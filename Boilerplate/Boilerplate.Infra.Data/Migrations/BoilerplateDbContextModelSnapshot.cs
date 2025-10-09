@@ -46,16 +46,6 @@ namespace Boilerplate.Infra.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Tenants");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2025, 10, 8, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsDeleted = false,
-                            Name = "Boilerplate",
-                            UpdatedAt = new DateTime(2025, 10, 8, 0, 0, 0, 0, DateTimeKind.Utc)
-                        });
                 });
 
             modelBuilder.Entity("Boilerplate.Domain.Entities.TenantInvitation", b =>
@@ -119,7 +109,7 @@ namespace Boilerplate.Infra.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("TenantId")
+                    b.Property<int?>("TenantId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -183,7 +173,7 @@ namespace Boilerplate.Infra.Data.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("TenantId")
+                    b.Property<int?>("TenantId")
                         .HasColumnType("int");
 
                     b.Property<bool>("TwoFactorEnabled")
@@ -210,7 +200,7 @@ namespace Boilerplate.Infra.Data.Migrations
 
                     b.HasIndex("UserName", "TenantId")
                         .IsUnique()
-                        .HasFilter("[UserName] IS NOT NULL");
+                        .HasFilter("[UserName] IS NOT NULL AND [TenantId] IS NOT NULL");
 
                     b.ToTable("UsersIdentity", (string)null);
                 });
@@ -386,8 +376,7 @@ namespace Boilerplate.Infra.Data.Migrations
                     b.HasOne("Boilerplate.Domain.Entities.Tenant", "Tenant")
                         .WithMany("Users")
                         .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Tenant");
                 });
@@ -403,8 +392,7 @@ namespace Boilerplate.Infra.Data.Migrations
                     b.HasOne("Boilerplate.Domain.Entities.Tenant", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Tenant");
 

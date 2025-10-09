@@ -12,6 +12,7 @@ using Boilerplate.Domain.Interfaces.JobExecutors;
 using Boilerplate.Domain.Interfaces.Repositories;
 using Boilerplate.Domain.Interfaces.Repositories.IUnitOfWork;
 using Boilerplate.Infra.Data.Context;
+using Boilerplate.Infra.Data.Context.Seeding;
 using Boilerplate.Infra.Data.Identity;
 using Boilerplate.Infra.Data.Identity.AuthenticateService;
 using Boilerplate.Infra.Data.Repositories;
@@ -75,6 +76,7 @@ namespace Boilerplate.Infra.IoC
             services.AddScoped<IEntity1Service, Entity1Service>();
             services.AddScoped<IAuthenticateService, AuthenticateService>();
             services.AddScoped<AuthAppService>();
+            services.AddScoped<SeedData>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ITenantService, TenantService>();
             services.AddScoped<ICurrentUserContext, CurrentUserContext>();

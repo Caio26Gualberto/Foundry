@@ -106,7 +106,7 @@ namespace Boilerplate.Infra.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    TenantId = table.Column<int>(type: "int", nullable: false),
+                    TenantId = table.Column<int>(type: "int", nullable: true),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CanImpersonateTenants = table.Column<bool>(type: "bit", nullable: false),
@@ -131,7 +131,7 @@ namespace Boilerplate.Infra.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    TenantId = table.Column<int>(type: "int", nullable: false),
+                    TenantId = table.Column<int>(type: "int", nullable: true),
                     DomainUserId = table.Column<int>(type: "int", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -250,11 +250,6 @@ namespace Boilerplate.Infra.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.InsertData(
-                table: "Tenants",
-                columns: new[] { "Id", "CreatedAt", "IsDeleted", "Name", "UpdatedAt" },
-                values: new object[] { 1, new DateTime(2025, 10, 8, 0, 0, 0, 0, DateTimeKind.Utc), false, "Boilerplate", new DateTime(2025, 10, 8, 0, 0, 0, 0, DateTimeKind.Utc) });
-
             migrationBuilder.CreateIndex(
                 name: "IX_DomainUsers_TenantId",
                 table: "DomainUsers",
@@ -308,7 +303,7 @@ namespace Boilerplate.Infra.Data.Migrations
                 table: "UsersIdentity",
                 columns: new[] { "UserName", "TenantId" },
                 unique: true,
-                filter: "[UserName] IS NOT NULL");
+                filter: "[UserName] IS NOT NULL AND [TenantId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "UserNameIndex",

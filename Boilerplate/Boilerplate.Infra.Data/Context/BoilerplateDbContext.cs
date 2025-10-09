@@ -34,10 +34,16 @@ namespace Boilerplate.Infra.Data.Context
             foreach (var entityType in builder.Model.GetEntityTypes())
             {
                 var tenantProperty = entityType.FindProperty("TenantId");
-                if (tenantProperty != null && tenantProperty.ClrType == typeof(int))
+                if (tenantProperty != null && (tenantProperty.ClrType == typeof(int) || tenantProperty.ClrType == typeof(int?)))
                 {
                     var parameter = Expression.Parameter(entityType.ClrType, "e");
-                    var property = Expression.Convert(Expression.Property(parameter, "TenantId"), typeof(int?));
+                    Expression property = Expression.Property(parameter, "TenantId");
+
+                    if (tenantProperty.ClrType == typeof(int))
+                    {
+                        property = Expression.Convert(property, typeof(int?));
+                    }
+
                     var currentTenant = Expression.Property(Expression.Constant(this), nameof(CurrentTenantId));
 
                     var body = Expression.OrElse(
@@ -56,15 +62,6 @@ namespace Boilerplate.Infra.Data.Context
                             .HasForeignKey(u => u.TenantId)
                             .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<Tenant>().HasData(new Tenant
-            {
-                Id = 1,
-                Name = "Boilerplate",
-                CreatedAt = new DateTime(2025, 10, 8, 0, 0, 0, DateTimeKind.Utc),
-                UpdatedAt = new DateTime(2025, 10, 8, 0, 0, 0, DateTimeKind.Utc),
-                IsDeleted = false
-            });
-
             builder.Entity<User>(b =>
             {
                 b.ToTable("DomainUsers");
@@ -73,7 +70,8 @@ namespace Boilerplate.Infra.Data.Context
                 b.HasOne(u => u.Tenant)
                     .WithMany(t => t.Users)
                     .HasForeignKey(u => u.TenantId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired(false);
             });
 
             builder.Entity<ApplicationUser>(b =>
@@ -89,7 +87,8 @@ namespace Boilerplate.Infra.Data.Context
                 b.HasOne(a => a.Tenant)
                     .WithMany()
                     .HasForeignKey(a => a.TenantId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired(false);
             });
 
         }

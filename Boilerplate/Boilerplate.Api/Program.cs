@@ -1,3 +1,4 @@
+using Boilerplate.Infra.Data.Context.Seeding;
 using Boilerplate.Infra.IoC;
 using Microsoft.OpenApi.Models;
 
@@ -54,6 +55,12 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Boilerplate API V1");
         c.RoutePrefix = ""; // acessa no root: http://localhost:5245/
     });
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var roleSeeder = scope.ServiceProvider.GetRequiredService<SeedData>();
+    await roleSeeder.SeedAsync();
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();

@@ -31,7 +31,7 @@ namespace Boilerplate.Application.Services.Auth
             if (user == null)
                 throw new Exception("Usuário não encontrado");
 
-            var tenantId = user.TenantId;
+            var tenantId = (int)user.TenantId!;
 
             var isAuthenticated = await _authService.Authenticate(email, password, tenantId);
 
@@ -154,7 +154,7 @@ namespace Boilerplate.Application.Services.Auth
             var newRefreshToken = _authService.GenerateRefreshToken();
 
             // Salvar novo refresh token
-            await _authService.SaveRefreshToken(email, newRefreshToken, user.TenantId);
+            await _authService.SaveRefreshToken(email, newRefreshToken, (int)user.TenantId!);
 
             return new TokensDto
             {
