@@ -25,7 +25,9 @@ namespace Boilerplate.Infra.Data.Context.Factory
                 b.MigrationsHistoryTable("__EFMigrationsHistory", "core");
             });
 
-            return new BoilerplateDbContext(builder.Options);
+            var currentUserContext = new DesignTimeCurrentContextService();
+
+            return new BoilerplateDbContext(builder.Options, currentUserContext);
         }
     }
 }

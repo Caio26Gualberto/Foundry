@@ -28,6 +28,13 @@ namespace Boilerplate.Infra.Data.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task SoftDelete(T obj)
+        {
+            obj.IsDeleted = true;
+            _dbSet.Update(obj);
+            await _context.SaveChangesAsync();
+        }
+
         public IQueryable<T> GetAll()
         {
             return _dbSet.AsQueryable();
@@ -36,13 +43,6 @@ namespace Boilerplate.Infra.Data.Repositories
         public async Task<T?> GetByIdAsync(int id)
         {
             return await _dbSet.FindAsync(id);
-        }
-
-        public async Task SoftDelete(T obj)
-        {
-            obj.IsDeleted = true;
-            _dbSet.Update(obj);
-            await _context.SaveChangesAsync();
         }
 
         public async Task UpdateAsync(T entity)

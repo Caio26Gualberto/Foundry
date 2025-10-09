@@ -30,8 +30,4 @@
     <ProjectReference Include="..\Boilerplate.Domain\Boilerplate.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Context\Factory\" />
-  </ItemGroup>
-
 </Project>

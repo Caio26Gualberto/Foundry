@@ -1,4 +1,5 @@
-﻿using Boilerplate.Domain.Entities;
+﻿using Boilerplate.Application.Interfaces.ICurrentUserContext;
+using Boilerplate.Domain.Entities;
 using Boilerplate.Infra.Data.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -9,11 +10,17 @@ namespace Boilerplate.Infra.Data.Context
 {
     public class BoilerplateDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>
     {
-        public BoilerplateDbContext(DbContextOptions<BoilerplateDbContext> options) : base(options) { }
+        private readonly ICurrentUserContext _currentUserContext;
+
+        public BoilerplateDbContext(DbContextOptions<BoilerplateDbContext> options, ICurrentUserContext currentUserContext) : base(options) 
+        { 
+            _currentUserContext = currentUserContext;
+        }
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<TenantInvitation> TenantInvitations => Set<TenantInvitation>();
         public new DbSet<User> Users => Set<User>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<Entity1> Entity1s => Set<Entity1>();
 
 
         public int? CurrentTenantId { get; private set; }
@@ -96,6 +103,7 @@ namespace Boilerplate.Infra.Data.Context
         public override int SaveChanges()
         {
             ApplyTenantId();
+            ApplyAuditing();
             return base.SaveChanges();
         }
 
@@ -112,6 +120,34 @@ namespace Boilerplate.Infra.Data.Context
                 var tenantProp = entry.Entity.GetType().GetProperty("TenantId");
                 if (tenantProp != null && tenantProp.GetValue(entry.Entity) == null)
                     tenantProp.SetValue(entry.Entity, CurrentTenantId);
+            }
+        }
+
+        private void ApplyAuditing()
+        {
+            var now = DateTime.UtcNow;
+
+            foreach (var entry in ChangeTracker.Entries<EntityBase>())
+            {
+                switch (entry.State)
+                {
+                    case EntityState.Added:
+                        entry.Entity.CreatedAt = now;
+                        entry.Entity.CreatedBy = _currentUserContext.UserId;
+                        break;
+
+                    case EntityState.Modified:
+                        entry.Entity.UpdatedAt = now;
+                        entry.Entity.UpdatedBy = _currentUserContext.UserId;
+                        break;
+
+                    case EntityState.Deleted:
+                        entry.State = EntityState.Modified;
+                        entry.Entity.IsDeleted = true;
+                        entry.Entity.DeletedAt = now;
+                        entry.Entity.DeletedBy = _currentUserContext.UserId;
+                        break;
+                }
             }
         }
     }
