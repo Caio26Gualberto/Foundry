@@ -1,21 +1,31 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
 
 namespace Boilerplate.Infra.Data.Context.Factory
 {
-    internal class BoilerplateDbContextFactory : IDesignTimeDbContextFactory<BoilerplateDbContext>
+    public class BoilerplateDbContextFactory : IDesignTimeDbContextFactory<BoilerplateDbContext>
     {
         public BoilerplateDbContext CreateDbContext(string[] args)
         {
-            var connectionString = Environment.GetEnvironmentVariable("BoilerplateDb");
+            var basePath = Directory.GetParent(Directory.GetCurrentDirectory())!.FullName;
+            var configurationPath = Path.Combine(basePath, "Boilerplate.Api");
 
-            if (string.IsNullOrEmpty(connectionString))
-                throw new InvalidOperationException("Environment variable 'BoilerplateDb' not set.");
+            IConfigurationRoot configuration = new ConfigurationBuilder()
+                .SetBasePath(configurationPath)
+                .AddJsonFile("appsettings.json")
+                .Build();
 
-            var optionsBuilder = new DbContextOptionsBuilder<BoilerplateDbContext>();
-            optionsBuilder.UseSqlServer(connectionString);
+            var builder = new DbContextOptionsBuilder<BoilerplateDbContext>();
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
 
-            return new BoilerplateDbContext(optionsBuilder.Options);
+            builder.UseSqlServer(connectionString, b =>
+            {
+                b.MigrationsAssembly(typeof(BoilerplateDbContext).Assembly.FullName);
+                b.MigrationsHistoryTable("__EFMigrationsHistory", "core");
+            });
+
+            return new BoilerplateDbContext(builder.Options);
         }
     }
 }

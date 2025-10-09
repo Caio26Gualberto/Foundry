@@ -10,13 +10,14 @@ namespace Boilerplate.Infra.Data.Context
     public class BoilerplateDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>
     {
         public BoilerplateDbContext(DbContextOptions<BoilerplateDbContext> options) : base(options) { }
-        public DbSet<Tenant> Tenants => Set<Tenant>(); //<-- Se o usuário não quer multitenancy, pode remover isso
+        public DbSet<Tenant> Tenants => Set<Tenant>();
+        public DbSet<TenantInvitation> TenantInvitations => Set<TenantInvitation>();
         public new DbSet<User> Users => Set<User>();
-        public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
 
-        public int? CurrentTenantId { get; private set; } //<-- Se o usuário não quer multitenancy, pode remover isso
-        public void SetTenant(int tenantId) => CurrentTenantId = tenantId; //<-- Se o usuário não quer multitenancy, pode remover isso
+        public int? CurrentTenantId { get; private set; }
+        public void SetTenant(int tenantId) => CurrentTenantId = tenantId;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -36,25 +37,33 @@ namespace Boilerplate.Infra.Data.Context
                 if (tenantProperty != null && tenantProperty.ClrType == typeof(int))
                 {
                     var parameter = Expression.Parameter(entityType.ClrType, "e");
-                    var property = Expression.Property(parameter, "TenantId");
-                    var currentTenant = Expression.Property(
-                        Expression.Constant(this),
-                        nameof(CurrentTenantId)
+                    var property = Expression.Convert(Expression.Property(parameter, "TenantId"), typeof(int?));
+                    var currentTenant = Expression.Property(Expression.Constant(this), nameof(CurrentTenantId));
+
+                    var body = Expression.OrElse(
+                        Expression.Equal(currentTenant, Expression.Constant(null, typeof(int?))),
+                        Expression.Equal(property, currentTenant)
                     );
 
-                    var body = Expression.Equal(property, currentTenant);
                     var lambda = Expression.Lambda(body, parameter);
-
-                    builder.Entity(entityType.ClrType)
-                        .HasQueryFilter(lambda);
+                    builder.Entity(entityType.ClrType).HasQueryFilter(lambda);
                 }
             }
 
-            builder.Entity<Tenant>() //<-- Se o usuário não quer multitenancy, pode remover isso
+            builder.Entity<Tenant>()
                             .HasMany(t => t.Users)
                             .WithOne(u => u.Tenant)
                             .HasForeignKey(u => u.TenantId)
                             .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Tenant>().HasData(new Tenant
+            {
+                Id = 1,
+                Name = "Boilerplate",
+                CreatedAt = new DateTime(2025, 10, 8, 0, 0, 0, DateTimeKind.Utc),
+                UpdatedAt = new DateTime(2025, 10, 8, 0, 0, 0, DateTimeKind.Utc),
+                IsDeleted = false
+            });
 
             builder.Entity<User>(b =>
             {
@@ -62,7 +71,7 @@ namespace Boilerplate.Infra.Data.Context
                 b.HasKey(u => u.Id);
 
                 b.HasOne(u => u.Tenant)
-                    .WithMany()
+                    .WithMany(t => t.Users)
                     .HasForeignKey(u => u.TenantId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
@@ -77,7 +86,7 @@ namespace Boilerplate.Infra.Data.Context
                 b.HasIndex(a => new { a.UserName, a.TenantId }).IsUnique();
 
                 // Tenant reference (1:N)
-                b.HasOne(a => a.Tenant) //<-- Se o usuário não quer multitenancy, pode remover isso
+                b.HasOne(a => a.Tenant)
                     .WithMany()
                     .HasForeignKey(a => a.TenantId)
                     .OnDelete(DeleteBehavior.Restrict);
@@ -85,13 +94,13 @@ namespace Boilerplate.Infra.Data.Context
 
         }
 
-        public override int SaveChanges() //<-- Se o usuário não quer multitenancy, pode remover isso
+        public override int SaveChanges()
         {
             ApplyTenantId();
             return base.SaveChanges();
         }
 
-        private void ApplyTenantId() //<-- Se o usuário não quer multitenancy, pode remover isso
+        private void ApplyTenantId()
         {
             if (CurrentTenantId is null)
                 return;

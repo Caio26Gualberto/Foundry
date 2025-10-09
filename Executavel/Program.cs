@@ -7,10 +7,33 @@ namespace BoilerplateCustomizer
 {
     class Program
     {
-        private static readonly string BoilerplatePath = Path.Combine(Directory.GetCurrentDirectory(), "Boilerplate");
+        private static readonly string BoilerplatePath = GetBoilerplatePath();
         private static string? projectName;
         private static List<string> entityNames = new();
         private static bool enableMultitenancy = true;
+
+        private static string GetBoilerplatePath()
+        {
+            // Primeiro, tenta no diretório atual (para quando executado da pasta Executavel)
+            string currentDir = Directory.GetCurrentDirectory();
+            string boilerplatePath = Path.Combine(currentDir, "Boilerplate");
+            
+            if (Directory.Exists(boilerplatePath))
+                return boilerplatePath;
+            
+            // Se não encontrar, tenta no diretório pai (para quando executado da pasta publish)
+            string parentDir = Directory.GetParent(currentDir)?.FullName ?? currentDir;
+            boilerplatePath = Path.Combine(parentDir, "Boilerplate");
+            
+            if (Directory.Exists(boilerplatePath))
+                return boilerplatePath;
+            
+            // Se ainda não encontrar, tenta dois níveis acima (publish -> Executavel -> Boilerplate)
+            string grandParentDir = Directory.GetParent(parentDir)?.FullName ?? parentDir;
+            boilerplatePath = Path.Combine(grandParentDir, "Boilerplate");
+            
+            return boilerplatePath;
+        }
 
         static async Task Main(string[] args)
         {
@@ -22,16 +45,25 @@ namespace BoilerplateCustomizer
                 // Verificar se a pasta Boilerplate existe
                 if (!Directory.Exists(BoilerplatePath))
                 {
-                    Console.WriteLine($"Erro: Pasta 'Boilerplate' não encontrada em: {BoilerplatePath}");
-                    Console.WriteLine("Certifique-se de que o executável está no mesmo nível da pasta Boilerplate.");
+                    Console.WriteLine($"Erro: Pasta 'Boilerplate' não encontrada!");
+                    Console.WriteLine($"Procurado em: {BoilerplatePath}");
+                    Console.WriteLine($"Diretório atual: {Directory.GetCurrentDirectory()}");
+                    Console.WriteLine();
+                    Console.WriteLine("Estrutura esperada:");
+                    Console.WriteLine("📁 E:\\Projetos\\Boilerplate\\");
+                    Console.WriteLine("├── 📁 Boilerplate\\     # Pasta com o boilerplate");
+                    Console.WriteLine("└── 📁 Executavel\\      # Pasta com o executável");
+                    Console.WriteLine("    └── 📁 publish\\");
+                    Console.WriteLine("        └── BoilerplateCustomizer.exe");
                     return;
                 }
 
                 // Coletar informações do usuário
                 await CollectUserInput();
 
-                // Criar nova pasta do projeto
-                string newProjectPath = Path.Combine(Directory.GetCurrentDirectory(), projectName!);
+                // Criar nova pasta do projeto no mesmo nível das pastas Boilerplate e Executavel
+                string baseDir = Directory.GetParent(BoilerplatePath)?.FullName ?? Directory.GetCurrentDirectory();
+                string newProjectPath = Path.Combine(baseDir, projectName!);
                 
                 if (Directory.Exists(newProjectPath))
                 {
@@ -66,6 +98,12 @@ namespace BoilerplateCustomizer
             {
                 Console.WriteLine($"❌ Erro durante a execução: {ex.Message}");
                 Console.WriteLine("Pressione qualquer tecla para sair...");
+                Console.ReadKey();
+            }
+            finally
+            {
+                Console.WriteLine();
+                Console.WriteLine("Pressione qualquer tecla para fechar...");
                 Console.ReadKey();
             }
         }
@@ -316,15 +354,41 @@ namespace BoilerplateCustomizer
             {
                 await CreateEntityFromEntity1Template(projectPath, entityName);
             }
+
+            // Após criar todas as entidades, remover os arquivos Entity1
+            await RemoveEntity1Files(projectPath);
         }
 
         private static async Task CreateEntityFromEntity1Template(string projectPath, string entityName)
         {
-            // Encontrar todos os arquivos que contêm "Entity1"
+            // Encontrar todos os arquivos que contêm "Entity1", excluindo arquivos do Visual Studio e outros desnecessários
             var entity1Files = Directory.GetFiles(projectPath, "*", SearchOption.AllDirectories)
-                .Where(f => !f.Contains("\\bin\\") && !f.Contains("\\obj\\"))
-                .Where(f => Path.GetFileName(f).Contains("Entity1") || File.ReadAllText(f).Contains("Entity1"))
+                .Where(f => !f.Contains("\\bin\\") && !f.Contains("\\obj\\") && !f.Contains("\\.vs\\") && !f.Contains("\\packages\\"))
+                .Where(f => Path.GetExtension(f).ToLower() is ".cs" or ".csproj" or ".json")
+                .Where(f => Path.GetFileName(f).Contains("Entity1"))
                 .ToList();
+
+            // Também procurar arquivos .cs que contenham "Entity1" no conteúdo
+            var additionalFiles = Directory.GetFiles(projectPath, "*.cs", SearchOption.AllDirectories)
+                .Where(f => !f.Contains("\\bin\\") && !f.Contains("\\obj\\") && !f.Contains("\\.vs\\") && !f.Contains("\\packages\\"))
+                .Where(f => !Path.GetFileName(f).Contains("Entity1")) // Evitar duplicatas
+                .ToList();
+
+            foreach (string file in additionalFiles)
+            {
+                try
+                {
+                    string content = await File.ReadAllTextAsync(file);
+                    if (content.Contains("Entity1") && !entity1Files.Contains(file))
+                    {
+                        entity1Files.Add(file);
+                    }
+                }
+                catch
+                {
+                    // Ignorar arquivos que não podem ser lidos
+                }
+            }
 
             foreach (string templateFile in entity1Files)
             {
@@ -342,6 +406,16 @@ namespace BoilerplateCustomizer
                     string newContent = content.Replace("Entity1", entityName);
                     newContent = newContent.Replace("entity1", entityName.ToLower());
 
+                    // Se for um arquivo de entidade no Domain, garantir que herde de EntityBase
+                    if (templateFile.Contains("\\Domain\\Entities\\") && templateFile.EndsWith(".cs"))
+                    {
+                        // Verificar se já herda de EntityBase, se não, adicionar
+                        if (!newContent.Contains(": EntityBase") && newContent.Contains($"class {entityName}"))
+                        {
+                            newContent = newContent.Replace($"class {entityName}", $"class {entityName} : EntityBase");
+                        }
+                    }
+
                     await File.WriteAllTextAsync(newFilePath, newContent);
                 }
                 catch (Exception ex)
@@ -352,6 +426,75 @@ namespace BoilerplateCustomizer
 
             // Atualizar DependencyInjection.cs para incluir a nova entidade
             await UpdateDependencyInjection(projectPath, entityName);
+        }
+
+        private static async Task RemoveEntity1Files(string projectPath)
+        {
+            Console.WriteLine("Removendo arquivos template Entity1...");
+
+            // Encontrar todos os arquivos que contêm "Entity1" no nome
+            var entity1Files = Directory.GetFiles(projectPath, "*Entity1*", SearchOption.AllDirectories)
+                .Where(f => !f.Contains("\\bin\\") && !f.Contains("\\obj\\") && !f.Contains("\\.vs\\") && !f.Contains("\\packages\\"))
+                .ToList();
+
+            foreach (string file in entity1Files)
+            {
+                try
+                {
+                    File.Delete(file);
+                    Console.WriteLine($"Removido: {Path.GetFileName(file)}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Aviso: Não foi possível remover {file}: {ex.Message}");
+                }
+            }
+
+            // Também remover referências a Entity1 em arquivos que não foram removidos
+            await RemoveEntity1References(projectPath);
+        }
+
+        private static async Task RemoveEntity1References(string projectPath)
+        {
+            var filesToProcess = Directory.GetFiles(projectPath, "*.cs", SearchOption.AllDirectories)
+                .Where(f => !f.Contains("\\bin\\") && !f.Contains("\\obj\\") && !f.Contains("\\.vs\\") && !f.Contains("\\packages\\"))
+                .ToList();
+
+            foreach (string filePath in filesToProcess)
+            {
+                try
+                {
+                    string content = await File.ReadAllTextAsync(filePath);
+                    bool modified = false;
+
+                    // Remover using statements para Entity1
+                    if (content.Contains($"using {projectName}.Domain.Entities.Entity1"))
+                    {
+                        content = Regex.Replace(content, $@"using {projectName}\.Domain\.Entities\.Entity1.*\n", "");
+                        modified = true;
+                    }
+
+                    // Remover registros de Entity1 no DependencyInjection
+                    if (content.Contains("Entity1Service") || content.Contains("Entity1JobScheduler") || content.Contains("Entity1JobExecutor"))
+                    {
+                        content = Regex.Replace(content, @".*Entity1Service.*\n", "");
+                        content = Regex.Replace(content, @".*Entity1JobScheduler.*\n", "");
+                        content = Regex.Replace(content, @".*Entity1JobExecutor.*\n", "");
+                        content = Regex.Replace(content, @".*Entity1Wrapper.*\n", "");
+                        content = Regex.Replace(content, @".*Entity1Executor.*\n", "");
+                        modified = true;
+                    }
+
+                    if (modified)
+                    {
+                        await File.WriteAllTextAsync(filePath, content);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Aviso: Não foi possível processar {filePath} para remoção de Entity1: {ex.Message}");
+                }
+            }
         }
 
         private static async Task UpdateDependencyInjection(string projectPath, string entityName)
@@ -451,6 +594,28 @@ namespace BoilerplateCustomizer
                         modified = true;
                     }
 
+                    // Processar arquivos de autenticação (mais abrangente)
+                    if (filePath.Contains("AuthService") || filePath.Contains("Authentication") || 
+                        filePath.Contains("Service") || filePath.Contains("Repository"))
+                    {
+                        content = RemoveMultitenancyFromAuthService(content);
+                        modified = true;
+                    }
+
+                    // Processar RefreshToken
+                    if (filePath.Contains("RefreshToken"))
+                    {
+                        content = RemoveMultitenancyFromRefreshToken(content);
+                        modified = true;
+                    }
+
+                    // Processar qualquer arquivo que contenha referências a TenantId
+                    if (content.Contains("TenantId") && !modified)
+                    {
+                        content = RemoveMultitenancyFromAuthService(content);
+                        modified = true;
+                    }
+
                     if (modified)
                     {
                         await File.WriteAllTextAsync(filePath, content);
@@ -470,18 +635,83 @@ namespace BoilerplateCustomizer
             content = Regex.Replace(content, @"\s*public int\? CurrentTenantId.*\n", "");
             content = Regex.Replace(content, @"\s*public void SetTenant.*\n", "");
             
-            // Remover configurações de tenant no OnModelCreating
+            // Remover configurações de tenant no OnModelCreating - Tenant entity
             content = Regex.Replace(content, @"\s*builder\.Entity<Tenant>\(\).*?\.OnDelete\(DeleteBehavior\.Restrict\);\s*", "", RegexOptions.Singleline);
+            
+            // Remover configurações de relacionamento com Tenant em User
+            content = Regex.Replace(content, @"\s*\.HasMany\(t => t\.Users\).*?\.OnDelete\(DeleteBehavior\.Restrict\);\s*", "", RegexOptions.Singleline);
+            content = Regex.Replace(content, @"\s*b\.HasOne\(u => u\.Tenant\).*?\.OnDelete\(DeleteBehavior\.Restrict\);\s*", "", RegexOptions.Singleline);
+            
+            // Remover configurações de relacionamento com Tenant em ApplicationUser
+            content = Regex.Replace(content, @"\s*b\.HasIndex\(a => new \{ a\.UserName, a\.TenantId \}\)\.IsUnique\(\);\s*", "");
+            content = Regex.Replace(content, @"\s*// Tenant reference \(1:N\).*?\.OnDelete\(DeleteBehavior\.Restrict\);\s*", "", RegexOptions.Singleline);
+            content = Regex.Replace(content, @"\s*\.WithMany\(\).*?\.OnDelete\(DeleteBehavior\.Restrict\);\s*", "", RegexOptions.Singleline);
             
             // Remover query filters
             content = Regex.Replace(content, @"\s*foreach \(var entityType in builder\.Model\.GetEntityTypes\(\)\).*?}\s*}", "", RegexOptions.Singleline);
             
-            // Remover SaveChanges override
-            content = Regex.Replace(content, @"\s*public override int SaveChanges\(\).*?}\s*", "", RegexOptions.Singleline);
+            // Remover SaveChanges override - versões mais específicas para capturar blocos quebrados
+            content = Regex.Replace(content, @"\s*public override int SaveChanges\(\)\s*\{[^}]*ApplyTenantId\(\);[^}]*return base\.SaveChanges\(\);[^}]*\}\s*", "", RegexOptions.Singleline);
+            content = Regex.Replace(content, @"\s*\{\s*ApplyTenantId\(\);\s*return base\.SaveChanges\(\);\s*\}\s*", "", RegexOptions.Singleline);
             
-            // Remover ApplyTenantId method
-            content = Regex.Replace(content, @"\s*private void ApplyTenantId\(\).*?}\s*}", "", RegexOptions.Singleline);
+            // Remover ApplyTenantId method - versões mais específicas para capturar blocos quebrados
+            content = Regex.Replace(content, @"\s*private void ApplyTenantId\(\)\s*\{[^}]*CurrentTenantId[^}]*\}\s*", "", RegexOptions.Singleline);
+            content = Regex.Replace(content, @"\s*\{\s*if \(CurrentTenantId is null\)\s*return;[^}]*\}\s*", "", RegexOptions.Singleline);
+            
+            // Remover blocos órfãos específicos que podem ter sobrado
+            content = Regex.Replace(content, @"\s*\{\s*ApplyTenantId\(\);\s*return base\.SaveChanges\(\);\s*\}\s*", "");
+            content = Regex.Replace(content, @"\s*\{\s*if \(CurrentTenantId is null\)\s*return;.*?tenantProp\.SetValue\(entry\.Entity, CurrentTenantId\);.*?\}\s*\}\s*", "", RegexOptions.Singleline);
+            
+            // Remover blocos vazios que podem ter sobrado
+            content = Regex.Replace(content, @"\s*\{\s*\}\s*", "");
+            
+            // Corrigir índice único do ApplicationUser para usar apenas UserName
+            content = content.Replace("b.HasIndex(a => new { a.UserName, a.TenantId }).IsUnique();", "b.HasIndex(a => a.UserName).IsUnique();");
+            
+            // Corrigir construtor quebrado - adicionar chaves faltantes se necessário
+            content = Regex.Replace(content, @"(\w+DbContext\(DbContextOptions<\w+DbContext> options\) : base\(options\))(\s*public)", "$1 { }$2");
 
+            return content;
+        }
+
+        private static string RemoveMultitenancyFromAuthService(string content)
+        {
+            // Remover parâmetros TenantId de métodos - versões mais específicas
+            content = Regex.Replace(content, @",\s*int\s+tenantId", "");
+            content = Regex.Replace(content, @"int\s+tenantId\s*,\s*", "");
+            content = Regex.Replace(content, @"\(\s*int\s+tenantId\s*\)", "()");
+            content = Regex.Replace(content, @"\(string\s+\w+,\s*string\s+\w+,\s*int\s+tenantId\)", "(string email, string password)");
+            content = Regex.Replace(content, @"\(string\s+\w+,\s*string\s+\w+,\s*int\s+tenantId\)", "(string email, string refreshToken)");
+            
+            // Remover atribuições de TenantId
+            content = Regex.Replace(content, @"\s*TenantId\s*=\s*tenantId\s*,?\s*", "");
+            content = Regex.Replace(content, @"\s*,\s*TenantId\s*=\s*tenantId\s*", "");
+            
+            // Remover filtros por TenantId em queries - mais específico
+            content = Regex.Replace(content, @"\.Where\(rt => rt\.Email == email && rt\.TenantId == tenantId\)", ".Where(rt => rt.Email == email)");
+            content = Regex.Replace(content, @"\.FirstOrDefaultAsync\(u => u\.Email == email && u\.TenantId == tenantId\)", ".FirstOrDefaultAsync(u => u.Email == email)");
+            content = Regex.Replace(content, @"\.Where\([^)]*TenantId[^)]*\)", "");
+            content = Regex.Replace(content, @"&&\s*[^&]*TenantId[^&]*", "");
+            content = Regex.Replace(content, @"[^&]*TenantId[^&]*\s*&&\s*", "");
+            
+            // Remover validações de TenantId
+            content = Regex.Replace(content, @"\s*if\s*\([^)]*TenantId[^)]*\)[^}]*\{[^}]*\}\s*", "");
+            
+            return content;
+        }
+
+        private static string RemoveMultitenancyFromRefreshToken(string content)
+        {
+            // Remover propriedade TenantId da classe RefreshToken
+            content = Regex.Replace(content, @"\s*public int TenantId \{ get; set; \}\s*", "\n");
+            
+            // Remover navegação para Tenant
+            content = Regex.Replace(content, @"\s*public Tenant Tenant \{ get; set; \}\s*", "\n");
+            
+            // Remover atribuições de TenantId
+            content = Regex.Replace(content, @"\s*TenantId\s*=\s*[^,\n]*,?\s*", "");
+            content = Regex.Replace(content, @"\s*,\s*TenantId\s*=\s*[^,\n]*", "");
+            
             return content;
         }
     }

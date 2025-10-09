@@ -40,15 +40,20 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
             return passwordValid;
         }
 
-        public async Task<(string, int, string)> Register(string email, string password, string name)
+        public async Task<(int, string)> Register(string email, string password, string name, int tenantId, string token)
         {
+            var invite = await _context.TenantInvitations.FirstOrDefaultAsync(x => x.Email == email);
+            if (invite == null || invite.TenantId != tenantId || invite.Token != token)
+                return (0, string.Empty);
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 var user = new User
                 {
                     Email = email,
-                    Name = name
+                    Name = name,
+                    TenantId = tenantId
                 };
 
                 _context.Users.Add(user);
@@ -58,7 +63,8 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
                 {
                     UserName = email,
                     Email = email,
-                    DomainUserId = user.Id
+                    DomainUserId = user.Id,
+                    TenantId = tenantId
                 };
 
                 var result = await _userManager.CreateAsync(applicationUser, password);
@@ -66,12 +72,14 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
                 if (!result.Succeeded)
                 {
                     await transaction.RollbackAsync();
-                    return (string.Empty, 0, string.Empty);
+                    return (0, string.Empty);
                 }
 
+                invite.IsDeleted = true;
+                _context.TenantInvitations.Update(invite);
                 await transaction.CommitAsync();
 
-                return (await _userManager.GenerateEmailConfirmationTokenAsync(applicationUser), applicationUser.Id, applicationUser.Email);
+                return (applicationUser.Id, applicationUser.Email);
             }
             catch
             {
@@ -106,14 +114,11 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
         }
 
         // JWT Methods Implementation
-        public async Task<string> GenerateJwtToken(string email, int tenantId)
+        public async Task<string> GenerateJwtToken(string email, User domainUser)
         {
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null) return string.Empty;
             IList<string> roles = await _userManager.GetRolesAsync(user);
-            if (user == null) return string.Empty;
-            var domainUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == user.DomainUserId);
-            if (domainUser == null) return string.Empty;
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_configuration["JWT:SecretKey"] ?? "your-secret-key-here");
@@ -123,7 +128,7 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
                 new Claim(ClaimTypes.Email, email),
                 new Claim(ClaimTypes.NameIdentifier, domainUser.Id.ToString()),
                 new Claim("userId", domainUser.Id.ToString()), 
-                new Claim("tenantId", tenantId.ToString())
+                new Claim("tenantId", domainUser.TenantId.ToString())
             };
 
             foreach (var role in roles)
@@ -146,12 +151,13 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
             return tokenHandler.WriteToken(token);
         }
 
-        public async Task<string> GenerateRefreshToken()
+        public string GenerateRefreshToken()
         {
             var randomNumber = new byte[32];
             using var rng = RandomNumberGenerator.Create();
             rng.GetBytes(randomNumber);
-            return Convert.ToBase64String(randomNumber);
+            var base64Token = Convert.ToBase64String(randomNumber);
+            return base64Token;
         }
 
         public async Task<bool> ValidateRefreshToken(string refreshToken)

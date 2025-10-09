@@ -1,4 +1,4 @@
-﻿using Boilerplate.Application.Services.Interfaces;
+﻿using Boilerplate.Application.Interfaces;
 
 namespace Boilerplate.Application.Services
 {

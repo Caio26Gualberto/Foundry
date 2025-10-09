@@ -1,12 +1,19 @@
-﻿using Boilerplate.Application.JobExecutors;
+﻿using Boilerplate.Application.Interfaces;
+using Boilerplate.Application.Interfaces.ICurrentUserContext;
+using Boilerplate.Application.JobExecutors;
 using Boilerplate.Application.JobScheduler;
 using Boilerplate.Application.Services;
-using Boilerplate.Application.Services.Interfaces;
+using Boilerplate.Application.Services.Auth;
+using Boilerplate.Application.Services.Email;
+using Boilerplate.Application.Services.Tenants;
+using Boilerplate.Application.Utils.CurrentUserContext;
+using Boilerplate.Domain.Interfaces.Authenticate;
 using Boilerplate.Domain.Interfaces.JobExecutors;
 using Boilerplate.Domain.Interfaces.Repositories;
 using Boilerplate.Domain.Interfaces.Repositories.IUnitOfWork;
 using Boilerplate.Infra.Data.Context;
 using Boilerplate.Infra.Data.Identity;
+using Boilerplate.Infra.Data.Identity.AuthenticateService;
 using Boilerplate.Infra.Data.Repositories;
 using Boilerplate.Infra.Data.Repositories.UnitOfWork;
 using Boilerplate.JobServer.Wrappers;
@@ -35,7 +42,6 @@ namespace Boilerplate.Infra.IoC
                 options.Password.RequireUppercase = false;
                 options.Password.RequireLowercase = false;
                 options.User.RequireUniqueEmail = true;
-                options.SignIn.RequireConfirmedEmail = true;
             })
             .AddEntityFrameworkStores<BoilerplateDbContext>()
             .AddDefaultTokenProviders();
@@ -63,8 +69,15 @@ namespace Boilerplate.Infra.IoC
                 };
             });
 
+            services.AddHttpContextAccessor();
+
             //Application Services
             services.AddScoped<IEntity1Service, Entity1Service>();
+            services.AddScoped<IAuthenticateService, AuthenticateService>();
+            services.AddScoped<AuthAppService>();
+            services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<ITenantService, TenantService>();
+            services.AddScoped<ICurrentUserContext, CurrentUserContext>();
 
             //Hangfire Job Scheduler Wrappers
             services.AddScoped<IEntity1JobScheduler, Entity1Wrapper>();
