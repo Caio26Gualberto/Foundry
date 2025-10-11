@@ -1,0 +1,86 @@
+import React from 'react';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  IconButton,
+  Box,
+  Chip,
+  Avatar,
+} from '@mui/material';
+import {
+  Menu as MenuIcon,
+  Notifications,
+  AccountCircle,
+} from '@mui/icons-material';
+import { useAuth } from '../../contexts/Auth';
+import { canAccessTenantSelection } from '../../utils/authHelpers';
+
+interface HeaderProps {
+  onMenuClick: () => void;
+  drawerWidth: number;
+}
+export const Header: React.FC<HeaderProps> = ({ onMenuClick, drawerWidth }) => {
+  const { user } = useAuth();
+
+  return (
+    <AppBar
+      position="fixed"
+      sx={{
+        width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
+        ml: { sm: `${drawerWidth}px` },
+        bgcolor: 'background.paper',
+        color: 'text.primary',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+      }}
+    >
+      <Toolbar>
+        <IconButton
+          color="inherit"
+          aria-label="open drawer"
+          edge="start"
+          onClick={onMenuClick}
+          sx={{ mr: 2, display: { sm: 'none' } }}
+        >
+          <MenuIcon />
+        </IconButton>
+
+        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          Dashboard
+        </Typography>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* Tenant Indicator */}
+          {user?.tenantId ? (
+            <Chip
+              label={`Tenant: ${user.tenantId}`}
+              size="small"
+              variant="outlined"
+              color="primary"
+            />
+          ) : canAccessTenantSelection(user) ? (
+            <Chip
+              label="Modo Global"
+              size="small"
+              color="secondary"
+              variant="filled"
+            />
+          ) : null}
+
+          {/* Notifications */}
+          <IconButton color="inherit">
+            <Notifications />
+          </IconButton>
+
+          {/* User Avatar */}
+          <IconButton color="inherit">
+            <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+              <AccountCircle />
+            </Avatar>
+          </IconButton>
+        </Box>
+      </Toolbar>
+    </AppBar>
+  );
+};

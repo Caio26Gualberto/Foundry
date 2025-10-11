@@ -23,6 +23,7 @@ namespace Boilerplate.Api.Controllers
 
             return new BoilerplateResponse<LoginResponseDto>()
             {
+                IsSuccess = true,
                 Data = new LoginResponseDto
                 {
                     Tokens = resultLogin.Tokens != null ? new TokensDto

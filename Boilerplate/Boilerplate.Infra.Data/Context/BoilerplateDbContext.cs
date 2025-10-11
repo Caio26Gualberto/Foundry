@@ -1,6 +1,7 @@
 ﻿using Boilerplate.Application.Interfaces.ICurrentUserContext;
 using Boilerplate.Domain.Entities;
 using Boilerplate.Infra.Data.Identity;
+using Boilerplate.Infra.Data.Persistence.Configuration;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,7 @@ namespace Boilerplate.Infra.Data.Context
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            builder.ApplyConfiguration(new TenantConfiguration());
             base.OnModelCreating(builder);
 
             builder.Entity<ApplicationUser>().ToTable("UsersIdentity");
@@ -40,6 +42,9 @@ namespace Boilerplate.Infra.Data.Context
 
             foreach (var entityType in builder.Model.GetEntityTypes())
             {
+                if (entityType.IsOwned())
+                    continue;
+
                 var tenantProperty = entityType.FindProperty("TenantId");
                 if (tenantProperty != null && (tenantProperty.ClrType == typeof(int) || tenantProperty.ClrType == typeof(int?)))
                 {

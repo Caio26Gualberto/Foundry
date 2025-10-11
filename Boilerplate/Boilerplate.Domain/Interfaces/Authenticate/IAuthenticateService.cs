@@ -4,7 +4,7 @@ namespace Boilerplate.Domain.Interfaces.Authenticate
 {
     public interface IAuthenticateService
     {
-        Task<bool> Authenticate(string email, string password, int tenantId);
+        Task<bool> Authenticate(string email, string password);
         Task<(int, string)> Register(string email, string password, string nickname, int tenantId, string token);
         Task Logout();
         Task<string?> GeneratePasswordResetTokenAsync(string email);
@@ -16,7 +16,7 @@ namespace Boilerplate.Domain.Interfaces.Authenticate
         string GenerateRefreshToken();
         Task<bool> ValidateRefreshToken(string refreshToken);
         Task<string?> GetEmailFromRefreshToken(string refreshToken);
-        Task SaveRefreshToken(string email, string refreshToken, int tenantId);
+        Task SaveRefreshToken(string email, string refreshToken, int? tenantId);
         Task<bool> RemoveRefreshToken(string refreshToken);
     }
 }

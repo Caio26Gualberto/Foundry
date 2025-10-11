@@ -1,4 +1,5 @@
-﻿using Boilerplate.Application.Interfaces;
+﻿using Boilerplate.Application.Dtos.Tenants;
+using Boilerplate.Application.Interfaces;
 using Boilerplate.Domain.Entities;
 using Boilerplate.Domain.Interfaces.Repositories;
 using System.Security.Cryptography;
@@ -16,6 +17,17 @@ namespace Boilerplate.Application.Services.Tenants
             _repository = repository;
             _tenantInvitationRepository = tenantInvitationRepository;
             _emailService = emailService;
+        }
+
+        public async Task<List<TenantDto>> GetAllTenants()
+        {
+            var tenants = _repository.GetAll().ToList();
+            return tenants.Select(x => new TenantDto
+            {
+                Address = x.Address,
+                Id = x.Id,
+                Name = x.Name,
+            }).ToList();        
         }
 
         public async Task<bool> InviteUserToTenantAsync(int tenantId, string userEmail)

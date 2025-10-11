@@ -27,10 +27,10 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
             _context = context;
         }
 
-        public async Task<bool> Authenticate(string email, string password, int tenantId)
+        public async Task<bool> Authenticate(string email, string password)
         {
             var user = await _userManager.Users
-                .FirstOrDefaultAsync(u => u.Email == email && u.TenantId == tenantId);
+                .FirstOrDefaultAsync(u => u.Email == email);
 
             if (user == null)
                 return false;
@@ -126,9 +126,10 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.Name, domainUser.Name),
                 new Claim(ClaimTypes.NameIdentifier, domainUser.Id.ToString()),
                 new Claim("userId", domainUser.Id.ToString()), 
-                new Claim("tenantId", domainUser.TenantId.ToString())
+                new Claim("tenantId", domainUser.TenantId.ToString()),
             };
 
             foreach (var role in roles)
@@ -176,7 +177,7 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
             return token?.Email;
         }
 
-        public async Task SaveRefreshToken(string email, string refreshToken, int tenantId)
+        public async Task SaveRefreshToken(string email, string refreshToken, int? tenantId)
         {
             // Remove existing refresh tokens for this user
             var existingTokens = _context.RefreshTokens.Where(rt => rt.Email == email && rt.TenantId == tenantId);

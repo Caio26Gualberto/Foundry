@@ -15,6 +15,13 @@ namespace Boilerplate.Api.Controllers
             _tenantService = tenantService;
         }
 
+        [HttpPost]
+        public async Task<ActionResult<BoilerplateResponse<List<TenantDto>>>> GetAll()
+        {
+            var tenants = await _tenantService.GetAllTenants();
+            return Ok(tenants);
+        }
+
         [HttpPost("invite")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> InviteUser([FromBody] TenantInvitationInput dto)
         {

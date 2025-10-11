@@ -31,9 +31,9 @@ namespace Boilerplate.Application.Services.Auth
             if (user == null)
                 throw new Exception("Usuário não encontrado");
 
-            var tenantId = (int)user.TenantId!;
+            var tenantId = user.TenantId;
 
-            var isAuthenticated = await _authService.Authenticate(email, password, tenantId);
+            var isAuthenticated = await _authService.Authenticate(email, password);
 
             if (!isAuthenticated)
             {
