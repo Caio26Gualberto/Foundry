@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
+import { useSnackbar } from 'notistack';
 import { apiService } from '../../services/api';
 import { STORAGE_KEYS } from '../../utils/constants';
 import type { AuthContextType, User } from '../../types';
@@ -10,6 +11,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const { enqueueSnackbar } = useSnackbar();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
@@ -36,6 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         } catch (error) {
           console.error('Token validation failed:', error);
+          enqueueSnackbar('Erro ao validar token. Faça login novamente.', { variant: 'error' });
           await logout();
         }
       }
@@ -44,7 +47,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initializeAuth();
-  }, []);
+  }, [enqueueSnackbar]);
 
   const login = async (email: string, password: string): Promise<void> => {
     try {
@@ -65,12 +68,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken);
           localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
           localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+          
+          enqueueSnackbar('Login realizado com sucesso!', { variant: 'success' });
         }
       } else {
         throw new Error(response.message || 'Login failed');
       }
     } catch (error) {
       console.error('Login failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro no login';
+      enqueueSnackbar(errorMessage, { variant: 'error' });
       throw error;
     } finally {
       setIsLoading(false);
@@ -84,6 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     } catch (error) {
       console.error('Logout API call failed:', error);
+      enqueueSnackbar('Erro ao fazer logout', { variant: 'error' });
     } finally {
       setUser(null);
       setToken(null);
@@ -91,8 +99,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.removeItem(STORAGE_KEYS.TOKEN);
       localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.USER);
+      // Remove permissão temporária de acesso ao dashboard
+      sessionStorage.removeItem('allowDashboardAccess');
     }
-  }, [token]);
+  }, [token, enqueueSnackbar]);
 
   const refreshTokens = useCallback(async (): Promise<boolean> => {
     try {
@@ -125,10 +135,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     } catch (error) {
       console.error('Token refresh failed:', error);
+      enqueueSnackbar('Sessão expirada. Faça login novamente.', { variant: 'warning' });
       await logout();
       return false;
     }
-  }, [refreshToken, logout]);
+  }, [refreshToken, logout, enqueueSnackbar]);
 
   const selectTenant = async (tenantId: string): Promise<void> => {
     try {
@@ -148,12 +159,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken);
           localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
           localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+          
+          enqueueSnackbar('Tenant selecionado com sucesso!', { variant: 'success' });
         }
       } else {
         throw new Error(response.message || 'Tenant selection failed');
       }
     } catch (error) {
       console.error('Tenant selection failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao selecionar tenant';
+      enqueueSnackbar(errorMessage, { variant: 'error' });
       throw error;
     } finally {
       setIsLoading(false);

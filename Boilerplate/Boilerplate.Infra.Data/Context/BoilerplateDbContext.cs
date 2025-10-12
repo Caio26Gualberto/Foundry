@@ -21,6 +21,7 @@ namespace Boilerplate.Infra.Data.Context
         public DbSet<TenantInvitation> TenantInvitations => Set<TenantInvitation>();
         public new DbSet<User> Users => Set<User>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<SystemNotification> SystemNotifications => Set<SystemNotification>();
         public DbSet<Entity1> Entity1s => Set<Entity1>();
 
 

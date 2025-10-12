@@ -3,10 +3,10 @@ import type {
   LoginResponseDto, 
   User, 
   Tenant, 
-  BoilerplateResponse, 
   LoginInputDto, 
   TokensDto, 
-  RefreshTokenRequestDto 
+  RefreshTokenRequestDto, 
+  BoilerplateResponse
 } from '../types';
 
 class ApiService {
@@ -97,7 +97,7 @@ class ApiService {
       headers: this.getAuthHeaders(),
       method: 'POST',  
     });
-
+    
     const result = await this.handleResponse<Tenant[]>(response);
     return result;
   }

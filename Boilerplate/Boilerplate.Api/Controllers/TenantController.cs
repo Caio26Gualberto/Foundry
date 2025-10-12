@@ -19,7 +19,11 @@ namespace Boilerplate.Api.Controllers
         public async Task<ActionResult<BoilerplateResponse<List<TenantDto>>>> GetAll()
         {
             var tenants = await _tenantService.GetAllTenants();
-            return Ok(tenants);
+            return Ok(new BoilerplateResponse<List<TenantDto>>
+            {
+                IsSuccess = true,
+                Data = tenants   
+            });
         }
 
         [HttpPost("invite")]

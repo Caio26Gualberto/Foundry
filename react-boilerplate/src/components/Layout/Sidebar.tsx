@@ -28,9 +28,12 @@ import { useAuth } from '../../contexts/Auth';
 import { canAccessTenantSelection } from '../../utils/authHelpers';
 
 interface SidebarProps {
-  open: boolean;
-  onClose: () => void;
+  mobileOpen: boolean;
+  desktopOpen: boolean;
+  onMobileClose: () => void;
+  onDesktopToggle: () => void;
   drawerWidth: number;
+  collapsedWidth: number;
 }
 
 const menuItems = [
@@ -41,7 +44,14 @@ const menuItems = [
   { text: 'Segurança', icon: <Security />, path: '/dashboard/security' },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  mobileOpen, 
+  desktopOpen, 
+  onMobileClose, 
+  onDesktopToggle, 
+  drawerWidth, 
+  collapsedWidth 
+}) => {
   const { user, logout } = useAuth();
 
   const handleNavigation = (path: string) => {
@@ -54,14 +64,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) 
     console.log('Open tenant configuration');
   };
 
-  const drawerContent = (
+  const getDrawerContent = (isCollapsed = false) => (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600 }}>
-          Boilerplate
-        </Typography>
-        <IconButton onClick={onClose} sx={{ display: { sm: 'none' } }}>
+        {!isCollapsed && (
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600 }}>
+            Boilerplate
+          </Typography>
+        )}
+        <IconButton 
+          onClick={isCollapsed ? onDesktopToggle : onMobileClose} 
+          sx={{ display: { sm: isCollapsed ? 'block' : 'none' } }}
+        >
           <ChevronLeft />
         </IconButton>
       </Box>
@@ -69,53 +84,64 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) 
       <Divider />
 
       {/* User Info */}
-      <Box sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Avatar sx={{ width: 40, height: 40, mr: 2, bgcolor: 'primary.main' }}>
+      {!isCollapsed && (
+        <Box sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Avatar sx={{ width: 40, height: 40, mr: 2, bgcolor: 'primary.main' }}>
+              <AccountCircle />
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="subtitle2" noWrap>
+                {user?.userName}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" noWrap>
+                {user?.email}
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* User Roles */}
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+            {user?.roles.map((role) => (
+              <Chip
+                key={role}
+                label={role}
+                size="small"
+                variant="outlined"
+                sx={{ fontSize: '0.7rem' }}
+              />
+            ))}
+          </Box>
+
+          {/* Tenant Info */}
+          {user?.tenantId && (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                Tenant: {user.tenantId}
+              </Typography>
+            </Box>
+          )}
+
+          {/* Global Admin Info */}
+          {canAccessTenantSelection(user) && !user?.tenantId && (
+            <Chip
+              label="Modo Global"
+              size="small"
+              color="primary"
+              sx={{ mt: 1 }}
+            />
+          )}
+        </Box>
+      )}
+
+      {/* Collapsed User Avatar */}
+      {isCollapsed && (
+        <Box sx={{ p: 1, display: 'flex', justifyContent: 'center' }}>
+          <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>
             <AccountCircle />
           </Avatar>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="subtitle2" noWrap>
-              {user?.userName}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {user?.email}
-            </Typography>
-          </Box>
         </Box>
-
-        {/* User Roles */}
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-          {user?.roles.map((role) => (
-            <Chip
-              key={role}
-              label={role}
-              size="small"
-              variant="outlined"
-              sx={{ fontSize: '0.7rem' }}
-            />
-          ))}
-        </Box>
-
-        {/* Tenant Info */}
-        {user?.tenantId && (
-          <Box sx={{ mt: 1 }}>
-            <Typography variant="caption" color="text.secondary">
-              Tenant: {user.tenantId}
-            </Typography>
-          </Box>
-        )}
-
-        {/* Global Admin Info */}
-        {canAccessTenantSelection(user) && !user?.tenantId && (
-          <Chip
-            label="Modo Global"
-            size="small"
-            color="primary"
-            sx={{ mt: 1 }}
-          />
-        )}
-      </Box>
+      )}
 
       <Divider />
 
@@ -134,16 +160,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) 
                   },
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 40 }}>
+                <ListItemIcon sx={{ minWidth: isCollapsed ? 'auto' : 40, justifyContent: 'center' }}>
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText 
-                  primary={item.text}
-                  primaryTypographyProps={{
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                  }}
-                />
+                {!isCollapsed && (
+                  <ListItemText 
+                    primary={item.text}
+                    primaryTypographyProps={{
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                    }}
+                  />
+                )}
               </ListItemButton>
             </ListItem>
           ))}
@@ -159,15 +187,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) 
             onClick={handleTenantConfig}
             sx={{ borderRadius: 1, mb: 1 }}
           >
-            <ListItemIcon sx={{ minWidth: 40 }}>
+            <ListItemIcon sx={{ minWidth: isCollapsed ? 'auto' : 40, justifyContent: 'center' }}>
               <Business />
             </ListItemIcon>
-            <ListItemText 
-              primary="Configurações do Tenant"
-              primaryTypographyProps={{
-                fontSize: '0.875rem',
-              }}
-            />
+            {!isCollapsed && (
+              <ListItemText 
+                primary="Configurações do Tenant"
+                primaryTypographyProps={{
+                  fontSize: '0.875rem',
+                }}
+              />
+            )}
           </ListItemButton>
         )}
 
@@ -175,15 +205,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) 
           onClick={() => handleNavigation('/dashboard/settings')}
           sx={{ borderRadius: 1, mb: 1 }}
         >
-          <ListItemIcon sx={{ minWidth: 40 }}>
+          <ListItemIcon sx={{ minWidth: isCollapsed ? 'auto' : 40, justifyContent: 'center' }}>
             <Settings />
           </ListItemIcon>
-          <ListItemText 
-            primary="Configurações"
-            primaryTypographyProps={{
-              fontSize: '0.875rem',
-            }}
-          />
+          {!isCollapsed && (
+            <ListItemText 
+              primary="Configurações"
+              primaryTypographyProps={{
+                fontSize: '0.875rem',
+              }}
+            />
+          )}
         </ListItemButton>
 
         <ListItemButton
@@ -197,30 +229,34 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) 
             },
           }}
         >
-          <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
+          <ListItemIcon sx={{ minWidth: isCollapsed ? 'auto' : 40, justifyContent: 'center', color: 'inherit' }}>
             <AccountCircle />
           </ListItemIcon>
-          <ListItemText 
-            primary="Sair"
-            primaryTypographyProps={{
-              fontSize: '0.875rem',
-            }}
-          />
+          {!isCollapsed && (
+            <ListItemText 
+              primary="Sair"
+              primaryTypographyProps={{
+                fontSize: '0.875rem',
+              }}
+            />
+          )}
         </ListItemButton>
       </Box>
     </Box>
   );
 
+  const currentDesktopWidth = desktopOpen ? drawerWidth : collapsedWidth;
+
   return (
     <Box
       component="nav"
-      sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+      sx={{ width: { sm: currentDesktopWidth }, flexShrink: { sm: 0 } }}
     >
       {/* Mobile drawer */}
       <Drawer
         variant="temporary"
-        open={open}
-        onClose={onClose}
+        open={mobileOpen}
+        onClose={onMobileClose}
         ModalProps={{
           keepMounted: true, // Better open performance on mobile.
         }}
@@ -232,7 +268,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) 
           },
         }}
       >
-        {drawerContent}
+        {getDrawerContent(false)}
       </Drawer>
 
       {/* Desktop drawer */}
@@ -242,12 +278,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) 
           display: { xs: 'none', sm: 'block' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
-            width: drawerWidth,
+            width: currentDesktopWidth,
+            transition: 'width 0.3s ease',
+            overflowX: 'hidden',
           },
         }}
         open
       >
-        {drawerContent}
+        {getDrawerContent(!desktopOpen)}
       </Drawer>
     </Box>
   );

@@ -40,6 +40,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
   }
 
+  // Verifica se o usuário AdminGlobal tem permissão temporária para acessar dashboard
+  const hasTemporaryDashboardAccess = sessionStorage.getItem('allowDashboardAccess') === 'true';
+  
+  // Permite acesso ao dashboard se tiver permissão temporária
+  if (location.pathname.startsWith('/dashboard') && hasTemporaryDashboardAccess && requireAuth && user && token) {
+    return <>{children}</>;
+  }
+
   // Redirect to tenant selection if user needs to select a tenant (but not if already there)
   if (requireAuth && needsTenantSelection(user) && location.pathname !== ROUTES.TENANT_SELECTION) {
     return <Navigate to={ROUTES.TENANT_SELECTION} replace />;

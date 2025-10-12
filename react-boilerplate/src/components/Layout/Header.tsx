@@ -18,9 +18,10 @@ import { canAccessTenantSelection } from '../../utils/authHelpers';
 
 interface HeaderProps {
   onMenuClick: () => void;
+  onDesktopMenuClick?: () => void;
   drawerWidth: number;
 }
-export const Header: React.FC<HeaderProps> = ({ onMenuClick, drawerWidth }) => {
+export const Header: React.FC<HeaderProps> = ({ onMenuClick, onDesktopMenuClick, drawerWidth }) => {
   const { user } = useAuth();
 
   return (
@@ -33,9 +34,11 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, drawerWidth }) => {
         color: 'text.primary',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         zIndex: (theme) => theme.zIndex.drawer + 1,
+        transition: 'width 0.3s ease, margin-left 0.3s ease',
       }}
     >
       <Toolbar>
+        {/* Mobile menu button */}
         <IconButton
           color="inherit"
           aria-label="open drawer"
@@ -45,6 +48,19 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, drawerWidth }) => {
         >
           <MenuIcon />
         </IconButton>
+
+        {/* Desktop menu button */}
+        {onDesktopMenuClick && (
+          <IconButton
+            color="inherit"
+            aria-label="toggle drawer"
+            edge="start"
+            onClick={onDesktopMenuClick}
+            sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
 
         <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
           Dashboard

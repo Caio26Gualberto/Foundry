@@ -12,13 +12,18 @@ import {
   Alert,
   Avatar,
 } from '@mui/material';
-import { Business, CheckCircle } from '@mui/icons-material';
+import { Business, CheckCircle, Dashboard } from '@mui/icons-material';
+import { useSnackbar } from 'notistack';
+import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import type { Tenant } from '../types';
 import { useAuth } from '../contexts/Auth';
+import { ROUTES } from '../utils/constants';
 
 export const TenantSelection: React.FC = () => {
   const { user, selectTenant, isLoading: authLoading } = useAuth();
+  const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,42 +36,16 @@ export const TenantSelection: React.FC = () => {
         setTenants(tenantsData.data);
       } catch (err) {
         console.error('Error fetching tenants:', err);
-        setError(err instanceof Error ? err.message : 'Erro ao carregar tenants');
-        
-        // Mock data for testing
-        setTenants([
-          {
-            id: '1',
-            name: 'Tenant Demo 1',
-            address: {
-              street: 'Rua Demo 1',
-              city: 'Cidade Demo 1',
-              state: 'Estado Demo 1',
-              zipCode: '12345-678',
-              country: 'Brasil',
-              number: '123',
-            },
-          },
-          {
-            id: '2',
-            name: 'Tenant Demo 2',
-            address: {
-              street: 'Rua Demo 2',
-              city: 'Cidade Demo 2',
-              state: 'Estado Demo 2',
-              zipCode: '12345-678',
-              country: 'Brasil',
-              number: '123',
-            },
-          },
-        ]);
+        const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar tenants';
+        setError(errorMessage);
+        enqueueSnackbar(errorMessage, { variant: 'error' });
       } finally {
         setLoading(false);
       }
     };
 
     fetchTenants();
-  }, []);
+  }, [enqueueSnackbar]);
 
   const handleTenantSelect = async (tenantId: string) => {
     try {
@@ -76,6 +55,13 @@ export const TenantSelection: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Erro ao selecionar tenant');
       setSelectedTenantId(null);
     }
+  };
+
+  const handleSkipToDashboard = () => {
+    // Armazena temporariamente a permissão para acessar dashboard sem tenant
+    sessionStorage.setItem('allowDashboardAccess', 'true');
+    enqueueSnackbar('Acessando dashboard sem selecionar tenant', { variant: 'info' });
+    navigate(ROUTES.DASHBOARD);
   };
 
   if (loading) {
@@ -193,6 +179,32 @@ export const TenantSelection: React.FC = () => {
             </Typography>
           </Box>
         )}
+
+        {/* Botão para acessar dashboard sem selecionar tenant */}
+        <Box sx={{ textAlign: 'center', mt: 4 }}>
+          <Button
+            variant="outlined"
+            size="large"
+            startIcon={<Dashboard />}
+            onClick={handleSkipToDashboard}
+            disabled={authLoading}
+            sx={{
+              minWidth: 200,
+              borderColor: 'primary.main',
+              color: 'primary.main',
+              '&:hover': {
+                borderColor: 'primary.dark',
+                backgroundColor: 'primary.main',
+                color: 'white',
+              },
+            }}
+          >
+            Acessar Dashboard
+          </Button>
+          <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
+            Você pode selecionar um tenant mais tarde
+          </Typography>
+        </Box>
       </Box>
     </Container>
   );

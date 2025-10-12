@@ -10,10 +10,12 @@ import {
   Container,
   CircularProgress,
 } from '@mui/material';
+import { useSnackbar } from 'notistack';
 import { useAuth } from '../contexts/Auth';
 
 export const Login: React.FC = () => {
   const { login, isLoading } = useAuth();
+  const { enqueueSnackbar } = useSnackbar();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -23,14 +25,18 @@ export const Login: React.FC = () => {
     setError('');
 
     if (!email || !password) {
-      setError('Por favor, preencha todos os campos');
+      const errorMessage = 'Por favor, preencha todos os campos';
+      setError(errorMessage);
+      enqueueSnackbar(errorMessage, { variant: 'warning' });
       return;
     }
 
     try {
       await login(email, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao fazer login');
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer login';
+      setError(errorMessage);
+      enqueueSnackbar(errorMessage, { variant: 'error' });
     }
   };
 
