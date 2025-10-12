@@ -75,7 +75,7 @@ namespace Boilerplate.Api.Controllers
 
             var tokens = await _authAppService.RefreshTokens(request.RefreshToken);
 
-            if (!string.IsNullOrEmpty(tokens.Token) && !string.IsNullOrEmpty(tokens.RefreshToken))
+            if (!string.IsNullOrEmpty(tokens.Token))
             {
                 return Ok(new BoilerplateResponse<TokensDto>
                 {

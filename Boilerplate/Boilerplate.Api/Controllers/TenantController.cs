@@ -15,14 +15,14 @@ namespace Boilerplate.Api.Controllers
             _tenantService = tenantService;
         }
 
-        [HttpPost]
+        [HttpGet]
         public async Task<ActionResult<BoilerplateResponse<List<TenantDto>>>> GetAll()
         {
             var tenants = await _tenantService.GetAllTenants();
             return Ok(new BoilerplateResponse<List<TenantDto>>
             {
                 IsSuccess = true,
-                Data = tenants   
+                Data = tenants
             });
         }
 

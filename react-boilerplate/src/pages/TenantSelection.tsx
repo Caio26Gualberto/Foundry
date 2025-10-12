@@ -15,10 +15,10 @@ import {
 import { Business, CheckCircle, Dashboard } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
-import { apiService } from '../services/api';
 import type { Tenant } from '../types';
 import { useAuth } from '../contexts/Auth';
 import { ROUTES } from '../utils/constants';
+import apiClient from '../services/apiClient';
 
 export const TenantSelection: React.FC = () => {
   const { user, selectTenant, isLoading: authLoading } = useAuth();
@@ -32,8 +32,8 @@ export const TenantSelection: React.FC = () => {
   useEffect(() => {
     const fetchTenants = async () => {
       try {
-        const tenantsData = await apiService.getTenants();
-        setTenants(tenantsData.data);
+        const tenantsData = await apiClient.get<Tenant[]>('/tenant', { silent: false });
+        setTenants(tenantsData);
       } catch (err) {
         console.error('Error fetching tenants:', err);
         const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar tenants';

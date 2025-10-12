@@ -154,8 +154,7 @@ namespace Boilerplate.Application.Services.Auth
                 var newAccessToken = await _authService.GenerateJwtToken(email, user);
                 return new TokensDto
                 {
-                    Token = newAccessToken,
-                    RefreshToken = refreshToken
+                    Token = newAccessToken
                 };
             }
 

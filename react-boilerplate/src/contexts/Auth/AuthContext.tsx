@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { useSnackbar } from 'notistack';
-import { apiService } from '../../services/api';
+import apiClient from '../../services/apiClient';
 import { STORAGE_KEYS } from '../../utils/constants';
-import type { AuthContextType, User } from '../../types';
+import type { AuthContextType, LoginResponseDto, TokensDto, User } from '../../types';
 import { AuthContext } from './context';
 
 interface AuthProviderProps {
@@ -17,77 +17,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      const storedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
-      const storedRefreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-
-      if (storedToken && storedRefreshToken) {
-        try {
-          setToken(storedToken);
-          setRefreshToken(storedRefreshToken);
-          
-          // Extract user data from JWT token
-          const userData = apiService.getUserFromToken(storedToken);
-          if (userData) {
-            setUser(userData);
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
-          } else {
-            // Token is invalid, try to refresh
-            await refreshTokens();
-          }
-        } catch (error) {
-          console.error('Token validation failed:', error);
-          enqueueSnackbar('Erro ao validar token. Faça login novamente.', { variant: 'error' });
-          await logout();
-        }
-      }
-      
-      setIsLoading(false);
-    };
-
-    initializeAuth();
-  }, [enqueueSnackbar]);
-
-  const login = async (email: string, password: string): Promise<void> => {
+    async function decodeJWT(token: string | null): Promise<User | null> {
     try {
-      setIsLoading(true);
-      const response = await apiService.login(email, password);
+      if (!token) return null;
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+
+      const payload = JSON.parse(jsonPayload);
       
-      if (response.isSuccess && response.data?.tokens) {
-        const { token: accessToken, refreshToken: newRefreshToken } = response.data.tokens;
-        
-        setToken(accessToken);
-        setRefreshToken(newRefreshToken);
-        
-        // Extract user data from JWT
-        const userData = apiService.getUserFromToken(accessToken);
-        if (userData) {
-          setUser(userData);
-          
-          localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken);
-          localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
-          
-          enqueueSnackbar('Login realizado com sucesso!', { variant: 'success' });
-        }
-      } else {
-        throw new Error(response.message || 'Login failed');
-      }
+      return {
+        id: payload.sub || payload.userId || payload.id,
+        email: payload.email,
+        userName: payload.unique_name || payload.userName || payload.name,
+        tenantId: payload.tenantId,
+        roles: Array.isArray(payload.role) ? payload.role : [payload.role].filter(Boolean),
+      };
     } catch (error) {
-      console.error('Login failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro no login';
-      enqueueSnackbar(errorMessage, { variant: 'error' });
-      throw error;
-    } finally {
-      setIsLoading(false);
+      console.error('Error decoding JWT:', error);
+      return null;
     }
-  };
+  }
 
   const logout = useCallback(async (): Promise<void> => {
     try {
       if (token) {
-        await apiService.logout();
+        await apiClient.get('/auth/logout');
       }
     } catch (error) {
       console.error('Logout API call failed:', error);
@@ -111,15 +71,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
 
-      const response = await apiService.refreshToken(refreshToken);
+      const response = await apiClient.get<TokensDto>('/auth/refresh-token');
       
-      if (response.isSuccess && response.data) {
-        const { token: newAccessToken, refreshToken: newRefreshToken } = response.data;
+      if (response) {
+        const { token: newAccessToken, refreshToken: newRefreshToken } = response;
         
         setToken(newAccessToken);
         setRefreshToken(newRefreshToken);
         
-        const userData = apiService.getUserFromToken(newAccessToken);
+        const userData = await decodeJWT(newAccessToken);
         if (userData) {
           setUser(userData);
           
@@ -141,29 +101,90 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [refreshToken, logout, enqueueSnackbar]);
 
-  const selectTenant = async (tenantId: string): Promise<void> => {
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
+      const storedRefreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+
+      if (storedToken && storedRefreshToken) {
+        try {
+          setToken(storedToken);
+          setRefreshToken(storedRefreshToken);
+          
+          const userData = await decodeJWT(storedToken);
+          if (userData) {
+            setUser(userData);
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+          } else {
+            // Token is invalid, try to refresh
+            await refreshTokens();
+          }
+        } catch (error) {
+          console.error('Token validation failed:', error);
+          enqueueSnackbar('Erro ao validar token. Faça login novamente.', { variant: 'error' });
+          await logout();
+        }
+      }
+      
+      setIsLoading(false);
+    };
+
+    initializeAuth();
+  }, [enqueueSnackbar, refreshTokens, logout]);
+
+  const login = async (email: string, password: string): Promise<void> => {
     try {
       setIsLoading(true);
-      const response = await apiService.impersonateTenant(tenantId);
+      const response = await apiClient.post<LoginResponseDto>('/auth/login', { email, password });
       
-      if (response.isSuccess && response.data?.tokens) {
-        const { token: accessToken, refreshToken: newRefreshToken } = response.data.tokens;
+      if (response?.tokens?.token && response?.tokens?.refreshToken) {
+        const { token: accessToken, refreshToken: newRefreshToken } = response.tokens;
         
         setToken(accessToken);
         setRefreshToken(newRefreshToken);
         
-        const userData = apiService.getUserFromToken(accessToken);
+        const userData = await decodeJWT(accessToken);
         if (userData) {
           setUser(userData);
           
           localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken);
           localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
           localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
-          
-          enqueueSnackbar('Tenant selecionado com sucesso!', { variant: 'success' });
         }
       } else {
-        throw new Error(response.message || 'Tenant selection failed');
+        throw new Error('Login failed - no tokens received');
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro no login';
+      enqueueSnackbar(errorMessage, { variant: 'error' });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const selectTenant = async (tenantId: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+      const response = await apiClient.post<TokensDto>('/impersonate', { tenantId });
+      
+      if (response?.token && response?.refreshToken) {
+        const { token: accessToken, refreshToken: newRefreshToken } = response;
+        
+        setToken(accessToken);
+        setRefreshToken(newRefreshToken);
+        
+        const userData = await decodeJWT(accessToken);
+        if (userData) {
+          setUser(userData);
+          
+          localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken);
+          localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+        }
+      } else {
+        throw new Error('Tenant selection failed - no tokens received');
       }
     } catch (error) {
       console.error('Tenant selection failed:', error);
