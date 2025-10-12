@@ -15,7 +15,7 @@ export const USER_ROLES = {
 } as const;
 
 export const STORAGE_KEYS = {
-  TOKEN: 'auth_token',
-  REFRESH_TOKEN: 'refresh_token',
+  TOKEN: 'Boilerplate_token',
+  REFRESH_TOKEN: 'Boilerplate_refresh_token',
   USER: 'user_data',
 } as const;

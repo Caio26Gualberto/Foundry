@@ -216,5 +216,13 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
             var result = await _userManager.ConfirmEmailAsync(applicationUser, token);
             return result.Succeeded;
         }
+
+        public async Task<bool> IsExpiredRefreshToken(string refreshToken)
+        {
+            var token = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+            if (token == null) return false;
+            
+            return token.ExpiryDate < DateTime.Now;
+        }
     }
 }

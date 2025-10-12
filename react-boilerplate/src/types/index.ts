@@ -57,3 +57,8 @@ export interface RefreshTokenRequestDto {
 }
 
 export type UserRole = 'AdminGlobal' | 'GlobalManager' | 'TenantAdmin' | 'User';
+
+export interface ApiCallOptions {
+  errorMessage?: string;
+  silent?: boolean;
+}

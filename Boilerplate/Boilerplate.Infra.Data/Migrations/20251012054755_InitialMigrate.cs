@@ -64,6 +64,27 @@ namespace Boilerplate.Infra.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SystemNotifications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsRead = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SystemNotifications", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "TenantInvitations",
                 columns: table => new
                 {
@@ -361,6 +382,9 @@ namespace Boilerplate.Infra.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "RoleClaims");
+
+            migrationBuilder.DropTable(
+                name: "SystemNotifications");
 
             migrationBuilder.DropTable(
                 name: "TenantInvitations");

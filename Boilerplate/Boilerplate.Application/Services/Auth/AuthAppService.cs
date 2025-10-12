@@ -1,8 +1,10 @@
 ﻿using Boilerplate.Application.DTOs.Auth;
 using Boilerplate.Application.Interfaces;
+using Boilerplate.Application.Services.SignalR;
 using Boilerplate.Domain.Entities;
 using Boilerplate.Domain.Interfaces.Authenticate;
 using Boilerplate.Domain.Interfaces.Repositories;
+using Microsoft.AspNetCore.SignalR;
 using NewLevel.Shared.DTOs.Auth;
 
 namespace Boilerplate.Application.Services.Auth
@@ -12,12 +14,15 @@ namespace Boilerplate.Application.Services.Auth
         private readonly IAuthenticateService _authService;
         private readonly IEmailService _emailService;
         private readonly IRepository<User> _userRepository;
+        private readonly IHubContext<SystemNotificationHub> _hubContext;
 
-        public AuthAppService(IAuthenticateService authenticateService, IEmailService emailService, IRepository<User> userRepository)
+        public AuthAppService(IAuthenticateService authenticateService, IEmailService emailService, IRepository<User> userRepository,
+            IHubContext<SystemNotificationHub> hubContext)
         {
             _authService = authenticateService;
             _emailService = emailService;
             _userRepository = userRepository;
+            _hubContext = hubContext;
         }
 
         public async Task<bool> ConfirmEmail(string userId, string token)
@@ -82,6 +87,8 @@ namespace Boilerplate.Application.Services.Auth
 
         public async Task<bool> Logout()
         {
+            await _hubContext.Clients.User("1")
+                .SendAsync("NotificationsUpdated");
             await _authService.Logout();
             return true;
         }
@@ -131,36 +138,45 @@ namespace Boilerplate.Application.Services.Auth
 
         public async Task<TokensDto> RefreshTokens(string refreshToken)
         {
-            var isValidRefreshToken = await _authService.ValidateRefreshToken(refreshToken);
-            if (!isValidRefreshToken)
-            {
-                return new TokensDto { Token = string.Empty, RefreshToken = string.Empty };
-            }
+            if (!await _authService.ValidateRefreshToken(refreshToken))
+                return EmptyTokens();
 
             var email = await _authService.GetEmailFromRefreshToken(refreshToken);
             if (string.IsNullOrEmpty(email))
-            {
-                return new TokensDto { Token = string.Empty, RefreshToken = string.Empty };
-            }
+                return EmptyTokens();
 
-            var user = _userRepository.GetAll().Where(x => x.Email == email).FirstOrDefault();
-
+            var user = _userRepository.GetAll().FirstOrDefault(x => x.Email == email);
             if (user == null)
-                return new TokensDto { Token = string.Empty, RefreshToken = string.Empty };
+                return EmptyTokens();
+
+            if (!await _authService.IsExpiredRefreshToken(refreshToken))
+            {
+                var newAccessToken = await _authService.GenerateJwtToken(email, user);
+                return new TokensDto
+                {
+                    Token = newAccessToken,
+                    RefreshToken = refreshToken
+                };
+            }
 
             await _authService.RemoveRefreshToken(refreshToken);
 
-            var newAccessToken = await _authService.GenerateJwtToken(email, user);
+            var accessToken = await _authService.GenerateJwtToken(email, user);
             var newRefreshToken = _authService.GenerateRefreshToken();
 
-            // Salvar novo refresh token
             await _authService.SaveRefreshToken(email, newRefreshToken, (int)user.TenantId!);
 
             return new TokensDto
             {
-                Token = newAccessToken,
+                Token = accessToken,
                 RefreshToken = newRefreshToken
             };
         }
+
+        private static TokensDto EmptyTokens() => new TokensDto
+        {
+            Token = string.Empty,
+            RefreshToken = string.Empty
+        };
     }
 }

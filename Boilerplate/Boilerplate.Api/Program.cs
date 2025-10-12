@@ -1,3 +1,4 @@
+using Boilerplate.Application.Services.SignalR;
 using Boilerplate.Infra.Data.Context.Seeding;
 using Boilerplate.Infra.IoC;
 using Microsoft.OpenApi.Models;
@@ -7,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowLocalFrontend", policy =>
@@ -14,7 +16,8 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins("http://localhost:5173") // URL do seu front
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 builder.Services.AddInfraIoC(builder.Configuration);
@@ -76,8 +79,9 @@ using (var scope = app.Services.CreateScope())
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseCors("AllowLocalFrontend");
-
+app.UseAuthentication();
 app.UseAuthorization();
+app.MapHub<SystemNotificationHub>("/hubs/systemNotification");
 
 app.MapControllers();
 

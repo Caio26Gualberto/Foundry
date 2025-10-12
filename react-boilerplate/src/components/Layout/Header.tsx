@@ -10,11 +10,11 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  Notifications,
   AccountCircle,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/Auth';
 import { canAccessTenantSelection } from '../../utils/authHelpers';
+import { NotificationCenter } from '../NotificationCenter';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -85,9 +85,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onDesktopMenuClick,
           ) : null}
 
           {/* Notifications */}
-          <IconButton color="inherit">
-            <Notifications />
-          </IconButton>
+          <NotificationCenter />
 
           {/* User Avatar */}
           <IconButton color="inherit">

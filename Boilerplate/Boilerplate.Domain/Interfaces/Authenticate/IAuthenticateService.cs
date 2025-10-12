@@ -16,6 +16,7 @@ namespace Boilerplate.Domain.Interfaces.Authenticate
         string GenerateRefreshToken();
         Task<bool> ValidateRefreshToken(string refreshToken);
         Task<string?> GetEmailFromRefreshToken(string refreshToken);
+        Task<bool> IsExpiredRefreshToken(string refreshToken);
         Task SaveRefreshToken(string email, string refreshToken, int? tenantId);
         Task<bool> RemoveRefreshToken(string refreshToken);
     }

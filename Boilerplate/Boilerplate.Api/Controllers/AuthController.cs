@@ -53,7 +53,6 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
-        [Authorize]
         [HttpGet("Logout")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> Logout()
         {
