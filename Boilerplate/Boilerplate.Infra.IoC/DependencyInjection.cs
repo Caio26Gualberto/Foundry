@@ -11,6 +11,7 @@ using Boilerplate.Domain.Interfaces.Authenticate;
 using Boilerplate.Domain.Interfaces.JobExecutors;
 using Boilerplate.Domain.Interfaces.Repositories;
 using Boilerplate.Domain.Interfaces.Repositories.IUnitOfWork;
+using Boilerplate.Domain.Interfaces.TokenDecoder;
 using Boilerplate.Infra.Data.Context;
 using Boilerplate.Infra.Data.Context.Seeding;
 using Boilerplate.Infra.Data.Identity;
@@ -95,6 +96,7 @@ namespace Boilerplate.Infra.IoC
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ITenantService, TenantService>();
             services.AddScoped<ICurrentUserContext, CurrentUserContext>();
+            services.AddScoped<ITokenDecoder, TokenDecoder>();
 
             //Hangfire Job Scheduler Wrappers
             services.AddScoped<IEntity1JobScheduler, Entity1Wrapper>();

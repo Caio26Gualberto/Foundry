@@ -1,187 +1,187 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Container,
-  Grid,
-  Button,
-  Chip,
-  CircularProgress,
-  Alert,
-  Avatar,
-} from '@mui/material';
-import { Business, CheckCircle, Dashboard } from '@mui/icons-material';
-import { useSnackbar } from 'notistack';
-import { useNavigate } from 'react-router-dom';
-import type { Tenant } from '../types';
-import { useAuth } from '../contexts/Auth';
-import { ROUTES } from '../utils/constants';
-import apiClient from '../services/apiClient';
+import React, { useState, useEffect } from "react";
+import { Box, Typography, Container, Button, Chip } from "@mui/material";
+import { Dashboard } from "@mui/icons-material";
+import { useSnackbar } from "notistack";
+import { useNavigate } from "react-router-dom";
+import type { GridColDef, GridRowParams, GridRowId } from "@mui/x-data-grid";
+import type { Tenant, address } from "../types/tenants";
+import { useAuth } from "../contexts/Auth";
+import { ROUTES } from "../utils/constants";
+import apiClient from "../services/apiClient";
+import BoilerplateDataGrid from "../components/common/BoilerplateDataGrid";
+import TenantCreateModal from "../components/tenants/TenantCreateModal/TenantCreateModal";
+import TenantUsersModal from "../components/tenants/TenantUsersModal/TenantUsersModal";
+import { useConfirmation } from "../contexts/confirmationContext/ConfirmationProvider";
 
 export const TenantSelection: React.FC = () => {
-  const { user, selectTenant, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [showUsers, setShowUsers] = useState(false);
+  const confirm = useConfirmation();
 
   useEffect(() => {
-    const fetchTenants = async () => {
-      try {
-        const tenantsData = await apiClient.get<Tenant[]>('/tenant', { silent: false });
-        setTenants(tenantsData);
-      } catch (err) {
-        console.error('Error fetching tenants:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar tenants';
-        setError(errorMessage);
-        enqueueSnackbar(errorMessage, { variant: 'error' });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTenants();
-  }, [enqueueSnackbar]);
+  }, []);
 
-  const handleTenantSelect = async (tenantId: string) => {
+  const fetchTenants = async () => {
     try {
-      setSelectedTenantId(tenantId);
-      await selectTenant(tenantId);
+      setLoading(true);
+      const tenantsData = await apiClient.get<Tenant[]>("/tenant");
+      setTenants(tenantsData);
+      setError("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao selecionar tenant');
-      setSelectedTenantId(null);
+      console.error("Error fetching tenants:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar tenants";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSkipToDashboard = () => {
-    // Armazena temporariamente a permissão para acessar dashboard sem tenant
-    sessionStorage.setItem('allowDashboardAccess', 'true');
-    enqueueSnackbar('Acessando dashboard sem selecionar tenant', { variant: 'info' });
+    sessionStorage.setItem("allowDashboardAccess", "true");
+    enqueueSnackbar("Acessando dashboard sem selecionar tenant", {
+      variant: "info",
+    });
     navigate(ROUTES.DASHBOARD);
   };
 
-  if (loading) {
-    return (
-      <Container maxWidth="md">
-        <Box
-          sx={{
-            minHeight: '100vh',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <CircularProgress />
-        </Box>
-      </Container>
-    );
-  }
+  const handleRowClick = (params: GridRowParams) => {
+    const tenant = tenants.find((t) => t.id === params.id);
+    if (tenant) {
+      setSelectedTenant(tenant);
+      setShowUsers(true);
+    }
+  };
+
+  const handleCreateTenant = () => {
+    setCreateModalOpen(true);
+  };
+
+  const handleTenantCreated = () => {
+    fetchTenants();
+    setCreateModalOpen(false);
+    setEditingTenant(null);
+  };
+
+  const handleModalClose = () => {
+    setCreateModalOpen(false);
+    setEditingTenant(null);
+  };
+
+  const handleUsersModalClose = () => {
+    setShowUsers(false);
+    setSelectedTenant(null);
+  };
+
+  const handleEditTenant = (id: GridRowId) => {
+    const tenant = tenants.find((t) => t.id === id);
+    if (tenant) {
+      setEditingTenant(tenant);
+      setCreateModalOpen(true);
+    }
+  };
+
+  const handleDeleteTenant = async (id: GridRowId) => {
+    const result = await confirm({
+      title: "Excluir Tenant",
+      message: "Tem certeza que deseja excluir este tenant?",
+    });
+    if (!result) return;
+    await apiClient.delete(`/tenant/${id}`);
+    fetchTenants();
+    enqueueSnackbar("Tenant excluído com sucesso", {
+      variant: "success",
+    });
+  };
+
+  const columns: GridColDef[] = [
+    {
+      field: "name",
+      headerName: "Nome",
+      flex: 1,
+      minWidth: 200,
+    },
+    {
+      field: "addressCity",
+      headerName: "Cidade",
+      flex: 1,
+      minWidth: 150,
+      valueGetter: (params: string) => params || "-",
+    },
+    {
+      field: "addressState",
+      headerName: "Estado",
+      width: 100,
+      valueGetter: (params: string) => params || "-",
+    },
+    {
+      field: "address",
+      headerName: "Endereço Completo",
+      flex: 1,
+      minWidth: 250,
+      valueGetter: (params: address) => {
+        const addr = params;
+        return `${addr.street || ""}, ${addr.number || ""} - ${
+          addr.city || ""
+        }/${addr.state || ""}`;
+      },
+    },
+    {
+      field: "status",
+      headerName: "Status",
+      width: 120,
+      renderCell: () => <Chip label="Ativo" color="success" size="small" />,
+    },
+  ];
+
+  const rows = tenants.map((tenant) => ({
+    id: tenant.id,
+    name: tenant.name,
+    addressCity: tenant.address.city,
+    addressState: tenant.address.state,
+    address: tenant.address,
+  }));
 
   return (
-    <Container maxWidth="md">
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          py: 4,
-        }}
-      >
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
+    <Container maxWidth="lg">
+      <Box sx={{ py: 4 }}>
+        <Box sx={{ mb: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom>
-            Selecionar Tenant
+            Gerenciamento de Tenants
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Olá, {user?.userName}! Selecione um tenant para personificar:
+            Olá, {user?.userName}! Selecione um tenant para personificar ou
+            gerencie os tenants existentes.
           </Typography>
         </Box>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
+        <Box sx={{ mb: 3 }}>
+          <BoilerplateDataGrid
+            title="Tenants Disponíveis"
+            rows={rows}
+            columns={columns}
+            loading={loading}
+            error={error}
+            onAdd={handleCreateTenant}
+            onEdit={handleEditTenant}
+            onDelete={handleDeleteTenant}
+            onRowClick={handleRowClick}
+            addButtonText="Novo Tenant"
+            height={500}
+            pageSize={10}
+          />
+        </Box>
 
-        <Grid container spacing={3}>
-          {tenants.map((tenant) => (
-            <Grid sx={{xs: 12, sm: 6, md: 4}} key={tenant.id}>
-              <Card
-                sx={{
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                  },
-                }}
-                onClick={() => handleTenantSelect(tenant.id)}
-              >
-                <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                  <Avatar
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      mx: 'auto',
-                      mb: 2,
-                      bgcolor: 'primary.main',
-                    }}
-                  >
-                    <Business fontSize="large" />
-                  </Avatar>
-
-                  <Typography variant="h6" gutterBottom>
-                    {tenant.name}
-                  </Typography>
-
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {tenant.address.city}
-                  </Typography>
-
-                  <Box sx={{ mt: 2, mb: 2 }}>
-                    <Chip
-                      label="Ativo"
-                      color="success"
-                      size="small"
-                    />
-                  </Box>
-
-                  {(
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      disabled={authLoading || selectedTenantId === tenant.id}
-                      startIcon={
-                        selectedTenantId === tenant.id ? (
-                          <CircularProgress size={16} color="inherit" />
-                        ) : (
-                          <CheckCircle />
-                        )
-                      }
-                    >
-                      {selectedTenantId === tenant.id ? 'Selecionando...' : 'Selecionar'}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-
-        {tenants.length === 0 && (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="body1" color="text.secondary">
-              Nenhum tenant disponível
-            </Typography>
-          </Box>
-        )}
-
-        {/* Botão para acessar dashboard sem selecionar tenant */}
-        <Box sx={{ textAlign: 'center', mt: 4 }}>
+        <Box sx={{ textAlign: "center", mt: 4 }}>
           <Button
             variant="outlined"
             size="large"
@@ -190,21 +190,38 @@ export const TenantSelection: React.FC = () => {
             disabled={authLoading}
             sx={{
               minWidth: 200,
-              borderColor: 'primary.main',
-              color: 'primary.main',
-              '&:hover': {
-                borderColor: 'primary.dark',
-                backgroundColor: 'primary.main',
-                color: 'white',
+              borderColor: "primary.main",
+              color: "primary.main",
+              "&:hover": {
+                borderColor: "primary.dark",
+                backgroundColor: "primary.main",
+                color: "white",
               },
             }}
           >
             Acessar Dashboard
           </Button>
-          <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
+          <Typography
+            variant="caption"
+            display="block"
+            sx={{ mt: 1, color: "text.secondary" }}
+          >
             Você pode selecionar um tenant mais tarde
           </Typography>
         </Box>
+
+        <TenantCreateModal
+          open={createModalOpen}
+          onClose={handleModalClose}
+          onSuccess={handleTenantCreated}
+          editTenant={editingTenant}
+        />
+
+        <TenantUsersModal
+          open={showUsers}
+          onClose={handleUsersModalClose}
+          tenant={selectedTenant}
+        />
       </Box>
     </Container>
   );

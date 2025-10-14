@@ -1,3 +1,4 @@
+using Boilerplate.Api.Middleware;
 using Boilerplate.Application.Services.SignalR;
 using Boilerplate.Infra.Data.Context.Seeding;
 using Boilerplate.Infra.IoC;
@@ -76,6 +77,7 @@ using (var scope = app.Services.CreateScope())
     await roleSeeder.SeedAsync();
 }
 
+app.UseMiddleware<ImpersonationTokenMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseCors("AllowLocalFrontend");

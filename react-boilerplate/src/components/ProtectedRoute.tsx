@@ -49,7 +49,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Redirect to tenant selection if user needs to select a tenant (but not if already there)
-  if (requireAuth && needsTenantSelection(user) && location.pathname !== ROUTES.TENANT_SELECTION) {
+  // Mas permite acesso se estiver impersonando (tem token de impersonação)
+  const hasImpersonationToken = localStorage.getItem('Boilerplate_impersonated_token');
+  if (requireAuth && needsTenantSelection(user) && !hasImpersonationToken && location.pathname !== ROUTES.TENANT_SELECTION) {
     return <Navigate to={ROUTES.TENANT_SELECTION} replace />;
   }
 

@@ -1,26 +1,29 @@
-import { ThemeProvider } from '@mui/material/styles';
-import { CssBaseline } from '@mui/material';
-import { SnackbarProvider } from 'notistack';
-import { AuthProvider } from './contexts/Auth';
-import { AppRouter } from './components/AppRouter';
-import { theme } from './theme';
+import { ThemeProvider } from "@mui/material/styles";
+import { CssBaseline } from "@mui/material";
+import { SnackbarProvider } from "notistack";
+import { AuthProvider } from "./contexts/Auth";
+import { AppRouter } from "./components/AppRouter";
+import { theme } from "./theme";
+import { ConfirmationProvider } from "./contexts/confirmationContext/ConfirmationProvider";
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <SnackbarProvider 
-        maxSnack={3}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        autoHideDuration={5000}
-      >
-        <AuthProvider>
-          <AppRouter />
-        </AuthProvider>
-      </SnackbarProvider>
+      <ConfirmationProvider>
+        <SnackbarProvider
+          maxSnack={3}
+          anchorOrigin={{
+            vertical: "bottom",
+            horizontal: "right",
+          }}
+          autoHideDuration={5000}
+        >
+          <AuthProvider>
+            <AppRouter />
+          </AuthProvider>
+        </SnackbarProvider>
+      </ConfirmationProvider>
     </ThemeProvider>
   );
 }

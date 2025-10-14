@@ -40,7 +40,11 @@ class ApiClient {
     this.axiosInstance.interceptors.request.use(
       (config) => {
         const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-        if (token) {
+        const impersonatedToken = localStorage.getItem(STORAGE_KEYS.IMPERSONATED_TOKEN);
+        if (impersonatedToken) {
+          config.headers.Authorization = `Bearer ${impersonatedToken}`;
+        }
+        else if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -98,6 +102,20 @@ class ApiClient {
       });
     }
 
+    // Verifica se existe token de impersonação para decidir o redirecionamento
+      const impersonatedToken = localStorage.getItem(STORAGE_KEYS.IMPERSONATED_TOKEN);
+  
+      if (impersonatedToken) {
+        // Se tem token de impersonação, remove ele e redireciona para seleção de tenant
+        localStorage.removeItem(STORAGE_KEYS.IMPERSONATED_TOKEN);
+        enqueueSnackbar('Sessão de impersonação expirada. Retornando à seleção de tenant.', { variant: 'warning' });
+        
+        setTimeout(() => {    
+            window.location.href = '/tenant-selection';
+        }, 2000);
+        return Promise.reject(new Error('Impersonation session expired'));
+      }
+
     originalRequest._retry = true;
     this.isRefreshing = true;
 
@@ -133,14 +151,6 @@ class ApiClient {
         reject(refreshError);
       });
       this.pendingRequests = [];
-
-      enqueueSnackbar('Sessão expirada. Faça login novamente.', { variant: 'warning' });
-      
-      setTimeout(() => {
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
-        }
-      }, 2000);
 
       return Promise.reject(refreshError);
     } finally {

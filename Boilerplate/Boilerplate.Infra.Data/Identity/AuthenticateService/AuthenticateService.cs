@@ -1,4 +1,6 @@
-﻿using Boilerplate.Domain.Entities;
+﻿using Boilerplate.Domain.Constants;
+using Boilerplate.Domain.Entities;
+using Boilerplate.Domain.Enums;
 using Boilerplate.Domain.Interfaces.Authenticate;
 using Boilerplate.Infra.Data.Context;
 using Microsoft.AspNetCore.Identity;
@@ -36,14 +38,14 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
                 return false;
 
             var passwordValid = await _userManager.CheckPasswordAsync(user, password);
-            
+
             return passwordValid;
         }
 
         public async Task<(int, string)> Register(string email, string password, string name, int tenantId, string token)
         {
-            var invite = await _context.TenantInvitations.FirstOrDefaultAsync(x => x.Email == email);
-            if (invite == null || invite.TenantId != tenantId || invite.Token != token)
+            var invite = await _context.TenantInvitations.FirstOrDefaultAsync(x => x.Token == token);
+            if (invite == null || invite.TenantId != tenantId)
                 return (0, string.Empty);
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -53,7 +55,7 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
                 {
                     Email = email,
                     Name = name,
-                    TenantId = tenantId
+                    TenantId = invite.TenantId
                 };
 
                 _context.Users.Add(user);
@@ -64,7 +66,7 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
                     UserName = email,
                     Email = email,
                     DomainUserId = user.Id,
-                    TenantId = tenantId
+                    TenantId = invite.TenantId
                 };
 
                 var result = await _userManager.CreateAsync(applicationUser, password);
@@ -128,7 +130,7 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
                 new Claim(ClaimTypes.Email, email),
                 new Claim(ClaimTypes.Name, domainUser.Name),
                 new Claim(ClaimTypes.NameIdentifier, domainUser.Id.ToString()),
-                new Claim("userId", domainUser.Id.ToString()), 
+                new Claim("userId", domainUser.Id.ToString()),
                 new Claim("tenantId", domainUser.TenantId.ToString()),
             };
 
@@ -142,7 +144,7 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = subject,
-                Expires = DateTime.UtcNow.AddMinutes(15), // 15 minutes
+                Expires = DateTime.UtcNow.AddHours(3),
                 Issuer = _configuration["JWT:Issuer"],
                 Audience = _configuration["JWT:Audience"],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -221,8 +223,67 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
         {
             var token = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == refreshToken);
             if (token == null) return false;
-            
+
             return token.ExpiryDate < DateTime.Now;
+        }
+
+        public ClaimsPrincipal GetClaimsByToken(string impersonatedToken)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(impersonatedToken);
+            var identity = new ClaimsIdentity(jwt.Claims);
+            return new ClaimsPrincipal(identity);
+        }
+
+        public async Task<string> GenerateJwtImpersonatorToken(User adminUser, User targetUser)
+        {
+            if (adminUser == null) throw new ArgumentNullException(nameof(adminUser));
+            if (targetUser == null) throw new ArgumentNullException(nameof(targetUser));
+            var targetApplicationUSer = await _userManager.FindByEmailAsync(targetUser.Email);
+            if (targetApplicationUSer == null) throw new ArgumentException(nameof(targetUser));
+            IList<string> roles = await _userManager.GetRolesAsync(targetApplicationUSer);
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, targetUser.Name),
+                new Claim(ClaimTypes.NameIdentifier, targetUser.Id.ToString()),
+                new Claim("userId", targetUser.Id.ToString()),
+                new Claim("tenantId", targetUser.TenantId?.ToString() ?? string.Empty),
+                new Claim("tenantName", targetUser.Tenant!.Name),
+                new Claim(ClaimTypes.Email, targetUser.Email ?? string.Empty),
+                new Claim("impersonatedBy", adminUser.Id.ToString())
+            };
+
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JWT:SecretKey"] ?? "your-secret-key-here"));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["JWT:Issuer"],
+                audience: _configuration["JWT:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(15),
+                signingCredentials: creds
+            );
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public async Task<bool> ValidateInviteToken(string email, string token)
+        {
+            var invite = await _context.TenantInvitations.FirstOrDefaultAsync(x => x.Token == token);
+            if (invite == null)
+                return false;
+
+            if (invite.ExpiresAt < DateTime.Now)
+                return false;
+
+            if (invite.Status == EInviteStatus.Expired || invite.Status == EInviteStatus.Cancelled)
+                return false;
+
+            return true;
         }
     }
 }

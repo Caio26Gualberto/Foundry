@@ -1,0 +1,359 @@
+import React, { useState, useEffect } from "react";
+import { 
+  Box, 
+  Typography, 
+  Container, 
+  Tabs, 
+  Tab, 
+  Paper,
+  Button,
+  Chip,
+  Card,
+  CardContent
+} from "@mui/material";
+import { 
+  Settings, 
+  People, 
+  PersonAdd,
+  CheckCircle,
+  Cancel,
+  Schedule
+} from "@mui/icons-material";
+import { useSnackbar } from "notistack";
+import type { GridColDef, GridRowId } from "@mui/x-data-grid";
+import { useAuth } from "../contexts/Auth";
+import BoilerplateDataGrid from "../components/common/BoilerplateDataGrid";
+import InviteUserModal from "../components/users/InviteUserModal/InviteUserModal";
+import { useConfirmation } from "../contexts/confirmationContext/ConfirmationProvider";
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`tenant-tabpanel-${index}`}
+      aria-labelledby={`tenant-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
+interface InviteData {
+  id: string;
+  email: string;
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+  sentAt: string;
+  expiresAt: string;
+  acceptedAt?: string;
+}
+
+export const TenantSettings: React.FC = () => {
+  const { user } = useAuth();
+  const { enqueueSnackbar } = useSnackbar();
+  const confirm = useConfirmation();
+  const [tabValue, setTabValue] = useState(0);
+  const [invites, setInvites] = useState<InviteData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (tabValue === 1) {
+      fetchInvites();
+    }
+  }, [tabValue]);
+
+  const fetchInvites = async () => {
+    try {
+      setLoading(true);
+      // TODO: Implementar chamada real da API
+      // const invitesData = await apiClient.get<InviteData[]>("/tenant/invites");
+      const invitesData: InviteData[] = [
+        {
+          id: "1",
+          email: "john.doe@example.com",
+          status: "pending",
+          sentAt: "2023-01-01T00:00:00Z",
+          expiresAt: "2023-01-31T23:59:59Z",
+        },
+        {
+          id: "2",
+          email: "jane.smith@example.com",
+          status: "accepted",
+          sentAt: "2023-01-02T00:00:00Z",
+          expiresAt: "2023-01-31T23:59:59Z",
+          acceptedAt: "2023-01-02T12:34:56Z",
+        },
+      ]
+      setInvites(invitesData);
+      setError("");
+    } catch (err) {
+      console.error("Error fetching invites:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar convites";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  const handleInviteUser = () => {
+    setInviteModalOpen(true);
+  };
+
+  const handleInviteSuccess = () => {
+    fetchInvites();
+    setInviteModalOpen(false);
+  };
+
+  const handleCancelInvite = async (_id: GridRowId) => {
+    const result = await confirm({
+      title: "Cancelar Convite",
+      message: "Tem certeza que deseja cancelar este convite?",
+    });
+    if (!result) return;
+    // TODO: Implementar chamada real da API
+    try {
+      // await apiClient.delete(`/tenant/invites/${id}`);
+      fetchInvites();
+      enqueueSnackbar("Convite cancelado com sucesso", {
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Error canceling invite:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Erro ao cancelar convite";
+      enqueueSnackbar(errorMessage, { variant: "error" });
+    }
+  };
+
+  // const handleResendInvite = async (id: GridRowId) => {
+  //   try {
+  //     await apiClient.post(`/tenant/invites/${id}/resend`);
+  //     fetchInvites();
+  //     enqueueSnackbar("Convite reenviado com sucesso", {
+  //       variant: "success",
+  //     });
+  //   } catch (error) {
+  //     console.error("Error resending invite:", error);
+  //     enqueueSnackbar("Erro ao reenviar convite", { variant: "error" });
+  //   }
+  // };
+
+  const getStatusChip = (status: string) => {
+    const statusConfig = {
+      pending: { label: "Pendente", color: "warning" as const, icon: <Schedule /> },
+      accepted: { label: "Aceito", color: "success" as const, icon: <CheckCircle /> },
+      expired: { label: "Expirado", color: "error" as const, icon: <Cancel /> },
+      cancelled: { label: "Cancelado", color: "default" as const, icon: <Cancel /> },
+    };
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    
+    return (
+      <Chip 
+        label={config.label} 
+        color={config.color} 
+        size="small" 
+        icon={config.icon}
+      />
+    );
+  };
+
+  const inviteColumns: GridColDef[] = [
+    {
+      field: "email",
+      headerName: "Email",
+      flex: 1,
+      minWidth: 250,
+    },
+    {
+      field: "status",
+      headerName: "Status",
+      width: 130,
+      renderCell: (params) => getStatusChip(params.value),
+    },
+    {
+      field: "sentAt",
+      headerName: "Enviado em",
+      width: 150,
+      valueFormatter: (value: any) => {
+        return new Date(value).toLocaleDateString('pt-BR');
+      },
+    },
+    {
+      field: "expiresAt",
+      headerName: "Expira em",
+      width: 150,
+      valueFormatter: (value: any) => {
+        return new Date(value).toLocaleDateString('pt-BR');
+      },
+    },
+  ];
+
+  const inviteRows = invites.map((invite) => ({
+    id: invite.id,
+    email: invite.email,
+    status: invite.status,
+    sentAt: invite.sentAt,
+    expiresAt: invite.expiresAt,
+  }));
+
+  const getInviteStats = () => {
+    const stats = {
+      total: invites.length,
+      pending: invites.filter(i => i.status === 'pending').length,
+      accepted: invites.filter(i => i.status === 'accepted').length,
+      expired: invites.filter(i => i.status === 'expired').length,
+    };
+    return stats;
+  };
+
+  const stats = getInviteStats();
+
+  return (
+    <Container maxWidth="lg">
+      <Box sx={{ py: 4 }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Configurações do Tenant
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Gerencie as configurações e membros do seu tenant.
+          </Typography>
+          {user?.tenantName && (
+            <Box sx={{ mt: 2 }}>
+              <Chip 
+                label={`Tenant: ${user.tenantName}`} 
+                color="primary" 
+                size="small" 
+                icon={<Settings />}
+              />
+            </Box>
+          )}
+        </Box>
+
+        <Paper sx={{ width: '100%', p: 1 }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs value={tabValue} onChange={handleTabChange}>
+              <Tab 
+                label="Configurações Gerais" 
+                icon={<Settings />} 
+                iconPosition="start"
+              />
+              <Tab 
+                label="Gerenciar Membros" 
+                icon={<People />} 
+                iconPosition="start"
+              />
+            </Tabs>
+          </Box>
+
+          <TabPanel value={tabValue} index={0}>
+            <Typography variant="h6" gutterBottom>
+              Configurações Gerais
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Funcionalidades de configuração geral em desenvolvimento.
+            </Typography>
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={1}>
+            <Box sx={{ mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6">
+                  Histórico de Convites
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<PersonAdd />}
+                  onClick={handleInviteUser}
+                >
+                  Convidar Usuário
+                </Button>
+              </Box>
+
+              {/* Estatísticas dos convites */}
+              <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+                <Card sx={{ flex: '1 1 200px', minWidth: 200 }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography variant="h4" color="primary">
+                      {stats.total}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total de Convites
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Card sx={{ flex: '1 1 200px', minWidth: 200 }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography variant="h4" color="warning.main">
+                      {stats.pending}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Pendentes
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Card sx={{ flex: '1 1 200px', minWidth: 200 }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography variant="h4" color="success.main">
+                      {stats.accepted}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Aceitos
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Card sx={{ flex: '1 1 200px', minWidth: 200 }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography variant="h4" color="error.main">
+                      {stats.expired}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Expirados
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Box>
+
+              <BoilerplateDataGrid
+                title="Convites Enviados"
+                rows={inviteRows}
+                columns={inviteColumns}
+                loading={loading}
+                error={error}
+                onDelete={handleCancelInvite}
+                height={400}
+                pageSize={10}
+                elevation={0}
+              />
+            </Box>
+          </TabPanel>
+        </Paper>
+
+        <InviteUserModal
+          open={inviteModalOpen}
+          onClose={() => setInviteModalOpen(false)}
+          onSuccess={handleInviteSuccess}
+        />
+      </Box>
+    </Container>
+  );
+};
+
+export default TenantSettings;

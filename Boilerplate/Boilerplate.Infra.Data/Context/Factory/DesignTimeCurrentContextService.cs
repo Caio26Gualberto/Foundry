@@ -8,6 +8,11 @@ namespace Boilerplate.Infra.Data.Context.Factory
         public int? TenantId => null;
         public bool IsAuthenticated => false;
         public string Email => string.Empty;
+
+        public bool IsImpersonating => false;
+
+        public int? ImpersonatedBy => null;
+
         int ICurrentUserContext.UserId => 0;
     }
 }

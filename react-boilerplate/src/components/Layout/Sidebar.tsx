@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Drawer,
@@ -12,6 +12,7 @@ import {
   Avatar,
   Chip,
   IconButton,
+  Collapse,
 } from '@mui/material';
 import {
   Home,
@@ -21,11 +22,18 @@ import {
   Business,
   Analytics,
   Security,
-  ChevronLeft,
+  ChevronRight,
   AccountCircle,
+  ExpandLess,
+  ExpandMore,
+  PersonAdd,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/Auth';
 import { canAccessTenantSelection } from '../../utils/authHelpers';
+import { useNavigate } from 'react-router-dom';
+import InviteUserModal from '../users/InviteUserModal/InviteUserModal';
+import { ROUTES } from '../../utils/constants';
+import type { User } from '../../types';
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -36,12 +44,46 @@ interface SidebarProps {
   collapsedWidth: number;
 }
 
-const menuItems = [
+interface MenuItem {
+  text: string;
+  icon: React.ReactNode;
+  path?: string;
+  subItems?: MenuItem[];
+  action?: () => void;
+}
+
+const getMenuItems = (user: User, handleInviteUser: () => void): MenuItem[] => [
   { text: 'Início', icon: <Home />, path: '/dashboard' },
   { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard/analytics' },
-  { text: 'Usuários', icon: <People />, path: '/dashboard/users' },
+  { 
+    text: 'Usuários', 
+    icon: <People />, 
+    path: '/dashboard/users',
+    subItems: [
+      { 
+        text: 'Convidar Usuário', 
+        icon: <PersonAdd />, 
+        action: handleInviteUser 
+      },
+      {
+        text: 'Usuários',
+        icon: <People />,
+        path: '/dashboard/users'
+      }
+    ]
+  },
   { text: 'Relatórios', icon: <Analytics />, path: '/dashboard/reports' },
   { text: 'Segurança', icon: <Security />, path: '/dashboard/security' },
+  ...((user?.tenantId || localStorage.getItem('Boilerplate_impersonated_token')) ? [{ 
+    text: 'Configurações do Tenant', 
+    icon: <Settings />, 
+    path: ROUTES.TENANT_SETTINGS 
+  }] : []),
+  ...(canAccessTenantSelection(user) ? [{ 
+    text: 'Gerenciar Tenants', 
+    icon: <Business />, 
+    path: ROUTES.TENANT_SELECTION 
+  }] : []),
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -53,16 +95,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
   collapsedWidth 
 }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [openSubmenus, setOpenSubmenus] = useState<{ [key: string]: boolean }>({});
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   const handleNavigation = (path: string) => {
-    // TODO: Implement navigation logic
-    console.log('Navigate to:', path);
+    console.log('Navigating to:', path);
+    navigate(path);
   };
 
-  const handleTenantConfig = () => {
-    // TODO: Implement tenant configuration
-    console.log('Open tenant configuration');
+  const handleInviteUser = () => {
+    setInviteModalOpen(true);
   };
+
+  const handleInviteSuccess = () => {
+    setInviteModalOpen(false);
+  };
+
+  const toggleSubmenu = (itemText: string) => {
+    setOpenSubmenus(prev => ({
+      ...prev,
+      [itemText]: !prev[itemText]
+    }));
+  };
+
+  const menuItems = getMenuItems(user!, handleInviteUser);
 
   const getDrawerContent = (isCollapsed = false) => (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -77,7 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={isCollapsed ? onDesktopToggle : onMobileClose} 
           sx={{ display: { sm: isCollapsed ? 'block' : 'none' } }}
         >
-          <ChevronLeft />
+          <ChevronRight />
         </IconButton>
       </Box>
 
@@ -117,7 +174,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {user?.tenantId && (
             <Box sx={{ mt: 1 }}>
               <Typography variant="caption" color="text.secondary">
-                Tenant: {user.tenantId}
+                Tenant: {user.tenantName}
               </Typography>
             </Box>
           )}
@@ -149,31 +206,85 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <Box sx={{ flex: 1, overflow: 'auto' }}>
         <List>
           {menuItems.map((item) => (
-            <ListItem key={item.text} disablePadding>
-              <ListItemButton
-                onClick={() => handleNavigation(item.path)}
-                sx={{
-                  minHeight: 48,
-                  px: 2.5,
-                  '&:hover': {
-                    backgroundColor: 'action.hover',
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: isCollapsed ? 'auto' : 40, justifyContent: 'center' }}>
-                  {item.icon}
-                </ListItemIcon>
-                {!isCollapsed && (
-                  <ListItemText 
-                    primary={item.text}
-                    primaryTypographyProps={{
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                    }}
-                  />
-                )}
-              </ListItemButton>
-            </ListItem>
+            <React.Fragment key={item.text}>
+              <ListItem disablePadding>
+                <ListItemButton
+                  onClick={() => {
+                    if (item.subItems && !isCollapsed) {
+                      toggleSubmenu(item.text);
+                    } else if (item.path) {
+                      handleNavigation(item.path);
+                    } else if (item.action) {
+                      item.action();
+                    }
+                  }}
+                  sx={{
+                    minHeight: 48,
+                    px: 2.5,
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: isCollapsed ? 'auto' : 40, justifyContent: 'center' }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  {!isCollapsed && (
+                    <>
+                      <ListItemText 
+                        primary={item.text}
+                        primaryTypographyProps={{
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                        }}
+                      />
+                      {item.subItems && (
+                        openSubmenus[item.text] ? <ExpandLess /> : <ExpandMore />
+                      )}
+                    </>
+                  )}
+                </ListItemButton>
+              </ListItem>
+              
+              {/* Submenu */}
+              {item.subItems && !isCollapsed && (
+                <Collapse in={openSubmenus[item.text]} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding>
+                    {item.subItems.map((subItem) => (
+                      <ListItem key={subItem.text} disablePadding>
+                        <ListItemButton
+                          onClick={() => {
+                            if (subItem.path) {
+                              handleNavigation(subItem.path);
+                            } else if (subItem.action) {
+                              subItem.action();
+                            }
+                          }}
+                          sx={{
+                            pl: 4,
+                            minHeight: 40,
+                            '&:hover': {
+                              backgroundColor: 'action.hover',
+                            },
+                          }}
+                        >
+                          <ListItemIcon sx={{ minWidth: 32, justifyContent: 'center' }}>
+                            {subItem.icon}
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={subItem.text}
+                            primaryTypographyProps={{
+                              fontSize: '0.8rem',
+                              fontWeight: 400,
+                            }}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    ))}
+                  </List>
+                </Collapse>
+              )}
+            </React.Fragment>
           ))}
         </List>
       </Box>
@@ -182,42 +293,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Bottom Actions */}
       <Box sx={{ p: 1 }}>
-        {user?.tenantId && (
-          <ListItemButton
-            onClick={handleTenantConfig}
-            sx={{ borderRadius: 1, mb: 1 }}
-          >
-            <ListItemIcon sx={{ minWidth: isCollapsed ? 'auto' : 40, justifyContent: 'center' }}>
-              <Business />
-            </ListItemIcon>
-            {!isCollapsed && (
-              <ListItemText 
-                primary="Configurações do Tenant"
-                primaryTypographyProps={{
-                  fontSize: '0.875rem',
-                }}
-              />
-            )}
-          </ListItemButton>
-        )}
-
-        <ListItemButton
-          onClick={() => handleNavigation('/dashboard/settings')}
-          sx={{ borderRadius: 1, mb: 1 }}
-        >
-          <ListItemIcon sx={{ minWidth: isCollapsed ? 'auto' : 40, justifyContent: 'center' }}>
-            <Settings />
-          </ListItemIcon>
-          {!isCollapsed && (
-            <ListItemText 
-              primary="Configurações"
-              primaryTypographyProps={{
-                fontSize: '0.875rem',
-              }}
-            />
-          )}
-        </ListItemButton>
-
         <ListItemButton
           onClick={logout}
           sx={{ 
@@ -287,6 +362,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         {getDrawerContent(!desktopOpen)}
       </Drawer>
+
+      {/* Modal de Convite */}
+      <InviteUserModal
+        open={inviteModalOpen}
+        onClose={() => setInviteModalOpen(false)}
+        onSuccess={handleInviteSuccess}
+      />
     </Box>
   );
 };

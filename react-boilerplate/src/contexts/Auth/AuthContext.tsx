@@ -30,14 +30,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       );
 
       const payload = JSON.parse(jsonPayload);
+      console.log('JWT Payload:', payload);
       
-      return {
-        id: payload.sub || payload.userId || payload.id,
-        email: payload.email,
-        userName: payload.unique_name || payload.userName || payload.name,
+      const userData = {
+        id: payload.sub || payload.userId || payload.id || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'],
+        email: payload.email || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'],
+        userName: payload.unique_name || payload.userName || payload.name || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'],
         tenantId: payload.tenantId,
-        roles: Array.isArray(payload.role) ? payload.role : [payload.role].filter(Boolean),
+        tenantName: payload.tenantName,
+        roles: Array.isArray(payload.role) ? payload.role : payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ? [payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']] : [payload.role].filter(Boolean),
+        impersonatedBy: payload.impersonatedBy,
       };
+      
+      console.log('Decoded user data:', userData);
+      return userData;
     } catch (error) {
       console.error('Error decoding JWT:', error);
       return null;
@@ -58,6 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setRefreshToken(null);
       localStorage.removeItem(STORAGE_KEYS.TOKEN);
       localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.IMPERSONATED_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.USER);
       // Remove permissão temporária de acesso ao dashboard
       sessionStorage.removeItem('allowDashboardAccess');
@@ -103,26 +110,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
+      // Prioriza o token de impersonação se existir
+      const impersonatedToken = localStorage.getItem(STORAGE_KEYS.IMPERSONATED_TOKEN);
       const storedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
       const storedRefreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
-      if (storedToken && storedRefreshToken) {
+      const activeToken = impersonatedToken || storedToken;
+
+      if (activeToken && storedRefreshToken) {
         try {
-          setToken(storedToken);
+          setToken(activeToken);
           setRefreshToken(storedRefreshToken);
           
-          const userData = await decodeJWT(storedToken);
+          const userData = await decodeJWT(activeToken);
           if (userData) {
             setUser(userData);
             localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
-          } else {
-            // Token is invalid, try to refresh
+          } else if (!impersonatedToken) {
+            // Token is invalid, try to refresh (only if not impersonated)
             await refreshTokens();
           }
         } catch (error) {
           console.error('Token validation failed:', error);
-          enqueueSnackbar('Erro ao validar token. Faça login novamente.', { variant: 'error' });
-          await logout();
+          if (impersonatedToken) {
+            // Se o token de impersonação falhou, remove e tenta com o token original
+            localStorage.removeItem(STORAGE_KEYS.IMPERSONATED_TOKEN);
+            if (storedToken) {
+              const userData = await decodeJWT(storedToken);
+              if (userData) {
+                setToken(storedToken);
+                setUser(userData);
+                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+              }
+            }
+          } else {
+            enqueueSnackbar('Erro ao validar token. Faça login novamente.', { variant: 'error' });
+            await logout();
+          }
         }
       }
       
@@ -196,6 +220,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const stopImpersonation = async (): Promise<void> => {
+    try {
+      setIsLoading(true);
+      // Remove o token de impersonação
+      localStorage.removeItem(STORAGE_KEYS.IMPERSONATED_TOKEN);
+      
+      // Volta para o token original
+      const originalToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
+      if (originalToken) {
+        setToken(originalToken);
+        const userData = await decodeJWT(originalToken);
+        if (userData) {
+          setUser(userData);
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+          enqueueSnackbar('Impersonação finalizada', { variant: 'info' });
+        }
+      }
+    } catch (error) {
+      console.error('Error stopping impersonation:', error);
+      enqueueSnackbar('Erro ao finalizar impersonação', { variant: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshUserFromToken = async (): Promise<void> => {
+    try {
+      setIsLoading(true);
+      // Prioriza o token de impersonação se existir
+      const impersonatedToken = localStorage.getItem(STORAGE_KEYS.IMPERSONATED_TOKEN);
+      const storedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
+      const activeToken = impersonatedToken || storedToken;
+
+      if (activeToken) {
+        setToken(activeToken);
+        const userData = await decodeJWT(activeToken);
+        if (userData) {
+          console.log('User data decoded from token:', userData);
+          setUser(userData);
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing user from token:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
@@ -205,6 +278,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     selectTenant,
     refreshTokens,
+    stopImpersonation,
+    refreshUserFromToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

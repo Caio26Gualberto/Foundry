@@ -1,4 +1,5 @@
-﻿using Boilerplate.Application.DTOs.Auth;
+﻿using Boilerplate.Application.Dtos.Auth;
+using Boilerplate.Application.DTOs.Auth;
 using Boilerplate.Application.Interfaces;
 using Boilerplate.Application.Services.SignalR;
 using Boilerplate.Domain.Entities;
@@ -170,6 +171,15 @@ namespace Boilerplate.Application.Services.Auth
                 Token = accessToken,
                 RefreshToken = newRefreshToken
             };
+        }
+
+        public async Task<bool> ValidateInviteToken(ValidateInvitationTokenInputDto input)
+            => await _authService.ValidateInviteToken(input.Email, input.Token);
+
+        public async Task<bool> AcceptTenantInvite(AcceptTenantInvitationInputDto input)
+        {
+            var result = await _authService.Register(input.Email, input.Password, input.Name, input.TenantId, input.Token);
+            return !string.IsNullOrEmpty(result.Item2);
         }
 
         private static TokensDto EmptyTokens() => new TokensDto

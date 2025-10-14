@@ -2,6 +2,7 @@
 using Boilerplate.Domain.Interfaces.Repositories;
 using Boilerplate.Infra.Data.Context;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Boilerplate.Infra.Data.Repositories
 {
@@ -35,9 +36,14 @@ namespace Boilerplate.Infra.Data.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public IQueryable<T> GetAll()
+        public IQueryable<T> GetAll(params Expression<Func<T, object>>[] includes)
         {
-            return _dbSet.AsQueryable();
+            IQueryable<T> query = _dbSet;
+            if (includes != null)
+                foreach (var include in includes)
+                    query = query.Include(include);
+
+            return query.Where(x => !x.IsDeleted).AsQueryable();
         }
 
         public async Task<T?> GetByIdAsync(int id)

@@ -4,6 +4,8 @@ export const ROUTES = {
   LOGIN: '/login',
   TENANT_SELECTION: '/tenant-selection',
   DASHBOARD: '/dashboard',
+  USERS: '/dashboard/users',
+  TENANT_SETTINGS: '/dashboard/tenant-settings',
   HOME: '/',
 } as const;
 
@@ -17,5 +19,6 @@ export const USER_ROLES = {
 export const STORAGE_KEYS = {
   TOKEN: 'Boilerplate_token',
   REFRESH_TOKEN: 'Boilerplate_refresh_token',
+  IMPERSONATED_TOKEN: 'Boilerplate_impersonated_token',
   USER: 'user_data',
 } as const;

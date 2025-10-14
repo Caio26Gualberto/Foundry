@@ -16,6 +16,7 @@ namespace Boilerplate.Infra.Data.Context
         public BoilerplateDbContext(DbContextOptions<BoilerplateDbContext> options, ICurrentUserContext currentUserContext) : base(options) 
         { 
             _currentUserContext = currentUserContext;
+            CurrentTenantId = _currentUserContext.TenantId;
         }
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<TenantInvitation> TenantInvitations => Set<TenantInvitation>();
@@ -74,6 +75,12 @@ namespace Boilerplate.Infra.Data.Context
                             .WithOne(u => u.Tenant)
                             .HasForeignKey(u => u.TenantId)
                             .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Entity1>()
+                .HasOne(e => e.Tenant)
+                .WithOne()
+                .HasForeignKey<Entity1>(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<User>(b =>
             {

@@ -6,5 +6,7 @@
         int? TenantId { get; }
         bool IsAuthenticated { get; }
         string Email { get; }
+        bool IsImpersonating { get; }
+        int? ImpersonatedBy { get; }
     }
 }

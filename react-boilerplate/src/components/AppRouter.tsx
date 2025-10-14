@@ -8,6 +8,9 @@ import { Login } from "../pages/Login";
 import { TenantSelection } from "../pages/TenantSelection";
 import { Dashboard } from "../pages/Dashboard";
 import { ROUTES } from "../utils/constants";
+import TenantSettings from "../pages/TenantSettings";
+import Users from "../pages/Users";
+import AcceptInvitation from "../pages/AcceptInvitation";
 
 export const AppRouter: React.FC = () => {
   const { user, token, isLoading } = useAuth();
@@ -46,6 +49,12 @@ export const AppRouter: React.FC = () => {
             }
           />
 
+          {/* Accept Invitation Route */}
+          <Route
+            path="/security/acceptInvitation"
+            element={<AcceptInvitation />}
+          />
+
           {/* Tenant Selection Route */}
           <Route
             path={ROUTES.TENANT_SELECTION}
@@ -64,8 +73,9 @@ export const AppRouter: React.FC = () => {
                 <DashboardLayout>
                   <Routes>
                     <Route index element={<Dashboard />} />
+                    <Route path="tenant-settings" element={<TenantSettings />} />
                     <Route path="analytics" element={<Dashboard />} />
-                    <Route path="users" element={<Dashboard />} />
+                    <Route path="users" element={<Users />} />
                     <Route path="reports" element={<Dashboard />} />
                     <Route path="security" element={<Dashboard />} />
                     <Route path="settings" element={<Dashboard />} />

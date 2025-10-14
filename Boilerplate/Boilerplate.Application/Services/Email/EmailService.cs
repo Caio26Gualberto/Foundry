@@ -1,5 +1,6 @@
 using Boilerplate.Application.DTOs.Email;
 using Boilerplate.Application.Interfaces;
+using Boilerplate.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using System.Net;
 using System.Net.Mail;
@@ -15,17 +16,18 @@ namespace Boilerplate.Application.Services.Email
             _configuration = configuration;
         }
 
-        public async Task<bool> SendTenantInvitationEmailAsync(string email, string tenantName, string invitationToken)
+        public async Task<bool> SendTenantInvitationEmailAsync(string email, Tenant tenant, string invitationToken)
         {
             using var client = CreateSmtpClient();
-            var frontendUrl = _configuration["Frontend:Url"] ?? "http://localhost:3000";
+            var frontendUrl = _configuration["Frontend:Url"] ?? "http://localhost:5173";
 
-            var invitationLink = $"{frontendUrl}/security/acceptInvitation?token={Uri.EscapeDataString(invitationToken)}&email={Uri.EscapeDataString(email)}";
+            var invitationLink = $"{frontendUrl}/security/acceptInvitation?token={Uri.EscapeDataString(invitationToken)}" +
+                $"&email={Uri.EscapeDataString(email)}&tenant={tenant.Name}&tenantId={tenant.Id}";
 
             var emailBody = BuildEmailTemplate(
-                title: $"Você foi convidado para o tenant {tenantName}",
+                title: $"Você foi convidado para o tenant {tenant.Name}",
                 messageBody: $@"Olá,<br/><br/>
-                    Você recebeu um convite para se juntar ao tenant <strong>{tenantName}</strong> na plataforma Boilerplate.<br/>
+                    Você recebeu um convite para se juntar ao tenant <strong>{tenant.Name}</strong> na plataforma Boilerplate.<br/>
                     Clique no botão abaixo para aceitar o convite e criar sua conta:",
                 ctaText: "Aceitar Convite",
                 ctaLink: invitationLink

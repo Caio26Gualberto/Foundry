@@ -1,4 +1,5 @@
 ﻿using Boilerplate.Api.ApiResponse;
+using Boilerplate.Application.Dtos.Auth;
 using Boilerplate.Application.DTOs.Auth;
 using Boilerplate.Application.Services.Auth;
 using Microsoft.AspNetCore.Authorization;
@@ -131,6 +132,28 @@ namespace Boilerplate.Api.Controllers
             {
                 IsSuccess = result,
                 Message = result ? "Email confirmado com sucesso." : "Falha ao confirmar o email.",
+            });
+        }
+
+        [HttpPost("validate-invitation-token")]
+        public async Task<ActionResult<BoilerplateResponse<bool>>> ValidateToken(ValidateInvitationTokenInputDto input)
+        {
+            var isValid = await _authAppService.ValidateInviteToken(input);
+            return Ok(new BoilerplateResponse<bool>
+            {
+                IsSuccess = isValid,
+                Data = isValid,
+            });
+        }
+
+        [HttpPost("acceptTenantInvite")]
+        public async Task<ActionResult<BoilerplateResponse<bool>>> AcceptInvite(AcceptTenantInvitationInputDto input)
+        {
+            var isAccepted = await _authAppService.AcceptTenantInvite(input);
+            return Ok(new BoilerplateResponse<bool>
+            {
+                IsSuccess = isAccepted,
+                Data = isAccepted
             });
         }
     }
