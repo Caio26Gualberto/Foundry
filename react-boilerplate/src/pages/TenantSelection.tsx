@@ -90,13 +90,13 @@ export const TenantSelection: React.FC = () => {
     }
   };
 
-  const handleDeleteTenant = async (id: GridRowId) => {
+  const handleDeleteTenant = async () => {
     const result = await confirm({
       title: "Excluir Tenant",
       message: "Tem certeza que deseja excluir este tenant?",
     });
     if (!result) return;
-    await apiClient.delete(`/tenant/${id}`);
+    await apiClient.delete(`/tenant`);
     fetchTenants();
     enqueueSnackbar("Tenant excluído com sucesso", {
       variant: "success",

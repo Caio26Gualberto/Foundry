@@ -29,10 +29,10 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
-        [HttpPut("{tenantId}")]
-        public async Task<ActionResult<BoilerplateResponse<bool>>> UpdateTenant(int tenantId, [FromBody]TenantCreateOrUpdateDto input)
+        [HttpPut]
+        public async Task<ActionResult<BoilerplateResponse<bool>>> UpdateTenant(TenantCreateOrUpdateDto input)
         {
-            await _tenantService.Update(tenantId, input.Name, input.Address);
+            await _tenantService.Update(input.Name, input.Address);
             return NoContent();
         }
 
@@ -43,10 +43,10 @@ namespace Boilerplate.Api.Controllers
             return Created();
         }
 
-        [HttpDelete("{tenantId}")]
-        public async Task<ActionResult<BoilerplateResponse<bool>>> DeleteTenant(int tenantId)
+        [HttpDelete]
+        public async Task<ActionResult<BoilerplateResponse<bool>>> DeleteTenant()
         {
-            await _tenantService.Delete(tenantId);
+            await _tenantService.Delete();
             return NoContent();
         }
 

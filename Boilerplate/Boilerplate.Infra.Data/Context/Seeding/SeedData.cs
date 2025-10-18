@@ -67,7 +67,7 @@ namespace Boilerplate.Infra.Data.Context.Seeding
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-                _context.Users.Add(domainUser);
+                _context.DomainUsers.Add(domainUser);
                 await _context.SaveChangesAsync();
 
                 var adminUser = new ApplicationUser
@@ -91,14 +91,15 @@ namespace Boilerplate.Infra.Data.Context.Seeding
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-                _context.Users.Add(tenantDomainUser);
+                _context.DomainUsers.Add(tenantDomainUser);
                 await _context.SaveChangesAsync();
 
                 var tenantAdminUser = new ApplicationUser
                 {
                     UserName= "TenantAdmin123",
                     Email= tenantAdminEmail,
-                    DomainUserId = tenantDomainUser.Id
+                    DomainUserId = tenantDomainUser.Id,
+                    TenantId = tenant.Id
                 };
                 await _userManager.CreateAsync(tenantAdminUser, "admin123");
                 await _userManager.AddToRoleAsync(tenantAdminUser, Roles.TenantAdmin);
@@ -114,14 +115,15 @@ namespace Boilerplate.Infra.Data.Context.Seeding
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-                _context.Users.Add(tenantUserDomain);
+                _context.DomainUsers.Add(tenantUserDomain);
                 await _context.SaveChangesAsync();
 
                 var tenantUser = new ApplicationUser
                 {
                     UserName = "TenantUser123",
                     Email = tenantUserEmail,
-                    DomainUserId = tenantUserDomain.Id
+                    DomainUserId = tenantUserDomain.Id,
+                    TenantId= tenant.Id
                 };
                 await _userManager.CreateAsync(tenantUser, "admin123");
                 await _userManager.AddToRoleAsync(tenantUser, Roles.User);

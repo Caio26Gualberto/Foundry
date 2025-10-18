@@ -158,7 +158,7 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
     try {
       let tenant: Tenant;
       if (editTenant) {
-        tenant = await apiClient.put<Tenant>(`/tenant/${editTenant.id}`, formData);
+        tenant = await apiClient.put<Tenant>(`/tenant`, formData);
         enqueueSnackbar('Tenant atualizado com sucesso!', { variant: 'success' });
       } else {
         tenant = await apiClient.post<Tenant>('/tenant', formData);

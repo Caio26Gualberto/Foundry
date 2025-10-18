@@ -46,9 +46,9 @@ namespace Boilerplate.Application.Services.Tenants
             return tenant.Id;
         }
 
-        public async Task<bool> Delete(int tenantId)
+        public async Task<bool> Delete()
         {
-            var tenant = await _repository.GetByIdAsync(tenantId);
+            var tenant = await _repository.GetByIdAsync((int)_currentUserContext.TenantId!);
             if (tenant == null)
                 throw new NullReferenceException("Tenant não encontrada para exclusão");
 
@@ -119,9 +119,9 @@ namespace Boilerplate.Application.Services.Tenants
             return true;
         }
 
-        public async Task<bool> Update(int tenantid, string name, Address address)
+        public async Task<bool> Update(string name, Address address)
         {
-            var tenant = await _repository.GetByIdAsync(tenantid);
+            var tenant = await _repository.GetByIdAsync((int)_currentUserContext.TenantId!);
             if (tenant == null)
                 throw new NullReferenceException("Tenant não encontrada para atualizar");
 

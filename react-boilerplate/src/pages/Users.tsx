@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Container, Chip } from "@mui/material";
+import { Box, Typography, Container, Chip, Stack } from "@mui/material";
 import { People } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import type { GridColDef, GridRowParams, GridRowId } from "@mui/x-data-grid";
@@ -8,6 +8,7 @@ import { useAuth } from "../contexts/Auth";
 import BoilerplateDataGrid from "../components/common/BoilerplateDataGrid";
 import InviteUserModal from "../components/users/InviteUserModal/InviteUserModal";
 import { useConfirmation } from "../contexts/confirmationContext/ConfirmationProvider";
+import apiClient from "../services/apiClient";
 
 export const Users: React.FC = () => {
   const { user } = useAuth();
@@ -25,23 +26,7 @@ export const Users: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // const usersData = await apiClient.get<UserDto[]>("/users");
-      const usersData = [
-        {
-          id: "1",
-          name: "John Doe",
-          email: "john.doe@example.com",
-          status: "active",
-          role: "User",
-        },
-        {
-          id: "2",
-          name: "Jane Smith",
-          email: "jane.smith@example.com",
-          status: "active",
-          role: "User",
-        },
-      ];
+      const usersData = await apiClient.get<UserDto[]>("/user");
       setUsers(usersData);
       setError("");
     } catch (err) {
@@ -79,7 +64,7 @@ export const Users: React.FC = () => {
     if (!result) return;
 
     try {
-      // await apiClient.delete(`/users/${id}`);
+      await apiClient.delete(`/user/${id}`);
       fetchUsers();
       enqueueSnackbar("Usuário excluído com sucesso", {
         variant: "success",
@@ -108,34 +93,34 @@ export const Users: React.FC = () => {
       flex: 1,
       minWidth: 250,
     },
-    {
-      field: "status",
-      headerName: "Status",
-      width: 120,
-      renderCell: (params) => {
-        const status = params.value || "active";
-        const color = status === "active" ? "success" : status === "pending" ? "warning" : "default";
-        const label = status === "active" ? "Ativo" : status === "pending" ? "Pendente" : "Inativo";
-        return <Chip label={label} color={color} size="small" />;
-      },
+{
+    field: "roles",
+    headerName: "Funções",
+    minWidth: 200,
+    flex: 1,
+    renderCell: (params) => {
+      const roles: string[] = params.value || [];
+
+      if (!roles.length) {
+        return <Chip label="User" size="small" variant="outlined" />;
+      }
+
+      return (
+        <Stack direction="row" spacing={0.5} mt={2} sx={{ flexWrap: "wrap" }}>
+          {roles.map((role) => (
+            <Chip key={role} label={role} size="small" variant="outlined" />
+          ))}
+        </Stack>
+      );
     },
-    {
-      field: "role",
-      headerName: "Função",
-      width: 150,
-      renderCell: (params) => {
-        const role = params.value || "User";
-        return <Chip label={role} variant="outlined" size="small" />;
-      },
-    },
+  },
   ];
 
   const rows = users.map((user) => ({
     id: user.id,
     name: user.name,
     email: user.email || "-",
-    status: "active", // TODO: Adicionar status real quando disponível
-    role: "User", // TODO: Adicionar role real quando disponível
+    roles: user.roles || [],
   }));
 
   return (

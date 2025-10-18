@@ -6,7 +6,9 @@ using Boilerplate.Application.Services;
 using Boilerplate.Application.Services.Auth;
 using Boilerplate.Application.Services.Email;
 using Boilerplate.Application.Services.Tenants;
+using Boilerplate.Application.Services.Users;
 using Boilerplate.Application.Utils.CurrentUserContext;
+using Boilerplate.Domain.Interfaces.ApplicationUserService;
 using Boilerplate.Domain.Interfaces.Authenticate;
 using Boilerplate.Domain.Interfaces.JobExecutors;
 using Boilerplate.Domain.Interfaces.Repositories;
@@ -15,6 +17,7 @@ using Boilerplate.Domain.Interfaces.TokenDecoder;
 using Boilerplate.Infra.Data.Context;
 using Boilerplate.Infra.Data.Context.Seeding;
 using Boilerplate.Infra.Data.Identity;
+using Boilerplate.Infra.Data.Identity.ApplicationUserService;
 using Boilerplate.Infra.Data.Identity.AuthenticateService;
 using Boilerplate.Infra.Data.Repositories;
 using Boilerplate.Infra.Data.Repositories.UnitOfWork;
@@ -95,6 +98,8 @@ namespace Boilerplate.Infra.IoC
             services.AddScoped<SeedData>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ITenantService, TenantService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IApplicationUserService, ApplicationUserService>();
             services.AddScoped<ICurrentUserContext, CurrentUserContext>();
             services.AddScoped<ITokenDecoder, TokenDecoder>();
 

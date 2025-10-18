@@ -58,7 +58,7 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
                     TenantId = invite.TenantId
                 };
 
-                _context.Users.Add(user);
+                _context.DomainUsers.Add(user);
                 await _context.SaveChangesAsync();
 
                 var applicationUser = new ApplicationUser
