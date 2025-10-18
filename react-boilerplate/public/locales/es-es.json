@@ -1,0 +1,56 @@
+{
+    "tenantSelection": {
+        "title": "Gestión de Tenants",
+        "description": "¡Hola, {{userName}}! Selecciona un tenant para personificar o gestiona los tenants existentes.",
+        "skipToDashboard": "Ir al Dashboard",
+        "skipToDashboardDescription": "Puedes seleccionar un tenant más tarde",
+        "tenantGrid": {
+            "title": "Tenants Disponibles",
+            "addButtonText": "Nuevo Tenant",
+            "alertDeleteTenant": "¿Estás seguro de que deseas eliminar este tenant?",
+            "alertDeleteTenantTitle": "Eliminar Tenant",
+            "columns": {
+                "name": "Nombre",
+                "addressCity": "Ciudad",
+                "addressState": "Estado",
+                "address": "Dirección Completa",
+                "status": "Estado"
+            }
+        },
+        "tenantModal": {
+            "createTenant": "Crear Nuevo Tenant",
+            "editTenant": "Editar Tenant",
+            "infoTenant": "Información del Tenant",
+            "nameTenant": "Nombre del Tenant",
+            "address": "Dirección",
+            "street": "Calle",
+            "number": "Número",
+            "complement": "Complemento",
+            "city": "Ciudad",
+            "state": "Estado",
+            "zipCode": "Código Postal",
+            "country": "País"
+        },
+        "usersGrid": {
+            "title": "Usuarios del Tenant: {{tenantName}}",
+            "selectUser": "Selecciona un usuario para personificar",
+            "columns": {
+                "name": "Nombre de Usuario",
+                "id": "ID"
+            }
+        }
+    },
+    "dataGrid": {
+        "paginationRowsPerPage": "Filas por página",
+        "of": "de",
+        "moreThan": "más de",
+        "around": "alrededor de"
+    },
+    "button": {
+        "cancel": "Cancelar",
+        "create": "Crear",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "save": "Guardar"
+    }
+}

@@ -15,6 +15,7 @@ import { Close as CloseIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import apiClient from '../../../services/apiClient';
 import type { Tenant } from '../../../types/tenants';
+import { translate } from '../../../i18n';
 
 interface TenantCreateDto {
   name: string;
@@ -204,7 +205,7 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
     >
       <DialogTitle sx={{ pb: 1 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">{editTenant ? 'Editar Tenant' : 'Criar Novo Tenant'}</Typography>
+          <Typography variant="h6">{editTenant ? translate("tenantSelection.tenantModal.editTenant") : translate("tenantSelection.tenantModal.createTenant")}</Typography>
           <IconButton onClick={handleClose} size="small">
             <CloseIcon />
           </IconButton>
@@ -215,12 +216,12 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
         <Stack spacing={3}>
           {/* Informações do Tenant */}
           <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
-            Informações do Tenant
+            {translate("tenantSelection.tenantModal.infoTenant")}
           </Typography>
           
           <TextField
             fullWidth
-            label="Nome do Tenant"
+            label={translate("tenantSelection.tenantModal.nameTenant")}
             value={formData.name}
             onChange={(e) => handleInputChange('name', e.target.value)}
             error={!!errors.name}
@@ -230,13 +231,13 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
 
           {/* Endereço */}
           <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
-            Endereço
+            {translate("tenantSelection.tenantModal.address")}
           </Typography>
 
           <Stack direction="row" spacing={2}>
             <TextField
               fullWidth
-              label="Rua"
+              label={translate("tenantSelection.tenantModal.street")}
               value={formData.address.street}
               onChange={(e) => handleInputChange('address.street', e.target.value)}
               error={!!errors['address.street']}
@@ -245,7 +246,7 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
               sx={{ flex: 2 }}
             />
             <TextField
-              label="Número"
+              label={translate("tenantSelection.tenantModal.number")}
               value={formData.address.number}
               onChange={(e) => handleInputChange('address.number', e.target.value)}
               error={!!errors['address.number']}
@@ -258,7 +259,7 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
           <Stack direction="row" spacing={2}>
             <TextField
               fullWidth
-              label="Cidade"
+              label={translate("tenantSelection.tenantModal.city")}
               value={formData.address.city}
               onChange={(e) => handleInputChange('address.city', e.target.value)}
               error={!!errors['address.city']}
@@ -266,7 +267,7 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
               required
             />
             <TextField
-              label="Estado"
+              label={translate("tenantSelection.tenantModal.state")}
               value={formData.address.state}
               onChange={(e) => handleInputChange('address.state', e.target.value)}
               error={!!errors['address.state']}
@@ -275,7 +276,7 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
               sx={{ minWidth: 120 }}
             />
             <TextField
-              label="CEP"
+              label={translate("tenantSelection.tenantModal.zipCode")}
               value={formData.address.zipCode}
               onChange={(e) => handleInputChange('address.zipCode', e.target.value)}
               error={!!errors['address.zipCode']}
@@ -287,7 +288,7 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
 
           <TextField
             fullWidth
-            label="País"
+            label={translate("tenantSelection.tenantModal.country")}
             value={formData.address.country}
             onChange={(e) => handleInputChange('address.country', e.target.value)}
             error={!!errors['address.country']}
@@ -299,14 +300,14 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
 
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={handleClose} disabled={loading}>
-          Cancelar
+          {translate("button.cancel")}
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
           disabled={loading}
         >
-          {loading ? (editTenant ? 'Salvando...' : 'Criando...') : (editTenant ? 'Salvar' : 'Criar Tenant')}
+          {loading ? (editTenant ? translate("button.save") : translate("button.create")) : (editTenant ? translate("button.save") : translate("button.create"))}
         </Button>
       </DialogActions>
     </Dialog>

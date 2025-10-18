@@ -1,0 +1,56 @@
+{
+    "tenantSelection": {
+        "title": "租户管理",
+        "description": "你好，{{userName}}！请选择一个租户进行模拟，或管理现有租户。",
+        "skipToDashboard": "进入仪表板",
+        "skipToDashboardDescription": "你可以稍后选择租户",
+        "tenantGrid": {
+            "title": "可用租户",
+            "addButtonText": "新建租户",
+            "alertDeleteTenant": "你确定要删除此租户吗？",
+            "alertDeleteTenantTitle": "删除租户",
+            "columns": {
+                "name": "名称",
+                "addressCity": "城市",
+                "addressState": "州/省",
+                "address": "完整地址",
+                "status": "状态"
+            }
+        },
+        "tenantModal": {
+            "createTenant": "创建新租户",
+            "editTenant": "编辑租户",
+            "infoTenant": "租户信息",
+            "nameTenant": "租户名称",
+            "address": "地址",
+            "street": "街道",
+            "number": "号码",
+            "complement": "补充信息",
+            "city": "城市",
+            "state": "州/省",
+            "zipCode": "邮编",
+            "country": "国家"
+        },
+        "usersGrid": {
+            "title": "租户用户: {{tenantName}}",
+            "selectUser": "请选择要模拟的用户",
+            "columns": {
+                "name": "用户名",
+                "id": "ID"
+            }
+        }
+    },
+    "dataGrid": {
+        "paginationRowsPerPage": "每页行数",
+        "of": "共",
+        "moreThan": "多于",
+        "around": "约"
+    },
+    "button": {
+        "cancel": "取消",
+        "create": "创建",
+        "edit": "编辑",
+        "delete": "删除",
+        "save": "保存"
+    }
+}

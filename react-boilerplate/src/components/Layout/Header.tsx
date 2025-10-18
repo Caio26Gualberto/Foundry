@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../contexts/Auth';
 import { canAccessTenantSelection } from '../../utils/authHelpers';
 import { NotificationCenter } from '../NotificationCenter';
+import LanguageSwitcher from '../common/LanguageSwitcher';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -86,6 +87,9 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onDesktopMenuClick,
 
           {/* Notifications */}
           <NotificationCenter />
+
+          {/* Language Switcher */}
+          <LanguageSwitcher />
 
           {/* User Avatar */}
           <IconButton color="inherit">

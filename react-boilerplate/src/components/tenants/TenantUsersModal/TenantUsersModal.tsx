@@ -23,6 +23,7 @@ import type { TokensDto } from "../../../types";
 import { ROUTES, STORAGE_KEYS } from "../../../utils/constants";
 import apiClient from "../../../services/apiClient";
 import BoilerplateDataGrid from "../../common/BoilerplateDataGrid";
+import { translate } from "../../../i18n";
 
 interface TenantUsersModalProps {
   open: boolean;
@@ -96,13 +97,13 @@ export const TenantUsersModal: React.FC<TenantUsersModalProps> = ({
   const columns: GridColDef[] = [
     {
       field: "name",
-      headerName: "Nome do Usuário",
+      headerName: translate("tenantSelection.usersGrid.columns.name"),
       flex: 1,
       minWidth: 200,
     },
     {
       field: "id",
-      headerName: "ID",
+      headerName: translate("tenantSelection.usersGrid.columns.id"),
       width: 100,
     },
   ];
@@ -129,7 +130,7 @@ export const TenantUsersModal: React.FC<TenantUsersModalProps> = ({
               <ArrowBackIcon />
             </IconButton>
             <Typography variant="h6">
-              Usuários do Tenant: {tenant?.name}
+              {translate("tenantSelection.usersGrid.title", { tenantName: tenant?.name })}
             </Typography>
           </Box>
           <IconButton onClick={onClose} size="small">
@@ -141,7 +142,7 @@ export const TenantUsersModal: React.FC<TenantUsersModalProps> = ({
       <DialogContent dividers>
         <Box sx={{ height: 400 }}>
           <BoilerplateDataGrid
-            title="Selecione um usuário para impersonar"
+            title={translate("tenantSelection.usersGrid.selectUser")}
             rows={rows}
             columns={columns}
             loading={loading}

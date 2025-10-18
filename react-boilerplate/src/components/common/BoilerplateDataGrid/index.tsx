@@ -9,6 +9,7 @@ import {
   type GridSortModel,
   type GridFilterModel,
   type GridPaginationModel,
+  type GridLocaleText,
 } from '@mui/x-data-grid';
 import {
   Box,
@@ -20,6 +21,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { translate } from '../../../i18n';
 
 export interface BoilerplateDataGridProps {
   title: string;
@@ -71,7 +73,7 @@ export const BoilerplateDataGrid = ({
   // Adiciona colunas de ação se onEdit ou onDelete foram fornecidos
   const enhancedColumns: GridColDef[] = React.useMemo(() => {
     const hasActions = onEdit || onDelete;
-    
+
     if (!hasActions) return columns;
 
     const actionsColumn: GridColDef = {
@@ -81,7 +83,7 @@ export const BoilerplateDataGrid = ({
       width: 100,
       getActions: (params: GridRowParams) => {
         const actions = [];
-        
+
         if (onEdit) {
           actions.push(
             <GridActionsCellItem
@@ -92,7 +94,7 @@ export const BoilerplateDataGrid = ({
             />
           );
         }
-        
+
         if (onDelete) {
           actions.push(
             <GridActionsCellItem
@@ -103,13 +105,24 @@ export const BoilerplateDataGrid = ({
             />
           );
         }
-        
+
         return actions;
       },
     };
 
     return [...columns, actionsColumn];
   }, [columns, onEdit, onDelete]);
+
+  const localeText: Partial<GridLocaleText> = {
+    paginationRowsPerPage: translate("dataGrid.paginationRowsPerPage"),
+    paginationDisplayedRows: ({ from, to, count, estimated }) => {
+      if (!estimated) {
+        return `${from}–${to} ${translate("dataGrid.of")} ${count !== -1 ? count : `${translate("dataGrid.moreThan")} ${to}`}`;
+      }
+      const estimatedLabel = estimated && estimated > to ? `${translate("dataGrid.around")} ${estimated}` : `${translate("dataGrid.moreThan")} ${to}`;
+      return `${from}–${to} ${translate("dataGrid.of")} ${count !== -1 ? count : estimatedLabel}`;
+    }
+  };
 
   if (error) {
     return (
@@ -136,7 +149,7 @@ export const BoilerplateDataGrid = ({
           </Button>
         )}
       </Toolbar>
-      
+
       <Box sx={{ height: height, width: '100%', position: 'relative' }}>
         {loading && (
           <Box
@@ -156,7 +169,7 @@ export const BoilerplateDataGrid = ({
             <CircularProgress />
           </Box>
         )}
-        
+
         <DataGrid
           rows={rows}
           columns={enhancedColumns}
@@ -165,6 +178,7 @@ export const BoilerplateDataGrid = ({
               paginationModel: { pageSize, page: 0 },
             },
           }}
+          localeText={localeText}
           pageSizeOptions={pageSizeOptions}
           onRowClick={onRowClick}
           onSortModelChange={onSortModelChange}

@@ -12,6 +12,8 @@ import BoilerplateDataGrid from "../components/common/BoilerplateDataGrid";
 import TenantCreateModal from "../components/tenants/TenantCreateModal/TenantCreateModal";
 import TenantUsersModal from "../components/tenants/TenantUsersModal/TenantUsersModal";
 import { useConfirmation } from "../contexts/confirmationContext/ConfirmationProvider";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/common/LanguageSwitcher";
 
 export const TenantSelection: React.FC = () => {
   const { user, isLoading: authLoading } = useAuth();
@@ -25,6 +27,7 @@ export const TenantSelection: React.FC = () => {
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [showUsers, setShowUsers] = useState(false);
   const confirm = useConfirmation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchTenants();
@@ -92,8 +95,8 @@ export const TenantSelection: React.FC = () => {
 
   const handleDeleteTenant = async () => {
     const result = await confirm({
-      title: "Excluir Tenant",
-      message: "Tem certeza que deseja excluir este tenant?",
+      title: t("tenantSelection.tenantGrid.alertDeleteTenantTitle"),
+      message: t("tenantSelection.tenantGrid.alertDeleteTenant"),
     });
     if (!result) return;
     await apiClient.delete(`/tenant`);
@@ -106,26 +109,26 @@ export const TenantSelection: React.FC = () => {
   const columns: GridColDef[] = [
     {
       field: "name",
-      headerName: "Nome",
+      headerName: t("tenantSelection.tenantGrid.columns.name"),
       flex: 1,
       minWidth: 200,
     },
     {
       field: "addressCity",
-      headerName: "Cidade",
+      headerName: t("tenantSelection.tenantGrid.columns.addressCity"),
       flex: 1,
       minWidth: 150,
       valueGetter: (params: string) => params || "-",
     },
     {
       field: "addressState",
-      headerName: "Estado",
+      headerName: t("tenantSelection.tenantGrid.columns.addressState"),
       width: 100,
       valueGetter: (params: string) => params || "-",
     },
     {
       field: "address",
-      headerName: "Endereço Completo",
+      headerName: t("tenantSelection.tenantGrid.columns.address"),
       flex: 1,
       minWidth: 250,
       valueGetter: (params: address) => {
@@ -137,7 +140,7 @@ export const TenantSelection: React.FC = () => {
     },
     {
       field: "status",
-      headerName: "Status",
+      headerName: t("tenantSelection.tenantGrid.columns.status"),
       width: 120,
       renderCell: () => <Chip label="Ativo" color="success" size="small" />,
     },
@@ -154,19 +157,21 @@ export const TenantSelection: React.FC = () => {
   return (
     <Container maxWidth="lg">
       <Box sx={{ py: 4 }}>
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Gerenciamento de Tenants
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Olá, {user?.userName}! Selecione um tenant para personificar ou
-            gerencie os tenants existentes.
-          </Typography>
+        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom>
+              {t("tenantSelection.title")}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              {t("tenantSelection.description", { userName: user?.userName })}
+            </Typography>
+          </Box>
+          <LanguageSwitcher />
         </Box>
 
         <Box sx={{ mb: 3 }}>
           <BoilerplateDataGrid
-            title="Tenants Disponíveis"
+            title={t("tenantSelection.tenantGrid.title")}
             rows={rows}
             columns={columns}
             loading={loading}
@@ -175,7 +180,7 @@ export const TenantSelection: React.FC = () => {
             onEdit={handleEditTenant}
             onDelete={handleDeleteTenant}
             onRowClick={handleRowClick}
-            addButtonText="Novo Tenant"
+            addButtonText={t("tenantSelection.tenantGrid.addButtonText")}
             height={500}
             pageSize={10}
           />
@@ -199,14 +204,14 @@ export const TenantSelection: React.FC = () => {
               },
             }}
           >
-            Acessar Dashboard
+            {t("tenantSelection.skipToDashboard")}
           </Button>
           <Typography
             variant="caption"
             display="block"
             sx={{ mt: 1, color: "text.secondary" }}
           >
-            Você pode selecionar um tenant mais tarde
+            {t("tenantSelection.skipToDashboardDescription")}
           </Typography>
         </Box>
 

@@ -17,7 +17,7 @@ function App() {
             vertical: "bottom",
             horizontal: "right",
           }}
-          autoHideDuration={5000}
+          autoHideDuration={4000}
         >
           <AuthProvider>
             <AppRouter />
