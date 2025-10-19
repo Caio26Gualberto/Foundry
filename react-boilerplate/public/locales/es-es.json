@@ -67,7 +67,59 @@
             "label": "Correo electrónico del usuario"
         }
     },
+    "usersManagement": {
+        "title": "Gestión de Usuarios",
+        "description": "Administra los usuarios de tu tenant y envía invitaciones a nuevos miembros.",
+        "tenantName": "Tenant: {{tenantName}}",
+        "usersGrid": {
+            "title": "Usuarios del Tenant: {{tenantName}}",
+            "buttonInvite": "Invitar Usuario",
+            "columns": {
+                "name": "Nombre",
+                "email": "Correo electrónico",
+                "roles": "Funciones"
+            }
+        }
+    },
+    "tenantSettings": {
+        "title": "Configuraciones del Tenant",
+        "description": "Administra las configuraciones y los miembros de tu tenant.",
+        "tenantName": "Tenant: {{tenantName}}",
+        "warnings": {
+            "deleteInvite": "¿Estás seguro de que deseas cancelar este convite?",
+            "deleteInviteTitle": "Cancelar Convite"
+        },
+        "tenantTabs": {
+            "generalSettings": {
+                "tabTitle": "Configuraciones Generales",
+                "description": "Las funcionalidades de configuración general están en desarrollo."
+            },
+            "usersManagement": {
+                "tabTitle": "Gestionar Miembros",
+                "subtitle": "Historial de Invitaciones",
+                "inviteButton": "Invitar Usuario",
+                "cards": {
+                    "totalInvites": "Invitaciones Totales",
+                    "pendingInvites": "Invitaciones Pendientes",
+                    "acceptedInvites": "Invitaciones Aceptadas",
+                    "expiredInvites": "Invitaciones Expiradas"
+                },
+                "columns": {
+                    "email": "Correo electrónico",
+                    "status": "Estado",
+                    "sentAt": "Enviado el",
+                    "expiresAt": "Expira el"
+                },
+                "inviteStatus": {
+                    "pending": "Pendiente",
+                    "accepted": "Aceptado",
+                    "expired": "Expirado"
+                }
+            }
+        }
+    },
     "dataGrid": {
+        "actionsColumn": "Acciones",
         "paginationRowsPerPage": "Filas por página",
         "of": "de",
         "moreThan": "más de",
@@ -78,6 +130,7 @@
         "create": "Crear",
         "edit": "Editar",
         "delete": "Eliminar",
-        "save": "Guardar"
+        "save": "Guardar",
+        "confirm": "Confirmar"
     }
 }

@@ -67,7 +67,59 @@
             "label": "email do usuário"
         }
     },
+    "usersManagement": {
+        "title": "Gerenciamento de Usuários",
+        "description": "Gerencie os usuários do seu tenant e envie convites para novos membros.",
+        "tenantName": "Tenant: {{tenantName}}",
+        "usersGrid": {
+            "title": "Usuários do Tenant: {{tenantName}}",
+            "buttonInvite": "Convidar Usuário",
+            "columns": {
+                "name": "Nome",
+                "email": "Email",
+                "roles": "Funções"
+            }
+        }
+    },
+    "tenantSettings": {
+        "title": "Configurações do Tenant",
+        "description": "Gerencie as configurações e membros do seu tenant.",
+        "tenantName": "Tenant: {{tenantName}}",
+        "warnings": {
+            "deleteInvite": "Tem certeza que deseja cancelar este convite?",
+            "deleteInviteTitle": "Cancelar Convite"
+        },
+        "tenantTabs": {
+            "generalSettings": {
+                "tabTitle": "Configurações Gerais",
+                "description": "Funcionalidades de configuração geral em desenvolvimento."
+            },
+            "usersManagement": {
+                "tabTitle": "Gerenciar Membros",
+                "subtitle": "Histórico de Convites",
+                "inviteButton": "Convidar Usuário",
+                "cards": {
+                    "totalInvites": "Total de Convites",
+                    "pendingInvites": "Convites Pendentes",
+                    "acceptedInvites": "Convites Aceitos",
+                    "expiredInvites": "Convites Expirados"
+                },
+                "columns": {
+                    "email": "Email",
+                    "status": "Status",
+                    "sentAt": "Enviado em",
+                    "expiresAt": "Expira em"
+                },
+                "inviteStatus": {
+                    "pending": "Pendente",
+                    "accepted": "Aceito",
+                    "expired": "Expirado"
+                }
+            }
+        }
+    },
     "dataGrid": {
+        "actionsColumn": "Ações",
         "paginationRowsPerPage": "Linhas por página",
         "of": "de",
         "moreThan": "mais de",
@@ -78,7 +130,7 @@
         "create": "Criar",
         "edit": "Editar",
         "delete": "Excluir",
-        "save": "Salvar"
+        "save": "Salvar",
+        "confirm": "Confirmar"
     }
-    
 }

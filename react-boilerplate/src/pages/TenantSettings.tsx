@@ -25,6 +25,7 @@ import { useAuth } from "../contexts/Auth";
 import BoilerplateDataGrid from "../components/common/BoilerplateDataGrid";
 import InviteUserModal from "../components/users/InviteUserModal/InviteUserModal";
 import { useConfirmation } from "../contexts/confirmationContext/ConfirmationProvider";
+import { translate } from "../i18n";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -122,8 +123,8 @@ export const TenantSettings: React.FC = () => {
 
   const handleCancelInvite = async (_id: GridRowId) => {
     const result = await confirm({
-      title: "Cancelar Convite",
-      message: "Tem certeza que deseja cancelar este convite?",
+      title: translate("tenantSettings.warnings.deleteInviteTitle"),
+      message: translate("tenantSettings.warnings.deleteInvite"),
     });
     if (!result) return;
     // TODO: Implementar chamada real da API
@@ -156,10 +157,10 @@ export const TenantSettings: React.FC = () => {
 
   const getStatusChip = (status: string) => {
     const statusConfig = {
-      pending: { label: "Pendente", color: "warning" as const, icon: <Schedule /> },
-      accepted: { label: "Aceito", color: "success" as const, icon: <CheckCircle /> },
-      expired: { label: "Expirado", color: "error" as const, icon: <Cancel /> },
-      cancelled: { label: "Cancelado", color: "default" as const, icon: <Cancel /> },
+      pending: { label: translate("tenantSettings.tenantTabs.usersManagement.inviteStatus.pending"), color: "warning" as const, icon: <Schedule /> },
+      accepted: { label: translate("tenantSettings.tenantTabs.usersManagement.inviteStatus.accepted"), color: "success" as const, icon: <CheckCircle /> },
+      expired: { label: translate("tenantSettings.tenantTabs.usersManagement.inviteStatus.expired"), color: "error" as const, icon: <Cancel /> },
+      cancelled: { label: translate("tenantSettings.tenantTabs.usersManagement.inviteStatus.cancelled"), color: "default" as const, icon: <Cancel /> },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
@@ -177,19 +178,19 @@ export const TenantSettings: React.FC = () => {
   const inviteColumns: GridColDef[] = [
     {
       field: "email",
-      headerName: "Email",
+      headerName: translate("tenantSettings.tenantTabs.usersManagement.columns.email"),
       flex: 1,
       minWidth: 250,
     },
     {
       field: "status",
-      headerName: "Status",
+      headerName: translate("tenantSettings.tenantTabs.usersManagement.columns.status"),
       width: 130,
       renderCell: (params) => getStatusChip(params.value),
     },
     {
       field: "sentAt",
-      headerName: "Enviado em",
+      headerName: translate("tenantSettings.tenantTabs.usersManagement.columns.sentAt"),
       width: 150,
       valueFormatter: (value: any) => {
         return new Date(value).toLocaleDateString('pt-BR');
@@ -197,7 +198,7 @@ export const TenantSettings: React.FC = () => {
     },
     {
       field: "expiresAt",
-      headerName: "Expira em",
+      headerName: translate("tenantSettings.tenantTabs.usersManagement.columns.expiresAt"),
       width: 150,
       valueFormatter: (value: any) => {
         return new Date(value).toLocaleDateString('pt-BR');
@@ -230,10 +231,10 @@ export const TenantSettings: React.FC = () => {
       <Box sx={{ py: 4 }}>
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom>
-            Configurações do Tenant
+            {translate("tenantSettings.title")}
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Gerencie as configurações e membros do seu tenant.
+            {translate("tenantSettings.description")}
           </Typography>
           {user?.tenantName && (
             <Box sx={{ mt: 2 }}>
@@ -251,12 +252,12 @@ export const TenantSettings: React.FC = () => {
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={tabValue} onChange={handleTabChange}>
               <Tab 
-                label="Configurações Gerais" 
+                label={translate("tenantSettings.tenantTabs.generalSettings.tabTitle")} 
                 icon={<Settings />} 
                 iconPosition="start"
               />
               <Tab 
-                label="Gerenciar Membros" 
+                label={translate("tenantSettings.tenantTabs.usersManagement.tabTitle")} 
                 icon={<People />} 
                 iconPosition="start"
               />
@@ -265,10 +266,10 @@ export const TenantSettings: React.FC = () => {
 
           <TabPanel value={tabValue} index={0}>
             <Typography variant="h6" gutterBottom>
-              Configurações Gerais
+              {translate("tenantSettings.tenantTabs.generalSettings.tabTitle")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Funcionalidades de configuração geral em desenvolvimento.
+              {translate("tenantSettings.tenantTabs.generalSettings.description")}
             </Typography>
           </TabPanel>
 
@@ -276,14 +277,14 @@ export const TenantSettings: React.FC = () => {
             <Box sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h6">
-                  Histórico de Convites
+                  {translate("tenantSettings.tenantTabs.usersManagement.subtitle")}
                 </Typography>
                 <Button
                   variant="contained"
                   startIcon={<PersonAdd />}
                   onClick={handleInviteUser}
                 >
-                  Convidar Usuário
+                  {translate("tenantSettings.tenantTabs.usersManagement.inviteButton")}
                 </Button>
               </Box>
 
@@ -295,7 +296,7 @@ export const TenantSettings: React.FC = () => {
                       {stats.total}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Total de Convites
+                      {translate("tenantSettings.tenantTabs.usersManagement.cards.totalInvites")}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -305,7 +306,7 @@ export const TenantSettings: React.FC = () => {
                       {stats.pending}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Pendentes
+                      {translate("tenantSettings.tenantTabs.usersManagement.cards.pendingInvites")}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -315,7 +316,7 @@ export const TenantSettings: React.FC = () => {
                       {stats.accepted}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Aceitos
+                      {translate("tenantSettings.tenantTabs.usersManagement.cards.acceptedInvites")}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -325,14 +326,14 @@ export const TenantSettings: React.FC = () => {
                       {stats.expired}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Expirados
+                      {translate("tenantSettings.tenantTabs.usersManagement.cards.expiredInvites")}
                     </Typography>
                   </CardContent>
                 </Card>
               </Box>
 
               <BoilerplateDataGrid
-                title="Convites Enviados"
+                title={translate("tenantSettings.tenantTabs.usersManagement.subtitle")}
                 rows={inviteRows}
                 columns={inviteColumns}
                 loading={loading}

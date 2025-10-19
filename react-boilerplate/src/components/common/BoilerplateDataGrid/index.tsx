@@ -79,7 +79,7 @@ export const BoilerplateDataGrid = ({
     const actionsColumn: GridColDef = {
       field: 'actions',
       type: 'actions',
-      headerName: 'Ações',
+      headerName: translate("dataGrid.actionsColumn"),
       width: 100,
       getActions: (params: GridRowParams) => {
         const actions = [];

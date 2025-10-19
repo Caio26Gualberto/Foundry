@@ -67,7 +67,59 @@
             "label": "用户邮箱"
         }
     },
+    "usersManagement": {
+        "title": "用户管理",
+        "description": "管理您租户的用户并向新成员发送邀请。",
+        "tenantName": "租户: {{tenantName}}",
+        "usersGrid": {
+            "title": "租户用户: {{tenantName}}",
+            "buttonInvite": "邀请用户",
+            "columns": {
+                "name": "姓名",
+                "email": "电子邮箱",
+                "roles": "角色"
+            }
+        }
+    },
+    "tenantSettings": {
+        "title": "租户设置",
+        "description": "管理您的租户设置和成员。",
+        "tenantName": "租户: {{tenantName}}",
+        "warnings": {
+            "deleteInvite": "你确定要删除此邀请吗？",
+            "deleteInviteTitle": "删除邀请"
+        },
+        "tenantTabs": {
+            "generalSettings": {
+                "tabTitle": "常规设置",
+                "description": "常规配置功能正在开发中。"
+            },
+            "usersManagement": {
+                "tabTitle": "管理成员",
+                "subtitle": "邀请历史",
+                "inviteButton": "邀请用户",
+                "cards": {
+                    "totalInvites": "邀请总数",
+                    "pendingInvites": "待处理邀请",
+                    "acceptedInvites": "已接受邀请",
+                    "expiredInvites": "已过期邀请"
+                },
+                "columns": {
+                    "email": "电子邮箱",
+                    "status": "状态",
+                    "sentAt": "发送时间",
+                    "expiresAt": "过期时间"
+                },
+                "inviteStatus": {
+                    "pending": "待处理",
+                    "accepted": "已接受",
+                    "expired": "已过期"
+                }
+            }
+        }
+    },
     "dataGrid": {
+        "actionsColumn": "操作",
         "paginationRowsPerPage": "每页行数",
         "of": "共",
         "moreThan": "多于",
@@ -78,6 +130,7 @@
         "create": "创建",
         "edit": "编辑",
         "delete": "删除",
-        "save": "保存"
+        "save": "保存",
+        "confirm": "确认"
     }
 }

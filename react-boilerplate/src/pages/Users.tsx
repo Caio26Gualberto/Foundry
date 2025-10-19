@@ -9,6 +9,7 @@ import BoilerplateDataGrid from "../components/common/BoilerplateDataGrid";
 import InviteUserModal from "../components/users/InviteUserModal/InviteUserModal";
 import { useConfirmation } from "../contexts/confirmationContext/ConfirmationProvider";
 import apiClient from "../services/apiClient";
+import { translate } from "../i18n";
 
 export const Users: React.FC = () => {
   const { user } = useAuth();
@@ -83,19 +84,19 @@ export const Users: React.FC = () => {
   const columns: GridColDef[] = [
     {
       field: "name",
-      headerName: "Nome",
+      headerName: translate("usersManagement.usersGrid.columns.name"),
       flex: 1,
       minWidth: 200,
     },
     {
       field: "email",
-      headerName: "Email",
+      headerName: translate("usersManagement.usersGrid.columns.email"),
       flex: 1,
       minWidth: 250,
     },
 {
     field: "roles",
-    headerName: "Funções",
+    headerName: translate("usersManagement.usersGrid.columns.roles"),
     minWidth: 200,
     flex: 1,
     renderCell: (params) => {
@@ -128,15 +129,15 @@ export const Users: React.FC = () => {
       <Box sx={{ py: 4 }}>
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom>
-            Gerenciamento de Usuários
+            {translate("usersManagement.title")}
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Gerencie os usuários do seu tenant e envie convites para novos membros.
+            {translate("usersManagement.description")}
           </Typography>
           {user?.tenantName && (
             <Box sx={{ mt: 2 }}>
               <Chip 
-                label={`Tenant: ${user.tenantName}`} 
+                label={translate("usersManagement.tenantName", { tenantName: user.tenantName })} 
                 color="primary" 
                 size="small" 
                 icon={<People />}
@@ -147,7 +148,7 @@ export const Users: React.FC = () => {
 
         <Box sx={{ mb: 3 }}>
           <BoilerplateDataGrid
-            title="Usuários do Tenant"
+            title={translate("usersManagement.usersGrid.title", { tenantName: user?.tenantName })}
             rows={rows}
             columns={columns}
             loading={loading}
@@ -156,7 +157,7 @@ export const Users: React.FC = () => {
             onEdit={handleEditUser}
             onDelete={handleDeleteUser}
             onRowClick={handleRowClick}
-            addButtonText="Convidar Usuário"
+            addButtonText={translate("usersManagement.usersGrid.buttonInvite")}
             height={500}
             pageSize={10}
           />

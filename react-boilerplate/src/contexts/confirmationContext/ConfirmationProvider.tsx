@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, type ReactNode, type FC } from 'react';
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import { translate } from '../../i18n';
 
 interface ConfirmOptions {
     title: string;
@@ -46,9 +47,9 @@ export const ConfirmationProvider: FC<{ children: ReactNode }> = ({ children }) 
                     <DialogContentText>{options?.message}</DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCancel}>Cancelar</Button>
+                    <Button onClick={handleCancel}>{translate("button.cancel")}</Button>
                     <Button onClick={handleConfirm} color="primary" autoFocus>
-                        Confirmar
+                        {translate("button.confirm")}
                     </Button>
                 </DialogActions>
             </Dialog>

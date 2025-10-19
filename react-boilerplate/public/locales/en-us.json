@@ -67,7 +67,59 @@
             "label": "User email"
         }
     },
+    "usersManagement": {
+        "title": "User Management",
+        "description": "Manage your tenant's users and send invitations to new members.",
+        "tenantName": "Tenant: {{tenantName}}",
+        "usersGrid": {
+            "title": "Tenant Users: {{tenantName}}",
+            "buttonInvite": "Invite User",
+            "columns": {
+                "name": "Name",
+                "email": "Email",
+                "roles": "Roles"
+            }
+        }
+    },
+    "tenantSettings": {
+        "title": "Tenant Settings",
+        "description": "Manage your tenant's settings and members.",
+        "tenantName": "Tenant: {{tenantName}}",
+        "warnings": {
+            "deleteInvite": "Are you sure you want to cancel this invitation?",
+            "deleteInviteTitle": "Cancel Invitation"
+        },
+        "tenantTabs": {
+            "generalSettings": {
+                "tabTitle": "General Settings",
+                "description": "General configuration features are under development."
+            },
+            "usersManagement": {
+                "tabTitle": "Manage Members",
+                "subtitle": "Invitation History",
+                "inviteButton": "Invite User",
+                "cards": {
+                    "totalInvites": "Total Invitations",
+                    "pendingInvites": "Pending Invitations",
+                    "acceptedInvites": "Accepted Invitations",
+                    "expiredInvites": "Expired Invitations"
+                },
+                "columns": {
+                    "email": "Email",
+                    "status": "Status",
+                    "sentAt": "Sent At",
+                    "expiresAt": "Expires At"
+                },
+                "inviteStatus": {
+                    "pending": "Pending",
+                    "accepted": "Accepted",
+                    "expired": "Expired"
+                }
+            }
+        }
+    },
     "dataGrid": {
+        "actionsColumn": "Actions",
         "paginationRowsPerPage": "Rows per page",
         "of": "of",
         "moreThan": "more than",
@@ -78,6 +130,7 @@
         "create": "Create",
         "edit": "Edit",
         "delete": "Delete",
-        "save": "Save"
+        "save": "Save",
+        "confirm": "Confirm"
     }
 }
