@@ -14,6 +14,7 @@ import { Close as CloseIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import apiClient from '../../../services/apiClient';
 import { useAuth } from '../../../contexts/Auth';
+import { translate } from '../../../i18n';
 
 interface InviteUserModalProps {
   open: boolean;
@@ -88,7 +89,7 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
     >
       <DialogTitle sx={{ pb: 1 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">Convidar Usuário</Typography>
+          <Typography variant="h6">{translate('sidebar.inviteUser.title')}</Typography>
           <IconButton onClick={handleClose} size="small">
             <CloseIcon />
           </IconButton>
@@ -98,12 +99,12 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
       <DialogContent dividers>
         <Box sx={{ py: 2 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Digite o email da pessoa que você deseja convidar para o tenant.
+            {translate('sidebar.inviteUser.description')}
           </Typography>
           
           <TextField
             fullWidth
-            label="Email do usuário"
+            label={translate('sidebar.inviteUser.label')}
             type="email"
             value={email}
             onChange={(e) => handleEmailChange(e.target.value)}

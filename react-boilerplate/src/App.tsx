@@ -5,6 +5,7 @@ import { AuthProvider } from "./contexts/Auth";
 import { AppRouter } from "./components/AppRouter";
 import { theme } from "./theme";
 import { ConfirmationProvider } from "./contexts/confirmationContext/ConfirmationProvider";
+import LanguageBoundary from "./components/common/LanguageBoundary";
 
 function App() {
   return (
@@ -20,7 +21,9 @@ function App() {
           autoHideDuration={4000}
         >
           <AuthProvider>
-            <AppRouter />
+            <LanguageBoundary>
+              <AppRouter />
+            </LanguageBoundary>
           </AuthProvider>
         </SnackbarProvider>
       </ConfirmationProvider>

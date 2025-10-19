@@ -19,7 +19,6 @@ import {
   Dashboard,
   People,
   Settings,
-  Business,
   Analytics,
   Security,
   ChevronRight,
@@ -34,6 +33,7 @@ import { useNavigate } from 'react-router-dom';
 import InviteUserModal from '../users/InviteUserModal/InviteUserModal';
 import { ROUTES } from '../../utils/constants';
 import type { User } from '../../types';
+import { translate } from '../../i18n';
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -53,37 +53,32 @@ interface MenuItem {
 }
 
 const getMenuItems = (user: User, handleInviteUser: () => void): MenuItem[] => [
-  { text: 'Início', icon: <Home />, path: '/dashboard' },
-  { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard/analytics' },
+  { text: translate('sidebar.home'), icon: <Home />, path: '/dashboard' },
+  { text: translate('sidebar.dashboard'), icon: <Dashboard />, path: '/dashboard/analytics' },
   { 
-    text: 'Usuários', 
+    text: translate('sidebar.users.title'), 
     icon: <People />, 
     path: '/dashboard/users',
     subItems: [
       { 
-        text: 'Convidar Usuário', 
+        text: translate('sidebar.users.inviteUser'), 
         icon: <PersonAdd />, 
         action: handleInviteUser 
       },
       {
-        text: 'Usuários',
+        text: translate('sidebar.users.title'),
         icon: <People />,
         path: '/dashboard/users'
       }
     ]
   },
-  { text: 'Relatórios', icon: <Analytics />, path: '/dashboard/reports' },
-  { text: 'Segurança', icon: <Security />, path: '/dashboard/security' },
+  { text: translate('sidebar.reports'), icon: <Analytics />, path: '/dashboard/reports' },
+  { text: translate('sidebar.security'), icon: <Security />, path: '/dashboard/security' },
   ...((user?.tenantId || localStorage.getItem('Boilerplate_impersonated_token')) ? [{ 
-    text: 'Configurações do Tenant', 
+    text: translate('sidebar.configuration'), 
     icon: <Settings />, 
     path: ROUTES.TENANT_SETTINGS 
-  }] : []),
-  ...(canAccessTenantSelection(user) ? [{ 
-    text: 'Gerenciar Tenants', 
-    icon: <Business />, 
-    path: ROUTES.TENANT_SELECTION 
-  }] : []),
+  }] : [])
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -309,7 +304,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </ListItemIcon>
           {!isCollapsed && (
             <ListItemText 
-              primary="Sair"
+              primary={translate('sidebar.logout')}
               primaryTypographyProps={{
                 fontSize: '0.875rem',
               }}

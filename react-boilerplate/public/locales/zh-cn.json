@@ -40,6 +40,33 @@
             }
         }
     },
+    "dashboard": {
+        "title": "欢迎, {{userName}}!",
+        "description": "这是您的活动概览",
+        "subtitle": "下面没有进行任何翻译或样式处理，因为这只是一个模板。从这里开始，您可以根据需要进行自定义。",
+        "impersonatedBy": "由用户 ID {{impersonatedBy}} 模拟登录",
+        "adminGlobal": "全局管理员模式",
+        "tenantId": "租户 ID: {{tenantId}}",
+        "impersonated": "模拟登录模式",
+        "stopImpersonation": "停止模拟登录"
+    },
+    "sidebar": {
+        "home": "首页",
+        "dashboard": "仪表盘",
+        "users": {
+            "title": "用户",
+            "inviteUser": "邀请用户"
+        },
+        "reports": "报告",
+        "security": "安全",
+        "configuration": "设置",
+        "logout": "退出登录",
+        "inviteUser": {
+            "title": "邀请用户",
+            "description": "请输入您希望邀请加入租户的人的电子邮件地址。",
+            "label": "用户邮箱"
+        }
+    },
     "dataGrid": {
         "paginationRowsPerPage": "每页行数",
         "of": "共",

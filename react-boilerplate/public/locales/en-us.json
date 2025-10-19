@@ -40,6 +40,33 @@
             }
         }
     },
+    "dashboard": {
+        "title": "Welcome, {{userName}}!",
+        "description": "Here is a summary of your activities",
+        "subtitle": "No translation or styling has been applied below since this is just a template. From here, you can customize it as you wish.",
+        "impersonatedBy": "Impersonated by user ID: {{impersonatedBy}}",
+        "adminGlobal": "Global Admin Mode",
+        "tenantId": "Tenant ID: {{tenantId}}",
+        "impersonated": "Impersonation Mode",
+        "stopImpersonation": "Stop Impersonation"
+    },
+    "sidebar": {
+        "home": "Home",
+        "dashboard": "Dashboard",
+        "users": {
+            "title": "Users",
+            "inviteUser": "Invite User"
+        },
+        "reports": "Reports",
+        "security": "Security",
+        "configuration": "Settings",
+        "logout": "Logout",
+        "inviteUser": {
+            "title": "Invite User",
+            "description": "Enter the email of the person you want to invite to the tenant.",
+            "label": "User email"
+        }
+    },
     "dataGrid": {
         "paginationRowsPerPage": "Rows per page",
         "of": "of",

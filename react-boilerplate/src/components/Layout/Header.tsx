@@ -16,6 +16,7 @@ import { useAuth } from '../../contexts/Auth';
 import { canAccessTenantSelection } from '../../utils/authHelpers';
 import { NotificationCenter } from '../NotificationCenter';
 import LanguageSwitcher from '../common/LanguageSwitcher';
+import { translate } from '../../i18n';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -64,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onDesktopMenuClick,
         )}
 
         <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-          Dashboard
+          {translate('sidebar.dashboard')}
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

@@ -17,6 +17,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/Auth';
 import { canAccessTenantSelection } from '../utils/authHelpers';
+import { translate } from '../i18n';
 
 const StatCard: React.FC<{
   title: string;
@@ -57,30 +58,30 @@ export const Dashboard: React.FC = () => {
       {/* Welcome Section */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 600 }}>
-          Bem-vindo, {user?.userName}!
+          {translate('dashboard.title', { userName: user?.userName })}
           {user?.impersonatedBy && (
             <Typography variant="body2" color="warning.main" sx={{ fontWeight: 400, mt: 0.5 }}>
-              (Impersonado por usuário ID: {user.impersonatedBy})
+              {translate('dashboard.impersonatedBy', { impersonatedBy: user.impersonatedBy })}
             </Typography>
           )}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
           <Typography variant="body1" color="text.secondary">
-            Aqui está um resumo das suas atividades
+            {translate('dashboard.description')}
           </Typography>
           {canAccessTenantSelection(user) && !user?.tenantId && (
-            <Chip label="Modo Administrador Global" color="secondary" size="small" />
+            <Chip label={translate('dashboard.adminGlobal')} color="secondary" size="small" />
           )}
           {user?.tenantId && (
             <Chip 
-              label={`Tenant ID: ${user.tenantId}`} 
+              label={translate('dashboard.tenantId', { tenantId: user.tenantId })} 
               color="primary" 
               size="small" 
             />
           )}
           {localStorage.getItem('Boilerplate_impersonated_token') && (
             <>
-              <Chip label="Modo Impersonação" color="warning" size="small" />
+              <Chip label={translate('dashboard.impersonated')} color="warning" size="small" />
               <Button 
                 variant="outlined" 
                 size="small" 
@@ -88,12 +89,15 @@ export const Dashboard: React.FC = () => {
                 onClick={stopImpersonation}
                 sx={{ ml: 1 }}
               >
-                Parar Impersonação
+                {translate('dashboard.stopImpersonation')}
               </Button>
             </>
           )}
         </Box>
       </Box>
+      <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
+        {translate('dashboard.subtitle')}
+      </Typography>
 
       {/* Statistics Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
