@@ -1,7 +1,5 @@
 ﻿using Boilerplate.Domain.Interfaces.ApplicationUserService;
-using Boilerplate.Infra.Data.Context;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace Boilerplate.Infra.Data.Identity.ApplicationUserService
 {

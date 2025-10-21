@@ -10,12 +10,16 @@ import {
   Box,
   IconButton,
   Typography,
+  Stepper,
+  Step,
+  StepLabel,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import apiClient from '../../../services/apiClient';
 import type { Tenant } from '../../../types/tenants';
 import { translate } from '../../../i18n';
+import type { AcceptInvitationData } from '../../../types/Users';
 
 interface TenantCreateDto {
   name: string;
@@ -27,6 +31,7 @@ interface TenantCreateDto {
     country: string;
     number: string;
   };
+  registerInput : AcceptInvitationData;
 }
 
 interface TenantCreateModalProps {
@@ -44,6 +49,8 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
 }) => {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
+  const [activeStep, setActiveStep] = useState<number>(0);
+  const isEdit = !!editTenant;
   const [formData, setFormData] = useState<TenantCreateDto>({
     name: '',
     address: {
@@ -54,9 +61,20 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
       country: 'Brasil',
       number: '',
     },
+    registerInput: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      token: '',
+      tenant: '',
+      tenantId: '',
+    },
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [createdTenant, setCreatedTenant] = useState<Tenant | null>(null);
 
   // Preenche o formulário quando um tenant é passado para edição
   useEffect(() => {
@@ -71,6 +89,15 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
           country: editTenant.address.country,
           number: editTenant.address.number,
         },
+        registerInput: {
+          name: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          token: '',
+          tenant: '',
+          tenantId: '',
+        },
       });
     } else {
       // Reset form when not editing
@@ -84,9 +111,20 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
           country: 'Brasil',
           number: '',
         },
+        registerInput: {
+          name: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          token: '',
+          tenant: '',
+          tenantId: '',
+        },
       });
     }
     setErrors({});
+    setActiveStep(0);
+    setSuccessDialogOpen(false);
   }, [editTenant, open]);
 
   const handleInputChange = (field: string, value: string) => {
@@ -150,27 +188,110 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  const validateUserStep = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.registerInput.name.trim()) {
+      newErrors['registerInput.name'] = 'Nome do usuário é obrigatório';
+    }
+    if (!formData.registerInput.email.trim()) {
+      newErrors['registerInput.email'] = 'Email é obrigatório';
+    } else {
+      const emailRegex = /[^@\s]+@[^@\s]+\.[^@\s]+/;
+      if (!emailRegex.test(formData.registerInput.email)) {
+        newErrors['registerInput.email'] = 'Email inválido';
+      }
+    }
+    if (!formData.registerInput.password.trim()) {
+      newErrors['registerInput.password'] = 'Gere uma senha para o usuário';
+    }
+    setErrors(prev => ({ ...prev, ...newErrors }));
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const generateSecurePassword = (length = 14) => {
+    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lower = 'abcdefghijklmnopqrstuvwxyz';
+    const digits = '0123456789';
+    const symbols = '!@#$%^&*()-_=+[]{};:,.<>?';
+    const all = upper + lower + digits + symbols;
+
+    const pick = (chars: string, rand: number) => chars[Math.floor(rand * chars.length)];
+    const getRandomFloats = (n: number) => {
+      const arr = new Uint32Array(n);
+      (window.crypto || (window as any).msCrypto).getRandomValues(arr);
+      return Array.from(arr, (x) => x / 2 ** 32);
+    };
+
+    const ensure = [
+      pick(upper, getRandomFloats(1)[0]),
+      pick(lower, getRandomFloats(1)[0]),
+      pick(digits, getRandomFloats(1)[0]),
+      pick(symbols, getRandomFloats(1)[0]),
+    ];
+
+    const remaining = length - ensure.length;
+    const randoms = getRandomFloats(remaining);
+    const rest = randoms.map((r) => pick(all, r));
+    const pwd = [...ensure, ...rest];
+
+    // shuffle using secure randomness
+    const shuffleRand = getRandomFloats(pwd.length);
+    for (let i = pwd.length - 1; i > 0; i--) {
+      const j = Math.floor(shuffleRand[i] * (i + 1));
+      [pwd[i], pwd[j]] = [pwd[j], pwd[i]];
+    }
+
+    const password = pwd.join('');
+    setFormData(prev => ({
+      ...prev,
+      registerInput: {
+        ...prev.registerInput,
+        password,
+        confirmPassword: password,
+      },
+    }));
+    setErrors(prev => ({ ...prev, ['RegisterInput.password']: '' }));
+  };
+
   const handleSubmit = async () => {
-    if (!validateForm()) {
+    // Edit flow: mantém comportamento original de uma etapa
+    if (isEdit) {
+      if (!validateForm()) return;
+      setLoading(true);
+      try {
+        const tenant = await apiClient.put<Tenant>(`/tenant`, formData);
+        enqueueSnackbar('Tenant atualizado com sucesso!', { variant: 'success' });
+        onSuccess(tenant);
+        handleClose();
+      } catch (error) {
+        console.error('Error saving tenant:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Erro ao atualizar tenant';
+        enqueueSnackbar(errorMessage, { variant: 'error' });
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
+    // Create flow em duas etapas
+    if (activeStep === 0) {
+      if (!validateForm()) return;
+      setActiveStep(1);
+      return;
+    }
+
+    if (!validateUserStep()) return;
+
     setLoading(true);
     try {
-      let tenant: Tenant;
-      if (editTenant) {
-        tenant = await apiClient.put<Tenant>(`/tenant`, formData);
-        enqueueSnackbar('Tenant atualizado com sucesso!', { variant: 'success' });
-      } else {
-        tenant = await apiClient.post<Tenant>('/tenant', formData);
-        enqueueSnackbar('Tenant criado com sucesso!', { variant: 'success' });
-      }
-      onSuccess(tenant);
-      handleClose();
+      const tenant = await apiClient.post<Tenant>('/tenant', { ...formData, registerInput: { ...formData.registerInput, tenantId: null, nickname: formData.registerInput.name } });
+      enqueueSnackbar('Tenant criado com sucesso!', { variant: 'success' });
+      // Guarda tenant e abre confirmação para copiar email/senha
+      setCreatedTenant(tenant);
+      setSuccessDialogOpen(true);
     } catch (error) {
       console.error('Error saving tenant:', error);
-      const errorMessage = error instanceof Error ? error.message : 
-        editTenant ? 'Erro ao atualizar tenant' : 'Erro ao criar tenant';
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao criar tenant';
       enqueueSnackbar(errorMessage, { variant: 'error' });
     } finally {
       setLoading(false);
@@ -187,6 +308,15 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
         zipCode: '',
         country: 'Brasil',
         number: '',
+      },
+      registerInput: {
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        token: '',
+        tenant: '',
+        tenantId: undefined,
       },
     });
     setErrors({});
@@ -213,103 +343,179 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
       </DialogTitle>
 
       <DialogContent dividers>
-        <Stack spacing={3}>
-          {/* Informações do Tenant */}
-          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
-            {translate("tenantSelection.tenantModal.infoTenant")}
-          </Typography>
-          
-          <TextField
-            fullWidth
-            label={translate("tenantSelection.tenantModal.nameTenant")}
-            value={formData.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            error={!!errors.name}
-            helperText={errors.name}
-            required
-          />
+        {!isEdit && (
+          <Box sx={{ mb: 3 }}>
+            <Stepper activeStep={activeStep} alternativeLabel>
+              <Step>
+                <StepLabel>{translate("tenantSelection.tenantModal.steps.tenant")}</StepLabel>
+              </Step>
+              <Step>
+                <StepLabel>{translate("tenantSelection.tenantModal.steps.user")}</StepLabel>
+              </Step>
+            </Stepper>
+          </Box>
+        )}
 
-          {/* Endereço */}
-          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
-            {translate("tenantSelection.tenantModal.address")}
-          </Typography>
+        {activeStep === 0 || isEdit ? (
+          <Stack spacing={3}>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+              {translate("tenantSelection.tenantModal.infoTenant")}
+            </Typography>
 
-          <Stack direction="row" spacing={2}>
             <TextField
               fullWidth
-              label={translate("tenantSelection.tenantModal.street")}
-              value={formData.address.street}
-              onChange={(e) => handleInputChange('address.street', e.target.value)}
-              error={!!errors['address.street']}
-              helperText={errors['address.street']}
+              label={translate("tenantSelection.tenantModal.nameTenant")}
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              error={!!errors.name}
+              helperText={errors.name}
               required
-              sx={{ flex: 2 }}
             />
-            <TextField
-              label={translate("tenantSelection.tenantModal.number")}
-              value={formData.address.number}
-              onChange={(e) => handleInputChange('address.number', e.target.value)}
-              error={!!errors['address.number']}
-              helperText={errors['address.number']}
-              required
-              sx={{ flex: 1 }}
-            />
-          </Stack>
 
-          <Stack direction="row" spacing={2}>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
+              {translate("tenantSelection.tenantModal.address")}
+            </Typography>
+
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                label={translate("tenantSelection.tenantModal.street")}
+                value={formData.address.street}
+                onChange={(e) => handleInputChange('address.street', e.target.value)}
+                error={!!errors['address.street']}
+                helperText={errors['address.street']}
+                required
+                sx={{ flex: 2 }}
+              />
+              <TextField
+                label={translate("tenantSelection.tenantModal.number")}
+                value={formData.address.number}
+                onChange={(e) => handleInputChange('address.number', e.target.value)}
+                error={!!errors['address.number']}
+                helperText={errors['address.number']}
+                required
+                sx={{ flex: 1 }}
+              />
+            </Stack>
+
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                label={translate("tenantSelection.tenantModal.city")}
+                value={formData.address.city}
+                onChange={(e) => handleInputChange('address.city', e.target.value)}
+                error={!!errors['address.city']}
+                helperText={errors['address.city']}
+                required
+              />
+              <TextField
+                label={translate("tenantSelection.tenantModal.state")}
+                value={formData.address.state}
+                onChange={(e) => handleInputChange('address.state', e.target.value)}
+                error={!!errors['address.state']}
+                helperText={errors['address.state']}
+                required
+                sx={{ minWidth: 120 }}
+              />
+              <TextField
+                label={translate("tenantSelection.tenantModal.zipCode")}
+                value={formData.address.zipCode}
+                onChange={(e) => handleInputChange('address.zipCode', e.target.value)}
+                error={!!errors['address.zipCode']}
+                helperText={errors['address.zipCode']}
+                required
+                sx={{ minWidth: 120 }}
+              />
+            </Stack>
+
             <TextField
               fullWidth
-              label={translate("tenantSelection.tenantModal.city")}
-              value={formData.address.city}
-              onChange={(e) => handleInputChange('address.city', e.target.value)}
-              error={!!errors['address.city']}
-              helperText={errors['address.city']}
+              label={translate("tenantSelection.tenantModal.country")}
+              value={formData.address.country}
+              onChange={(e) => handleInputChange('address.country', e.target.value)}
+              error={!!errors['address.country']}
+              helperText={errors['address.country']}
               required
-            />
-            <TextField
-              label={translate("tenantSelection.tenantModal.state")}
-              value={formData.address.state}
-              onChange={(e) => handleInputChange('address.state', e.target.value)}
-              error={!!errors['address.state']}
-              helperText={errors['address.state']}
-              required
-              sx={{ minWidth: 120 }}
-            />
-            <TextField
-              label={translate("tenantSelection.tenantModal.zipCode")}
-              value={formData.address.zipCode}
-              onChange={(e) => handleInputChange('address.zipCode', e.target.value)}
-              error={!!errors['address.zipCode']}
-              helperText={errors['address.zipCode']}
-              required
-              sx={{ minWidth: 120 }}
             />
           </Stack>
-
-          <TextField
-            fullWidth
-            label={translate("tenantSelection.tenantModal.country")}
-            value={formData.address.country}
-            onChange={(e) => handleInputChange('address.country', e.target.value)}
-            error={!!errors['address.country']}
-            helperText={errors['address.country']}
-            required
-          />
-        </Stack>
+        ) : (
+          <Stack spacing={3}>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+              {translate("tenantSelection.tenantModal.secondStep.title")}
+            </Typography>
+            <TextField
+              fullWidth
+              label={translate("tenantSelection.tenantModal.secondStep.name")}
+              value={formData.registerInput.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, registerInput: { ...prev.registerInput, name: e.target.value } }))}
+              error={!!errors['registerInput.name']}
+              helperText={errors['registerInput.name']}
+              required
+            />
+            <TextField
+              fullWidth
+              label={translate("tenantSelection.tenantModal.secondStep.email")}
+              type="email"
+              value={formData.registerInput.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, registerInput: { ...prev.registerInput, email: e.target.value } }))}
+              error={!!errors['registerInput.email']}
+              helperText={errors['registerInput.email']}
+              required
+            />
+            <Stack direction="row" spacing={2} alignItems="flex-start">
+              <TextField
+                fullWidth
+                label={translate("tenantSelection.tenantModal.secondStep.password")}
+                value={formData.registerInput.password}
+                InputProps={{ readOnly: true }}
+                error={!!errors['registerInput.password']}
+                helperText={errors['registerInput.password'] || translate("tenantSelection.tenantModal.secondStep.helpText")}
+              />
+              <Button variant="outlined" onClick={() => generateSecurePassword()} sx={{ whiteSpace: 'nowrap', height: 56 }}>
+                {translate("tenantSelection.tenantModal.secondStep.generatePassword")}
+              </Button>
+            </Stack>
+          </Stack>
+        )}
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={handleClose} disabled={loading}>
           {translate("button.cancel")}
         </Button>
+        {!isEdit && activeStep === 1 && (
+          <Button onClick={() => setActiveStep(0)} disabled={loading}>
+            {translate("button.back")}
+          </Button>
+        )}
         <Button
           onClick={handleSubmit}
           variant="contained"
           disabled={loading}
         >
-          {loading ? (editTenant ? translate("button.save") : translate("button.create")) : (editTenant ? translate("button.save") : translate("button.create"))}
+          {isEdit ? translate("button.save") : activeStep === 0 ? translate("button.next") : translate("button.save")}
         </Button>
       </DialogActions>
+
+      <Dialog open={successDialogOpen} onClose={() => { setSuccessDialogOpen(false); if (createdTenant) onSuccess(createdTenant); handleClose(); }} maxWidth="sm" fullWidth>
+        <DialogTitle>{translate("tenantSelection.tenantModal.datashow.title")}</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            <Typography>{translate("tenantSelection.tenantModal.datashow.subtitle")}</Typography>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <TextField fullWidth label={translate("tenantSelection.tenantModal.datashow.email")} value={formData.registerInput.email} InputProps={{ readOnly: true }} />
+              <Button onClick={() => navigator.clipboard?.writeText(formData.registerInput.email)}>Copiar</Button>
+            </Stack>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <TextField fullWidth label={translate("tenantSelection.tenantModal.datashow.password")} value={formData.registerInput.password} InputProps={{ readOnly: true }} />
+              <Button onClick={() => navigator.clipboard?.writeText(formData.registerInput.password)}>Copiar</Button>
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { setSuccessDialogOpen(false); if (createdTenant) onSuccess(createdTenant); handleClose(); }} variant="contained">{translate("button.close")}</Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 };

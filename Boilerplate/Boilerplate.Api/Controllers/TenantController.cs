@@ -39,7 +39,7 @@ namespace Boilerplate.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<BoilerplateResponse<int>>> CreateTenant(TenantCreateOrUpdateDto input)
         {
-            await _tenantService.Create(input.Name, input.Address);
+            await _tenantService.Create(input.Name, input.Address, input.RegisterInput);
             return Created();
         }
 

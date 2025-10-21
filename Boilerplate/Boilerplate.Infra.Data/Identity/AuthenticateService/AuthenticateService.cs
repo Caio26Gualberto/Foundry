@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -29,17 +30,60 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
             _context = context;
         }
 
-        public async Task<bool> Authenticate(string email, string password)
+        public async Task<(bool, bool)> Authenticate(string email, string password)
         {
             var user = await _userManager.Users
                 .FirstOrDefaultAsync(u => u.Email == email);
 
             if (user == null)
-                return false;
+                return (false, false);
 
             var passwordValid = await _userManager.CheckPasswordAsync(user, password);
 
-            return passwordValid;
+            return (passwordValid, user.IsNeededChangePassword);
+        }
+
+        public async Task<(int, string)> RegisterTenantAdmin(string email, string password, string name, int tenantId)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var user = new User
+                {
+                    Email = email,
+                    Name = name,
+                    TenantId = tenantId
+                };
+
+                _context.DomainUsers.Add(user);
+                await _context.SaveChangesAsync();
+
+                var applicationUser = new ApplicationUser
+                {
+                    UserName = email,
+                    Email = email,
+                    DomainUserId = user.Id,
+                    TenantId = tenantId,
+                    IsNeededChangePassword = true
+                };
+
+                var result = await _userManager.CreateAsync(applicationUser, password);
+                await _userManager.AddToRoleAsync(applicationUser, Roles.TenantAdmin);
+
+                if (!result.Succeeded)
+                {
+                    await transaction.RollbackAsync();
+                    return (0, string.Empty);
+                }
+                await transaction.CommitAsync();
+
+                return (applicationUser.Id, applicationUser.Email);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<(int, string)> Register(string email, string password, string name, int tenantId, string token)
@@ -131,7 +175,8 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
                 new Claim(ClaimTypes.Name, domainUser.Name),
                 new Claim(ClaimTypes.NameIdentifier, domainUser.Id.ToString()),
                 new Claim("userId", domainUser.Id.ToString()),
-                new Claim("tenantId", domainUser.TenantId.ToString()),
+                new Claim("tenantName", domainUser?.Tenant?.Name ?? string.Empty),
+                new Claim("tenantId", domainUser?.TenantId?.ToString() ?? string.Empty),
             };
 
             foreach (var role in roles)
@@ -282,6 +327,22 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
 
             if (invite.Status == EInviteStatus.Expired || invite.Status == EInviteStatus.Cancelled)
                 return false;
+
+            return true;
+        }
+        public async Task<bool> ChangePassword(string email, string password)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) return false;
+
+            await _userManager.RemovePasswordAsync(user);
+
+            var result = await _userManager.AddPasswordAsync(user, password);
+            if (!result.Succeeded)
+                return false;
+
+            user.IsNeededChangePassword = false;
+            await _userManager.UpdateAsync(user);
 
             return true;
         }

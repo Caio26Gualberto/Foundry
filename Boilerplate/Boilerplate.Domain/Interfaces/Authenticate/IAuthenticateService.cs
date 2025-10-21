@@ -5,11 +5,14 @@ namespace Boilerplate.Domain.Interfaces.Authenticate
 {
     public interface IAuthenticateService
     {
-        Task<bool> Authenticate(string email, string password);
-        Task<(int, string)> Register(string email, string password, string nickname, int tenantId, string token);
+        Task<(bool, bool)> Authenticate(string email, string password);
+        Task<(int, string)> Register(string email, string password, string name, int tenantId, string token);
+        Task<(int, string)> RegisterTenantAdmin(string email, string password, string name, int tenantId);
         Task Logout();
         Task<string?> GeneratePasswordResetTokenAsync(string email);
         Task<bool> ResetPasswordAsync(string email, string token, string newPassword);
+        Task<bool> ChangePassword(string email, string password);
+
         Task<bool> ConfirmEmail(string userId, string token);
 
         // JWT Methods

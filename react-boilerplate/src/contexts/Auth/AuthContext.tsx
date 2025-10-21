@@ -156,28 +156,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, [enqueueSnackbar, refreshTokens, logout]);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string): Promise<{ isNeededChangePassword: boolean }> => {
     try {
       setIsLoading(true);
       const response = await apiClient.post<LoginResponseDto>('/auth/login', { email, password });
       
+      if (response?.isNeededChangePassword) {
+        return { isNeededChangePassword: true };
+      }
+
       if (response?.tokens?.token && response?.tokens?.refreshToken) {
         const { token: accessToken, refreshToken: newRefreshToken } = response.tokens;
-        
         setToken(accessToken);
         setRefreshToken(newRefreshToken);
-        
         const userData = await decodeJWT(accessToken);
         if (userData) {
           setUser(userData);
-          
           localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken);
           localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
           localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
         }
-      } else {
-        throw new Error('Login failed - no tokens received');
+        return { isNeededChangePassword: false };
       }
+
+      throw new Error('Login failed - no tokens received');
     } catch (error) {
       console.error('Login failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro no login';

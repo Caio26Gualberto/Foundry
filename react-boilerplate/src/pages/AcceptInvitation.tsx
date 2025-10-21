@@ -23,25 +23,16 @@ import {
   Person,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-// import apiClient from '../services/apiClient';
 import { ROUTES } from '../utils/constants';
 import apiClient from '../services/apiClient';
-
-interface AcceptInvitationData {
-  token: string;
-  email: string;
-  tenant: string;
-  tenantId: string;
-  name: string;
-  password: string;
-  confirmPassword: string;
-}
+import type { AcceptInvitationData } from '../types/Users';
+import { translate } from '../i18n';
 
 export const AcceptInvitation: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  
+
   const [formData, setFormData] = useState<AcceptInvitationData>({
     token: searchParams.get('token') || '',
     email: searchParams.get('email') || '',
@@ -51,7 +42,7 @@ export const AcceptInvitation: React.FC = () => {
     password: '',
     confirmPassword: '',
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -64,14 +55,14 @@ export const AcceptInvitation: React.FC = () => {
         setTokenValid(false);
         return;
       }
-      
+
       try {
         setLoading(true);
         const isValid = await apiClient.post<boolean>('/auth/validate-invitation-token', {
           token: formData.token,
           email: formData.email
         });
-        
+
         setTokenValid(isValid);
       } catch (error) {
         console.error('Error validating token:', error);
@@ -81,7 +72,7 @@ export const AcceptInvitation: React.FC = () => {
         setLoading(false);
       }
     };
-    
+
     validateTokenOnMount();
   }, [formData.token, formData.email, formData.tenant, formData.tenantId, enqueueSnackbar]);
 
@@ -111,7 +102,7 @@ export const AcceptInvitation: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setLoading(true);
@@ -128,10 +119,10 @@ export const AcceptInvitation: React.FC = () => {
         enqueueSnackbar('Erro ao aceitar convite', { variant: 'error' });
         return;
       }
-      enqueueSnackbar('Convite aceito com sucesso! Redirecionando...', { 
-        variant: 'success' 
+      enqueueSnackbar('Convite aceito com sucesso! Redirecionando...', {
+        variant: 'success'
       });
-      
+
       setTimeout(() => {
         navigate(ROUTES.LOGIN);
       }, 2000);
@@ -151,7 +142,7 @@ export const AcceptInvitation: React.FC = () => {
       ...prev,
       [field]: e.target.value
     }));
-    
+
     // Limpar erro do campo quando usuário começar a digitar
     if (errors[field]) {
       setErrors(prev => ({
@@ -201,10 +192,10 @@ export const AcceptInvitation: React.FC = () => {
               }}
             >
               <Typography variant="h4" color="error" gutterBottom>
-                Convite Inválido
+                {translate('acceptInvitation.errors.invite')}
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                O link do convite é inválido ou expirou. Entre em contato com o administrador para solicitar um novo convite.
+                {translate('acceptInvitation.errors.description')}
               </Typography>
               <Button
                 variant="contained"
@@ -216,7 +207,7 @@ export const AcceptInvitation: React.FC = () => {
                   },
                 }}
               >
-                Ir para Login
+                {translate('acceptInvitation.login')}
               </Button>
             </Paper>
           </Fade>
@@ -257,13 +248,13 @@ export const AcceptInvitation: React.FC = () => {
                 }}
               />
               <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
-                Bem-vindo!
+                {translate('acceptInvitation.title')}
               </Typography>
               <Typography variant="h6" gutterBottom sx={{ color: '#4a5568', mb: 2 }}>
-                A {formData.tenant} te dá boas vindas
+                {translate('acceptInvitation.subtitle', { tenantName: formData.tenant })}
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Complete seu cadastro para acessar a plataforma
+                {translate('acceptInvitation.description')}
               </Typography>
             </Box>
 
@@ -271,7 +262,7 @@ export const AcceptInvitation: React.FC = () => {
               <Box display="flex" alignItems="center" gap={1}>
                 <Email fontSize="small" />
                 <Typography variant="body2">
-                  Convite para: <strong>{formData.email}</strong>
+                  {translate('acceptInvitation.invite', { email: formData.email })}
                 </Typography>
               </Box>
             </Alert>
@@ -279,7 +270,7 @@ export const AcceptInvitation: React.FC = () => {
             <Box component="form" onSubmit={handleSubmit}>
               <TextField
                 fullWidth
-                label="Nome Completo"
+                label={translate('acceptInvitation.fields.name')}
                 value={formData.name}
                 onChange={handleInputChange('name')}
                 error={!!errors.name}
@@ -297,7 +288,7 @@ export const AcceptInvitation: React.FC = () => {
 
               <TextField
                 fullWidth
-                label="Senha"
+                label={translate('acceptInvitation.fields.password')}
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={handleInputChange('password')}
@@ -326,7 +317,7 @@ export const AcceptInvitation: React.FC = () => {
 
               <TextField
                 fullWidth
-                label="Confirmar Senha"
+                label={translate('acceptInvitation.fields.confirmPassword')}
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={formData.confirmPassword}
                 onChange={handleInputChange('confirmPassword')}
@@ -379,10 +370,10 @@ export const AcceptInvitation: React.FC = () => {
                 {loading ? (
                   <Box display="flex" alignItems="center" gap={2}>
                     <CircularProgress size={20} color="inherit" />
-                    Processando...
+                    {translate('acceptInvitation.processing')}
                   </Box>
                 ) : (
-                  'Aceitar Convite'
+                  translate('acceptInvitation.accept')
                 )}
               </Button>
 
@@ -392,7 +383,7 @@ export const AcceptInvitation: React.FC = () => {
                   onClick={() => navigate(ROUTES.LOGIN)}
                   sx={{ color: 'text.secondary' }}
                 >
-                  Já tem uma conta? Fazer login
+                  {translate('acceptInvitation.alreadyHaveAccount')}
                 </Button>
               </Box>
             </Box>

@@ -11,6 +11,7 @@ import { ROUTES } from "../utils/constants";
 import TenantSettings from "../pages/TenantSettings";
 import Users from "../pages/Users";
 import AcceptInvitation from "../pages/AcceptInvitation";
+import ChangePassword from "../pages/ChangePassword";
 
 export const AppRouter: React.FC = () => {
   const { user, token, isLoading } = useAuth();
@@ -47,6 +48,12 @@ export const AppRouter: React.FC = () => {
                 <Login />
               )
             }
+          />
+
+          {/* Change Password Route */}
+          <Route
+            path={ROUTES.CHANGE_PASSWORD}
+            element={<ChangePassword />}
           />
 
           {/* Accept Invitation Route */}

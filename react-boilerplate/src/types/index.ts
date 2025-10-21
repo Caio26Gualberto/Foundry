@@ -12,7 +12,7 @@ export interface AuthContextType {
   token: string | null;
   refreshToken: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ isNeededChangePassword: boolean }>;
   logout: () => void;
   selectTenant: (tenantId: string) => Promise<void>;
   refreshTokens: () => Promise<boolean>;
@@ -27,6 +27,7 @@ export interface TokensDto {
 
 export interface LoginResponseDto {
   tokens: TokensDto | null;
+  isNeededChangePassword: boolean;
 }
 
 export interface BoilerplateResponse<T> {

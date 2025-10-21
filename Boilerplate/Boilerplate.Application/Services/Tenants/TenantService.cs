@@ -34,7 +34,7 @@ namespace Boilerplate.Application.Services.Tenants
             _currentUserContext = currentUserContext;
         }
 
-        public async Task<int> Create(string name, Address address)
+        public async Task<int> Create(string name, Address address, RegisterInputDto registerDto)
         {
             Tenant tenant = new Tenant
             {
@@ -43,6 +43,8 @@ namespace Boilerplate.Application.Services.Tenants
             };
             
             await _repository.AddAsync(tenant);
+
+            await _authenticateService.RegisterTenantAdmin(registerDto.Email, registerDto.Password, registerDto.Nickname, tenant.Id);
             return tenant.Id;
         }
 
@@ -68,6 +70,7 @@ namespace Boilerplate.Application.Services.Tenants
                 {
                     Id = x.Id,
                     Name = x.Name,
+                    Email = x.Email
                 }).ToList(),
             }).ToList();        
         }

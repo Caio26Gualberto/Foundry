@@ -18,6 +18,22 @@
             }
         },
         "tenantModal": {
+            "steps": {
+                "tenant": "Tenant",
+                "user": "Usuário"
+            },
+            "secondStep": {
+                "title": "Dados do usuário administrador",
+                "name": "Nome",
+                "email": "Email",
+                "password": "Senha gerada",
+                "generatePassword": "Gerar senha",
+                "helpText": "Clique em 'Gerar senha' para criar uma senha forte."
+            },
+            "datashow": {
+                "title": "Tenant criado",
+                "subtitle": "Guarde as credenciais do usuário administrador"
+            },
             "createTenant": "Criar Novo Tenant",
             "editTenant": "Editar Tenant",
             "infoTenant": "Informações do Tenant",
@@ -118,6 +134,44 @@
             }
         }
     },
+    "login": {
+        "title": "Faça login para continuar",
+        "rights": "© 2024 Boilerplate. Todos os direitos reservados.",
+        "fields": {
+            "email": "Email",
+            "password": "Senha"
+        }
+    },
+    "changePassword": {
+        "title": "Definir nova senha",
+        "description": "Por favor, defina sua nova senha para continuar.",
+        "save": "Salvar nova senha",
+        "backToLogin": "Voltar ao login",
+        "fields": {
+            "email": "Email",
+            "password": "Senha",
+            "confirmPassword": "Confirmar nova senha"
+        }
+    },
+    "acceptInvitation": {
+        "title": "Bem-vindo!",
+        "subtitle": "A {{tenantName}} te dá boas vindas",
+        "description": "Complete seu cadastro para acessar a plataforma",
+        "invite": "Convite para: {{email}}",
+        "processing": "Processando...",
+        "alreadyHaveAccount": "Já tem uma conta?",
+        "login": "Ir para Login",
+        "errors": {
+            "invite": "Convite inválido ou expirado",
+            "description": "O link do convite é inválido ou expirou. Entre em contato com o administrador para solicitar um novo convite."
+        },
+        "accept": "Aceitar Convite",
+        "fields": {
+            "name": "Nome Completo",
+            "password": "Senha",
+            "confirmPassword": "Confirmar Senha"
+        }
+    },
     "dataGrid": {
         "actionsColumn": "Ações",
         "paginationRowsPerPage": "Linhas por página",
@@ -131,6 +185,10 @@
         "edit": "Editar",
         "delete": "Excluir",
         "save": "Salvar",
-        "confirm": "Confirmar"
+        "confirm": "Confirmar",
+        "close": "Fechar",
+        "enter": "Entrar",
+        "back": "Voltar",
+        "next": "Próximo"
     }
 }

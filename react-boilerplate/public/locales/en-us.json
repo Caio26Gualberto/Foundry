@@ -18,6 +18,22 @@
             }
         },
         "tenantModal": {
+            "steps": {
+                "tenant": "Tenant",
+                "user": "User"
+            },
+            "secondStep": {
+                "title": "Administrator user data",
+                "name": "Name",
+                "email": "Email",
+                "password": "Generated password",
+                "generatePassword": "Generate password",
+                "helpText": "Click on 'Generate password' to create a strong password."
+            },
+            "datashow": {
+                "title": "Tenant created",
+                "subtitle": "Save the administrator user credentials"
+            },
             "createTenant": "Create New Tenant",
             "editTenant": "Edit Tenant",
             "infoTenant": "Tenant Information",
@@ -118,6 +134,44 @@
             }
         }
     },
+    "login": {
+        "title": "Sign in to continue",
+        "rights": "© 2024 Boilerplate. All rights reserved.",
+        "fields": {
+            "email": "Email",
+            "password": "Password"
+        }
+    },
+    "changePassword": {
+        "title": "Set a new password",
+        "description": "Please set your new password to continue.",
+        "save": "Save new password",
+        "backToLogin": "Back to login",
+        "fields": {
+            "email": "Email",
+            "password": "Password",
+            "confirmPassword": "Confirm new password"
+        }
+    },
+    "acceptInvitation": {
+        "title": "Welcome!",
+        "subtitle": "{{tenantName}} welcomes you",
+        "description": "Complete your registration to access the platform",
+        "invite": "Invitation for: {{email}}",
+        "processing": "Processing...",
+        "alreadyHaveAccount": "Already have an account?",
+        "login": "Go to Login",
+        "errors": {
+            "invite": "Invalid or expired invitation",
+            "description": "The invitation link is invalid or has expired. Please contact the administrator to request a new invitation."
+        },
+        "accept": "Accept Invitation",
+        "fields": {
+            "name": "Full Name",
+            "password": "Password",
+            "confirmPassword": "Confirm Password"
+        }
+    },
     "dataGrid": {
         "actionsColumn": "Actions",
         "paginationRowsPerPage": "Rows per page",
@@ -131,6 +185,10 @@
         "edit": "Edit",
         "delete": "Delete",
         "save": "Save",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "close": "Close",
+        "enter": "Enter",
+        "back": "Back",
+        "next": "Next"
     }
 }

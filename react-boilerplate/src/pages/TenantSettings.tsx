@@ -26,6 +26,8 @@ import BoilerplateDataGrid from "../components/common/BoilerplateDataGrid";
 import InviteUserModal from "../components/users/InviteUserModal/InviteUserModal";
 import { useConfirmation } from "../contexts/confirmationContext/ConfirmationProvider";
 import { translate } from "../i18n";
+import apiClient from "../services/apiClient";
+import type { InviteData } from "../types/Users";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -49,15 +51,6 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-interface InviteData {
-  id: string;
-  email: string;
-  status: 'pending' | 'accepted' | 'expired' | 'cancelled';
-  sentAt: string;
-  expiresAt: string;
-  acceptedAt?: string;
-}
-
 export const TenantSettings: React.FC = () => {
   const { user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
@@ -77,25 +70,7 @@ export const TenantSettings: React.FC = () => {
   const fetchInvites = async () => {
     try {
       setLoading(true);
-      // TODO: Implementar chamada real da API
-      // const invitesData = await apiClient.get<InviteData[]>("/tenant/invites");
-      const invitesData: InviteData[] = [
-        {
-          id: "1",
-          email: "john.doe@example.com",
-          status: "pending",
-          sentAt: "2023-01-01T00:00:00Z",
-          expiresAt: "2023-01-31T23:59:59Z",
-        },
-        {
-          id: "2",
-          email: "jane.smith@example.com",
-          status: "accepted",
-          sentAt: "2023-01-02T00:00:00Z",
-          expiresAt: "2023-01-31T23:59:59Z",
-          acceptedAt: "2023-01-02T12:34:56Z",
-        },
-      ]
+      const invitesData = await apiClient.get<InviteData[]>("/user/GetInvites");
       setInvites(invitesData);
       setError("");
     } catch (err) {
@@ -206,20 +181,20 @@ export const TenantSettings: React.FC = () => {
     },
   ];
 
-  const inviteRows = invites.map((invite) => ({
+  const inviteRows = invites.map((invite: InviteData) => ({
     id: invite.id,
     email: invite.email,
     status: invite.status,
-    sentAt: invite.sentAt,
-    expiresAt: invite.expiresAt,
+    sentAt: invite.sendedAt,
+    expiresAt: invite.expirationTime,
   }));
 
   const getInviteStats = () => {
     const stats = {
       total: invites.length,
-      pending: invites.filter(i => i.status === 'pending').length,
-      accepted: invites.filter(i => i.status === 'accepted').length,
-      expired: invites.filter(i => i.status === 'expired').length,
+      pending: invites.filter(i => i.status.toLowerCase() === 'pending').length,
+      accepted: invites.filter(i => i.status.toLowerCase() === 'accepted').length,
+      expired: invites.filter(i => i.status.toLowerCase() === 'expired').length,
     };
     return stats;
   };

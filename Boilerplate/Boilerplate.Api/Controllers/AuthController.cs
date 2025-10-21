@@ -1,5 +1,6 @@
 ﻿using Boilerplate.Api.ApiResponse;
 using Boilerplate.Application.Dtos.Auth;
+using Boilerplate.Application.Dtos.Tenants;
 using Boilerplate.Application.DTOs.Auth;
 using Boilerplate.Application.Services.Auth;
 using Microsoft.AspNetCore.Authorization;
@@ -31,7 +32,8 @@ namespace Boilerplate.Api.Controllers
                     {
                         Token = resultLogin.Tokens.Token,
                         RefreshToken = resultLogin.Tokens.RefreshToken
-                    } : null
+                    } : null,
+                    IsNeededChangePassword = resultLogin.IsNeededChangePassword
                 }
             };
         }
@@ -120,6 +122,17 @@ namespace Boilerplate.Api.Controllers
                 Data = result.IsSuccess,
                 IsSuccess = result.IsSuccess,
                 Message = result.Message
+            });
+        }
+
+        [HttpPost("ChangePassword")]
+        public async Task<ActionResult<BoilerplateResponse<bool>>> ChangePassword(TenantChangePasswordDto request)
+        {
+            var result = await _authAppService.ChangePassword(request);
+            return Ok(new BoilerplateResponse<bool>
+            {
+                IsSuccess = result,
+                Data = result
             });
         }
 

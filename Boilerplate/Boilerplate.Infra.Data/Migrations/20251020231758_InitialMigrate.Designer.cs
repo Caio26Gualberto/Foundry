@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Boilerplate.Infra.Data.Migrations
 {
     [DbContext(typeof(BoilerplateDbContext))]
-    [Migration("20251014035928_InitialMigrate")]
+    [Migration("20251020231758_InitialMigrate")]
     partial class InitialMigrate
     {
         /// <inheritdoc />
@@ -269,6 +269,9 @@ namespace Boilerplate.Infra.Data.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsNeededChangePassword")
                         .HasColumnType("bit");
 
                     b.Property<bool>("LockoutEnabled")

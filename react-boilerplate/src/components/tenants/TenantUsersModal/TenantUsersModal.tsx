@@ -140,7 +140,7 @@ export const TenantUsersModal: React.FC<TenantUsersModalProps> = ({
       </DialogTitle>
 
       <DialogContent dividers>
-        <Box sx={{ height: 400 }}>
+        {users.length > 0 && <Box sx={{ height: 400 }}>
           <BoilerplateDataGrid
             title={translate("tenantSelection.usersGrid.selectUser")}
             rows={rows}
@@ -151,7 +151,7 @@ export const TenantUsersModal: React.FC<TenantUsersModalProps> = ({
             height={350}
             pageSize={10}
           />
-        </Box>
+        </Box>}
 
         {users.length === 0 && !loading && !error && (
           <Box sx={{ textAlign: "center", py: 4 }}>
@@ -163,7 +163,7 @@ export const TenantUsersModal: React.FC<TenantUsersModalProps> = ({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose}>Voltar</Button>
+        <Button onClick={onClose}>{translate("button.close")}</Button>
       </DialogActions>
     </Dialog>
   );

@@ -18,6 +18,22 @@
             }
         },
         "tenantModal": {
+            "steps": {
+                "tenant": "租户",
+                "user": "用户"
+            },
+            "secondStep": {
+                "title": "管理员用户信息",
+                "name": "姓名",
+                "email": "电子邮箱",
+                "password": "生成的密码",
+                "generatePassword": "生成密码",
+                "helpText": "点击 '生成密码' 生成一个强密码。"
+            },
+            "datashow": {
+                "title": "租户已创建",
+                "subtitle": "请保存管理员用户的凭证"
+            },
             "createTenant": "创建新租户",
             "editTenant": "编辑租户",
             "infoTenant": "租户信息",
@@ -118,6 +134,44 @@
             }
         }
     },
+    "login": {
+        "title": "登录以继续",
+        "rights": "© 2024 Boilerplate. 保留所有权利。",
+        "fields": {
+            "email": "电子邮箱",
+            "password": "密码"
+        }
+    },
+    "changePassword": {
+        "title": "Establecer nueva contraseña",
+        "description": "Por favor, establece tu nueva contraseña para continuar.",
+        "save": "Guardar nueva contraseña",
+        "backToLogin": "Volver al inicio de sesión",
+        "fields": {
+            "email": "Correo electrónico",
+            "password": "Contraseña",
+            "confirmPassword": "Confirmar nueva contraseña"
+        }
+    },
+    "acceptInvitation": {
+        "title": "欢迎！",
+        "subtitle": "{{tenantName}} 欢迎您",
+        "description": "完成注册以访问平台",
+        "invite": "邀请给：{{email}}",
+        "processing": "正在处理...",
+        "alreadyHaveAccount": "已经有账户？",
+        "login": "前往登录",
+        "errors": {
+            "invite": "邀请无效或已过期",
+            "description": "邀请链接无效或已过期。请联系管理员以请求新的邀请。"
+        },
+        "accept": "接受邀请",
+        "fields": {
+            "name": "全名",
+            "password": "密码",
+            "confirmPassword": "确认密码"
+        }
+    },
     "dataGrid": {
         "actionsColumn": "操作",
         "paginationRowsPerPage": "每页行数",
@@ -131,6 +185,10 @@
         "edit": "编辑",
         "delete": "删除",
         "save": "保存",
-        "confirm": "确认"
+        "confirm": "确认",
+        "close": "关闭",
+        "enter": "进入",
+        "back": "返回",
+        "next": "下一步"
     }
 }

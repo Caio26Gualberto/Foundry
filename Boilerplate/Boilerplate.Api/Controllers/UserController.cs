@@ -27,5 +27,16 @@ namespace Boilerplate.Api.Controllers
                 Data = users
             });
         }
+
+        [HttpGet("GetInvites")]
+        public async Task<ActionResult<BoilerplateResponse<List<UserInviteDto>>>> GetAllInvites()
+        {
+            var invites = await _userService.GetAllInvites();
+            return Ok(new BoilerplateResponse<List<UserInviteDto>>
+            {
+                IsSuccess = true,
+                Data = invites
+            });
+        }
     }
 }

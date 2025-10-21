@@ -1,4 +1,5 @@
 ﻿using Boilerplate.Application.Dtos.Auth;
+using Boilerplate.Application.Dtos.Tenants;
 using Boilerplate.Application.DTOs.Auth;
 using Boilerplate.Application.Interfaces;
 using Boilerplate.Application.Services.SignalR;
@@ -33,19 +34,20 @@ namespace Boilerplate.Application.Services.Auth
 
         public async Task<LoginResponseDto> Authenticate(string email, string password)
         {
-            var user = _userRepository.GetAll().Where(x => x.Email == email).FirstOrDefault();
+            var user = _userRepository.GetAll(x => x.Tenant).Where(x => x.Email == email).FirstOrDefault();
             if (user == null)
                 throw new Exception("Usuário não encontrado");
 
             var tenantId = user.TenantId;
 
-            var isAuthenticated = await _authService.Authenticate(email, password);
+            var (isAuthenticated, isNeededChangePassword) = await _authService.Authenticate(email, password);
 
             if (!isAuthenticated)
             {
                 return new LoginResponseDto
                 {
-                    Tokens = null
+                    Tokens = null,
+                    IsNeededChangePassword = isNeededChangePassword
                 };
             }
 
@@ -62,13 +64,17 @@ namespace Boilerplate.Application.Services.Auth
                 {
                     Token = accessToken,
                     RefreshToken = refreshToken
-                }
+                },
+                IsNeededChangePassword = isNeededChangePassword
             };
         }
 
+        public async Task<bool> ChangePassword(TenantChangePasswordDto input)
+            => await _authService.ChangePassword(input.Email, input.Password);
+
         public async Task<RegisterResponseDto> Register(RegisterInputDto input)
         {
-            var (userId, email) = await _authService.Register(input.Email, input.Password, input.Nickname, input.TenantId, input.Token);
+            var (userId, email) = await _authService.Register(input.Email, input.Password, input.Nickname, (int)input.TenantId!, input.Token);
 
             if (string.IsNullOrEmpty(email))
             {
@@ -146,7 +152,7 @@ namespace Boilerplate.Application.Services.Auth
             if (string.IsNullOrEmpty(email))
                 return EmptyTokens();
 
-            var user = _userRepository.GetAll().FirstOrDefault(x => x.Email == email);
+            var user = _userRepository.GetAll(x => x.Tenant).FirstOrDefault(x => x.Email == email);
             if (user == null)
                 return EmptyTokens();
 

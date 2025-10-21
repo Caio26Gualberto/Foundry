@@ -12,10 +12,14 @@ import {
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useAuth } from '../contexts/Auth';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../utils/constants';
+import { translate } from '../i18n';
 
 export const Login: React.FC = () => {
   const { login, isLoading } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -32,7 +36,10 @@ export const Login: React.FC = () => {
     }
 
     try {
-      await login(email, password);
+      const { isNeededChangePassword } = await login(email, password);
+      if (isNeededChangePassword) {
+        navigate(`${ROUTES.CHANGE_PASSWORD}?email=${encodeURIComponent(email)}`);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer login';
       setError(errorMessage);
@@ -59,7 +66,7 @@ export const Login: React.FC = () => {
                 Boilerplate
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Faça login para continuar
+                {translate('login.title')}
               </Typography>
             </Box>
 
@@ -75,7 +82,7 @@ export const Login: React.FC = () => {
                 required
                 fullWidth
                 id="email"
-                label="Email"
+                label={translate('login.fields.email')}
                 name="email"
                 autoComplete="email"
                 autoFocus
@@ -88,7 +95,7 @@ export const Login: React.FC = () => {
                 required
                 fullWidth
                 name="password"
-                label="Senha"
+                label={translate('login.fields.password')}
                 type="password"
                 id="password"
                 autoComplete="current-password"
@@ -106,7 +113,7 @@ export const Login: React.FC = () => {
                 {isLoading ? (
                   <CircularProgress size={24} color="inherit" />
                 ) : (
-                  'Entrar'
+                  translate('button.enter')
                 )}
               </Button>
             </Box>
@@ -114,7 +121,7 @@ export const Login: React.FC = () => {
         </Card>
 
         <Typography variant="body2" color="text.secondary" sx={{ mt: 4 }}>
-          © 2024 Boilerplate. Todos os direitos reservados.
+          {translate('login.rights')}
         </Typography>
       </Box>
     </Container>

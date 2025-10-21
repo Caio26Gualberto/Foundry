@@ -7,7 +7,7 @@ namespace Boilerplate.Application.Interfaces
     public interface ITenantService
     {
         Task<List<TenantDto>> GetAllTenants();
-        Task<int> Create(string name, Address address);
+        Task<int> Create(string name, Address address, RegisterInputDto registerDto);
         Task<bool> Update(string name, Address address);
         Task<bool> Delete();
         Task<bool> InviteUserToTenantAsync(int tenantId, string userEmail);
