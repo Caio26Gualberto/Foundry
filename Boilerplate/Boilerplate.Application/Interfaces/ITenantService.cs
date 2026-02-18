@@ -8,7 +8,7 @@ namespace Boilerplate.Application.Interfaces
     {
         Task<List<TenantDto>> GetAllTenants();
         Task<int> Create(string name, Address address, RegisterInputDto registerDto);
-        Task<bool> Update(string name, Address address);
+        Task<bool> Update(int id, string name, Address address);
         Task<bool> Delete();
         Task<bool> InviteUserToTenantAsync(int tenantId, string userEmail);
         Task<TokensDto> ImpersonateTenantByUser(int userId, int tenantId);

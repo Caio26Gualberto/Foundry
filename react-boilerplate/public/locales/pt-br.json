@@ -1,4 +1,11 @@
 {
+    "notifications": {
+        "title": "Notificações",
+        "clearAll": "Limpar",
+        "noNotifications": "Nenhuma notificação",
+        "markAsRead": "Marcar como lida",
+        "timeOfNotification": "agora"
+    },
     "tenantSelection": {
         "title": "Gerenciamento de Tenants",
         "description": "Olá, {{userName}}! Selecione um tenant para personificar ou gerencie os tenants existentes.",
@@ -131,12 +138,39 @@
                     "accepted": "Aceito",
                     "expired": "Expirado"
                 }
+            },
+            "systemNotifications": {
+                "tabTitle": "Avisos do Sistema",
+                "subtitle": "Notificações Enviadas",
+                "gridTitle": "Histórico de Notificações",
+                "createButton": "Nova Notificação",
+                "createSuccess": "Notificação criada com sucesso!",
+                "createError": "Erro ao criar notificação",
+                "columns": {
+                    "title": "Título",
+                    "content": "Conteúdo",
+                    "usersCount": "Destinatários",
+                    "createdAt": "Criado em"
+                },
+                "errors": {
+                    "titleRequired": "Título é obrigatório",
+                    "contentRequired": "Conteúdo é obrigatório"
+                },
+                "createModal": {
+                    "title": "Criar Notificação",
+                    "titleField": "Título",
+                    "contentField": "Conteúdo",
+                    "usersField": "Usuários",
+                    "usersHint": "Deixe vazio para enviar para todos os usuários",
+                    "selectAll": "Selecionar todos",
+                    "deselectAll": "Desmarcar todos"
+                }
             }
         }
     },
     "login": {
         "title": "Faça login para continuar",
-        "rights": "© 2024 Boilerplate. Todos os direitos reservados.",
+        "rights": " 2026 Boilerplate. Todos os direitos reservados.",
         "fields": {
             "email": "Email",
             "password": "Senha"

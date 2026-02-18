@@ -29,10 +29,10 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
-        [HttpPut]
-        public async Task<ActionResult<BoilerplateResponse<bool>>> UpdateTenant(TenantCreateOrUpdateDto input)
+        [HttpPatch("{id}")]
+        public async Task<ActionResult<BoilerplateResponse<bool>>> UpdateTenant(int id, TenantCreateOrUpdateDto input)
         {
-            await _tenantService.Update(input.Name, input.Address);
+            await _tenantService.Update(id, input.Name, input.Address);
             return NoContent();
         }
 

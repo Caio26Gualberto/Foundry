@@ -8,7 +8,7 @@ export const useSignalR = () => {
   useEffect(() => {
     if (connection) return;
 
-    const token = localStorage.getItem("auth_token");
+    const token = localStorage.getItem("Boilerplate_token");
 
     const newConnection = new HubConnectionBuilder()
       .withUrl("https://localhost:7265/hubs/systemNotification", {
@@ -42,10 +42,6 @@ export const useSignalR = () => {
     connection.onclose(() => {
       console.log("⚠️ Connection closed");
       setIsConnected(false);
-    });
-
-    connection.on("NotificationsUpdated", () => {
-      console.log("🔔 Notifications updated!");
     });
 
     return () => {

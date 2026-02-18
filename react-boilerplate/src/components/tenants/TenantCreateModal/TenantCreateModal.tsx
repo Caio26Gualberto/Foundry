@@ -96,7 +96,7 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
           confirmPassword: '',
           token: '',
           tenant: '',
-          tenantId: '',
+          tenantId: editTenant.id,
         },
       });
     } else {
@@ -259,7 +259,8 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
       if (!validateForm()) return;
       setLoading(true);
       try {
-        const tenant = await apiClient.put<Tenant>(`/tenant`, formData);
+        console.log(formData);
+        const tenant = await apiClient.patch<Tenant>(`/tenant/${formData.registerInput.tenantId}`, formData);
         enqueueSnackbar('Tenant atualizado com sucesso!', { variant: 'success' });
         onSuccess(tenant);
         handleClose();

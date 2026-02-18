@@ -17,7 +17,9 @@ import {
   PersonAdd,
   CheckCircle,
   Cancel,
-  Schedule
+  Schedule,
+  Notifications,
+  Add
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import type { GridColDef, GridRowId } from "@mui/x-data-grid";
@@ -28,6 +30,8 @@ import { useConfirmation } from "../contexts/confirmationContext/ConfirmationPro
 import { translate } from "../i18n";
 import apiClient from "../services/apiClient";
 import type { InviteData } from "../types/Users";
+import type { TenantNotificationDto } from "../types/systemNotifications";
+import CreateNotificationModal from "../components/notifications/CreateNotificationModal/CreateNotificationModal";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -60,10 +64,17 @@ export const TenantSettings: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [notifications, setNotifications] = useState<TenantNotificationDto[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsError, setNotificationsError] = useState("");
+  const [createNotificationModalOpen, setCreateNotificationModalOpen] = useState(false);
 
   useEffect(() => {
     if (tabValue === 1) {
       fetchInvites();
+    }
+    if (tabValue === 2) {
+      fetchNotifications();
     }
   }, [tabValue]);
 
@@ -94,6 +105,30 @@ export const TenantSettings: React.FC = () => {
   const handleInviteSuccess = () => {
     fetchInvites();
     setInviteModalOpen(false);
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      setNotificationsLoading(true);
+      const data = await apiClient.get<TenantNotificationDto[]>("/systemNotification/tenant");
+      setNotifications(data);
+      setNotificationsError("");
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+      const errorMessage = err instanceof Error ? err.message : "Erro ao carregar notificações";
+      setNotificationsError(errorMessage);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  };
+
+  const handleCreateNotification = () => {
+    setCreateNotificationModalOpen(true);
+  };
+
+  const handleCreateNotificationSuccess = () => {
+    fetchNotifications();
+    setCreateNotificationModalOpen(false);
   };
 
   const handleCancelInvite = async (_id: GridRowId) => {
@@ -149,6 +184,34 @@ export const TenantSettings: React.FC = () => {
       />
     );
   };
+
+  const notificationColumns: GridColDef[] = [
+    {
+      field: "title",
+      headerName: translate("tenantSettings.tenantTabs.systemNotifications.columns.title"),
+      flex: 1,
+      minWidth: 200,
+    },
+    {
+      field: "content",
+      headerName: translate("tenantSettings.tenantTabs.systemNotifications.columns.content"),
+      flex: 2,
+      minWidth: 300,
+    },
+    {
+      field: "usersCount",
+      headerName: translate("tenantSettings.tenantTabs.systemNotifications.columns.usersCount"),
+      width: 150,
+    },
+    {
+      field: "createdAt",
+      headerName: translate("tenantSettings.tenantTabs.systemNotifications.columns.createdAt"),
+      width: 150,
+      valueFormatter: (value: any) => {
+        return new Date(value).toLocaleDateString('pt-BR');
+      },
+    },
+  ];
 
   const inviteColumns: GridColDef[] = [
     {
@@ -236,6 +299,11 @@ export const TenantSettings: React.FC = () => {
                 icon={<People />} 
                 iconPosition="start"
               />
+              <Tab 
+                label={translate("tenantSettings.tenantTabs.systemNotifications.tabTitle")} 
+                icon={<Notifications />} 
+                iconPosition="start"
+              />
             </Tabs>
           </Box>
 
@@ -320,12 +388,52 @@ export const TenantSettings: React.FC = () => {
               />
             </Box>
           </TabPanel>
+
+          <TabPanel value={tabValue} index={2}>
+            <Box sx={{ mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6">
+                  {translate("tenantSettings.tenantTabs.systemNotifications.subtitle")}
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={handleCreateNotification}
+                >
+                  {translate("tenantSettings.tenantTabs.systemNotifications.createButton")}
+                </Button>
+              </Box>
+
+              <BoilerplateDataGrid
+                title={translate("tenantSettings.tenantTabs.systemNotifications.gridTitle")}
+                rows={notifications.map((n) => ({
+                  id: n.id,
+                  title: n.title,
+                  content: n.content,
+                  createdAt: n.createdAt,
+                  usersCount: n.usersCount,
+                }))}
+                columns={notificationColumns}
+                loading={notificationsLoading}
+                error={notificationsError}
+                height={400}
+                pageSize={10}
+                elevation={0}
+              />
+            </Box>
+          </TabPanel>
         </Paper>
 
         <InviteUserModal
           open={inviteModalOpen}
           onClose={() => setInviteModalOpen(false)}
           onSuccess={handleInviteSuccess}
+        />
+
+        <CreateNotificationModal
+          open={createNotificationModalOpen}
+          onClose={() => setCreateNotificationModalOpen(false)}
+          onSuccess={handleCreateNotificationSuccess}
         />
       </Box>
     </Container>

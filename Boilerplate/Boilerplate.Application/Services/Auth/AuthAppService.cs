@@ -1,4 +1,5 @@
-﻿using Boilerplate.Application.Dtos.Auth;
+﻿using Boilerplate.Application.Common.SystemNotifications;
+using Boilerplate.Application.Dtos.Auth;
 using Boilerplate.Application.Dtos.Tenants;
 using Boilerplate.Application.DTOs.Auth;
 using Boilerplate.Application.Interfaces;
@@ -16,15 +17,12 @@ namespace Boilerplate.Application.Services.Auth
         private readonly IAuthenticateService _authService;
         private readonly IEmailService _emailService;
         private readonly IRepository<User> _userRepository;
-        private readonly IHubContext<SystemNotificationHub> _hubContext;
 
-        public AuthAppService(IAuthenticateService authenticateService, IEmailService emailService, IRepository<User> userRepository,
-            IHubContext<SystemNotificationHub> hubContext)
+        public AuthAppService(IAuthenticateService authenticateService, IEmailService emailService, IRepository<User> userRepository)
         {
             _authService = authenticateService;
             _emailService = emailService;
             _userRepository = userRepository;
-            _hubContext = hubContext;
         }
 
         public async Task<bool> ConfirmEmail(string userId, string token)
@@ -94,8 +92,6 @@ namespace Boilerplate.Application.Services.Auth
 
         public async Task<bool> Logout()
         {
-            await _hubContext.Clients.User("1")
-                .SendAsync("NotificationsUpdated");
             await _authService.Logout();
             return true;
         }

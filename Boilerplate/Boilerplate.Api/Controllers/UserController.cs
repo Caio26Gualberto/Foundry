@@ -38,5 +38,19 @@ namespace Boilerplate.Api.Controllers
                 Data = invites
             });
         }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<BoilerplateResponse<bool>>> Delete(int id)
+        {
+            await _userService.DeleteUser(id);
+            return NoContent();
+        }
+
+        [HttpPatch("{id}")]
+        public async Task<ActionResult<BoilerplateResponse<bool>>> Update(int id, UpdateUserDto input)
+        {
+            await _userService.UpdateUser(id, input);
+            return NoContent();
+        }
     }
 }

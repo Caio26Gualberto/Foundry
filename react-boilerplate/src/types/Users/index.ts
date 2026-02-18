@@ -1,8 +1,8 @@
 export interface UserDto {
-    id: string;
-    name: string;
-    email?: string;
-    roles?: string[];
+  id: string;
+  name: string;
+  email?: string;
+  roles?: string[];
 }
 
 export interface InviteData {

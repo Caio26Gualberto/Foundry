@@ -23,3 +23,7 @@ export const STORAGE_KEYS = {
   IMPERSONATED_TOKEN: 'Boilerplate_impersonated_token',
   USER: 'user_data',
 } as const;
+
+export const SystemNotificationsEvents = {
+  UpdateNotifications: "UpdateNotifications"
+} as const;

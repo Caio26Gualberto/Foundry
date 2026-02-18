@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   IconButton,
   Badge,
@@ -10,8 +10,6 @@ import {
   Button,
   Chip,
   Avatar,
-  ListItemIcon,
-  ListItemText,
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
@@ -24,18 +22,16 @@ import {
   MarkEmailRead,
 } from '@mui/icons-material';
 import { useSignalR } from '../hooks/useSignalR';
+import type { SystemNotificationDto } from '../types/systemNotifications';
+import apiClient from '../services/apiClient';
+import { SystemNotificationsEvents } from '../utils/constants';
+import { useTranslation } from 'react-i18next';
 
 export const NotificationCenter: React.FC = () => {
   const { connection } = useSignalR();
+  const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [notifications, setNotifications] = useState([{
-    id: '',
-    title: '',
-    message: '',
-    type: '',
-    timestamp: new Date(),
-    isRead: false,
-  }]);
+  const [notifications, setNotifications] = useState<SystemNotificationDto[]>([]);
   const open = Boolean(anchorEl);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -46,7 +42,7 @@ export const NotificationCenter: React.FC = () => {
     setAnchorEl(null);
   };
 
-  const handleMarkAsRead = async (notificationId: string, event: React.MouseEvent) => {
+  const handleMarkAsRead = async (notificationId: number, event: React.MouseEvent) => {
     event.stopPropagation();
     if (!connection) return;
     await connection.invoke('MarkNotificationAsRead', notificationId);
@@ -91,32 +87,45 @@ export const NotificationCenter: React.FC = () => {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return 'Agora';
+    if (minutes < 1) return t('notifications.timeOfNotification');
     if (minutes < 60) return `${minutes}m`;
     if (hours < 24) return `${hours}h`;
     return `${days}d`;
   };
+
+  const fetchNotifications = async () => {
+    const notifications = await apiClient.get<SystemNotificationDto[]>('/systemNotification');
+    setNotifications(notifications);
+  };
+
+  useEffect(() => {
+    if (!connection) return;
+
+    const handleUpdate = () => {
+      fetchNotifications();
+    };
+
+    connection.on(SystemNotificationsEvents.UpdateNotifications, handleUpdate);
+
+    return () => {
+      connection.off(SystemNotificationsEvents.UpdateNotifications, handleUpdate);
+    };
+  }, [connection]);
 
   return (
     <>
       <IconButton
         color="inherit"
         onClick={handleClick}
-        sx={{
-          position: 'relative',
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            backgroundColor: 'error.main',
-          },
-        }}
       >
-        <Badge badgeContent={0} color="error" max={99}>
+        <Badge
+          badgeContent={notifications.length}
+          color="error"
+          max={9}
+          variant="standard"
+          showZero={false} 
+          invisible={notifications.length === 0}
+        >
           <NotificationsIcon />
         </Badge>
       </IconButton>
@@ -139,22 +148,16 @@ export const NotificationCenter: React.FC = () => {
         <Box sx={{ p: 2, pb: 1 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6">
-              Notificações
+              {t('notifications.title')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Chip
-                size="small"
-                label="Online"
-                color="success"
-                variant="outlined"
-              />
               {notifications.length > 0 && (
                 <Button
                   size="small"
                   onClick={handleClearAll}
                   startIcon={<Clear />}
                 >
-                  Limpar
+                  {t('notifications.clearAll')}
                 </Button>
               )}
             </Box>
@@ -169,7 +172,7 @@ export const NotificationCenter: React.FC = () => {
             <Box sx={{ p: 3, textAlign: 'center' }}>
               <NotificationsNone sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
               <Typography variant="body2" color="text.secondary">
-                Nenhuma notificação
+                {t('notifications.noNotifications')}
               </Typography>
             </Box>
           ) : (
@@ -177,73 +180,90 @@ export const NotificationCenter: React.FC = () => {
               <MenuItem
                 key={notification.id}
                 sx={{
-                  py: 1.5,
+                  py: 2,
                   px: 2,
-                  borderLeft: `4px solid ${getNotificationColor(notification.type)}`,
+                  // borderLeft: `4px solid ${getNotificationColor(notification.type)}`,
                   backgroundColor: notification.isRead ? 'transparent' : 'action.hover',
                   '&:hover': {
                     backgroundColor: 'action.selected',
                   },
+                  display: 'block',
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <Avatar
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {/* Header with icon, title and time */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Avatar
+                      sx={{
+                        width: 20,
+                        height: 20,
+                        bgcolor: 'transparent',
+                        '& .MuiSvgIcon-root': {
+                          fontSize: '1rem',
+                        },
+                      }}
+                    >
+                      {/* {getNotificationIcon(notification.type)} */}
+                    </Avatar>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        fontWeight: notification.isRead ? 400 : 600,
+                        flex: 1,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {notification.title}
+                    </Typography>
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary"
+                      sx={{ 
+                        whiteSpace: 'nowrap',
+                        fontSize: '0.7rem',
+                      }}
+                    >
+                      {formatTime(notification.createdAt)}
+                    </Typography>
+                  </Box>
+
+                  {/* Message */}
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
                     sx={{
-                      width: 32,
-                      height: 32,
-                      bgcolor: getNotificationColor(notification.type),
+                      pl: 3.5,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      lineHeight: 1.5,
+                      fontSize: '0.875rem',
                     }}
                   >
-                    {getNotificationIcon(notification.type)}
-                  </Avatar>
-                </ListItemIcon>
+                    {notification.content}
+                  </Typography>
 
-                <ListItemText
-                  primary={
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Typography
-                        variant="subtitle2"
-                        sx={{
-                          fontWeight: notification.isRead ? 400 : 600,
-                          flex: 1,
-                          mr: 1,
+                  {/* Mark as read button */}
+                  {!notification.isRead && (
+                    <Box sx={{ pl: 3.5 }}>
+                      <Button
+                        size="small"
+                        startIcon={<MarkEmailRead sx={{ fontSize: '0.9rem' }} />}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => handleMarkAsRead(notification.id, e)}
+                        sx={{ 
+                          mt: 0.5, 
+                          fontSize: '0.75rem',
+                          textTransform: 'none',
+                          py: 0.5,
                         }}
                       >
-                        {notification.title}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {formatTime(notification.timestamp)}
-                      </Typography>
+                        {t('notifications.markAsRead')}
+                      </Button>
                     </Box>
-                  }
-                  secondary={
-                    <Box>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          mt: 0.5,
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {notification.message}
-                      </Typography>
-                      {!notification.isRead && (
-                        <Button
-                          size="small"
-                          startIcon={<MarkEmailRead />}
-                          onClick={(e) => handleMarkAsRead(notification.id, e)}
-                          sx={{ mt: 1, fontSize: '0.75rem' }}
-                        >
-                          Marcar como lida
-                        </Button>
-                      )}
-                    </Box>
-                  }
-                />
+                  )}
+                </Box>
               </MenuItem>
             ))
           )}

@@ -1,4 +1,11 @@
 {
+    "notifications": {
+        "title": "Notifications",
+        "clearAll": "Clear all",
+        "noNotifications": "No notifications",
+        "markAsRead": "Mark as read",
+        "timeOfNotification": "now"
+    },
     "tenantSelection": {
         "title": "Tenant Management",
         "description": "Hello, {{userName}}! Select a tenant to impersonate or manage existing tenants.",
@@ -131,12 +138,39 @@
                     "accepted": "Accepted",
                     "expired": "Expired"
                 }
+            },
+            "systemNotifications": {
+                "tabTitle": "System Notifications",
+                "subtitle": "Sent Notifications",
+                "gridTitle": "Notification History",
+                "createButton": "New Notification",
+                "createSuccess": "Notification created successfully!",
+                "createError": "Error creating notification",
+                "columns": {
+                    "title": "Title",
+                    "content": "Content",
+                    "usersCount": "Recipients",
+                    "createdAt": "Created At"
+                },
+                "errors": {
+                    "titleRequired": "Title is required",
+                    "contentRequired": "Content is required"
+                },
+                "createModal": {
+                    "title": "Create Notification",
+                    "titleField": "Title",
+                    "contentField": "Content",
+                    "usersField": "Users",
+                    "usersHint": "Leave empty to send to all users",
+                    "selectAll": "Select all",
+                    "deselectAll": "Deselect all"
+                }
             }
         }
     },
     "login": {
         "title": "Sign in to continue",
-        "rights": "© 2024 Boilerplate. All rights reserved.",
+        "rights": " 2026 Boilerplate. All rights reserved.",
         "fields": {
             "email": "Email",
             "password": "Password"

@@ -53,7 +53,7 @@ namespace Boilerplate.Application.Services.Email
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(_configuration["SMTP:FromEmail"] ?? "", _configuration["SMTP:FromName"] ?? "NewLevel"),
+                    From = new MailAddress(_configuration["SMTP:FromEmail"] ?? "", _configuration["SMTP:FromName"] ?? "Boilerplate"),
                     Subject = emailDto.Subject,
                     Body = emailDto.Body,
                     IsBodyHtml = emailDto.IsHtml
@@ -131,7 +131,7 @@ namespace Boilerplate.Application.Services.Email
             };
         }
 
-        public string BuildEmailTemplate(string title, string messageBody, string ctaText = null, string ctaLink = null)
+        public string BuildEmailTemplate(string title, string messageBody, string? ctaText = null, string? ctaLink = null)
         {
             var emailHtml = $@"
                 <html>

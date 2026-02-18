@@ -1,5 +1,4 @@
 ﻿using Boilerplate.Application.Dtos.Users;
-using Boilerplate.Domain.Entities;
 using Boilerplate.Domain.Models;
 
 namespace Boilerplate.Application.Dtos.Tenants

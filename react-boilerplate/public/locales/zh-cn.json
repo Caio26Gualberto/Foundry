@@ -1,4 +1,11 @@
 {
+    "notifications": {
+        "title": "通知",
+        "clearAll": "清除",
+        "noNotifications": "没有通知",
+        "markAsRead": "标记为已读",
+        "timeOfNotification": "现在"
+    },
     "tenantSelection": {
         "title": "租户管理",
         "description": "你好，{{userName}}！请选择一个租户进行模拟，或管理现有租户。",
@@ -131,12 +138,39 @@
                     "accepted": "已接受",
                     "expired": "已过期"
                 }
+            },
+            "systemNotifications": {
+                "tabTitle": "系统通知",
+                "subtitle": "已发送的通知",
+                "gridTitle": "通知历史",
+                "createButton": "新建通知",
+                "createSuccess": "通知创建成功！",
+                "createError": "创建通知时出错",
+                "columns": {
+                    "title": "标题",
+                    "content": "内容",
+                    "usersCount": "接收者",
+                    "createdAt": "创建时间"
+                },
+                "errors": {
+                    "titleRequired": "标题为必填项",
+                    "contentRequired": "内容为必填项"
+                },
+                "createModal": {
+                    "title": "创建通知",
+                    "titleField": "标题",
+                    "contentField": "内容",
+                    "usersField": "用户",
+                    "usersHint": "留空则发送给所有用户",
+                    "selectAll": "全选",
+                    "deselectAll": "取消全选"
+                }
             }
         }
     },
     "login": {
         "title": "登录以继续",
-        "rights": "© 2024 Boilerplate. 保留所有权利。",
+        "rights": " 2026 Boilerplate. ",
         "fields": {
             "email": "电子邮箱",
             "password": "密码"

@@ -19,5 +19,25 @@ namespace Boilerplate.Infra.Data.Identity.ApplicationUserService
 
             return await _userManager.GetRolesAsync(user);
         }
+
+        public async Task<bool> UpdateUserRoles(int userId, List<string> roles)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                throw new KeyNotFoundException("User not found");
+
+            var currentRoles = await _userManager.GetRolesAsync(user);
+
+            var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            if (!removeResult.Succeeded)
+                return false;
+
+            var addResult = await _userManager.AddToRolesAsync(user, roles);
+            if (!addResult.Succeeded)
+                return false;
+
+            return true;
+        }
+
     }
 }

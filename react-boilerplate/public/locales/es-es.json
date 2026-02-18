@@ -1,4 +1,11 @@
 {
+    "notifications": {
+        "title": "Notificaciones",
+        "clearAll": "Limpiar",
+        "noNotifications": "Ninguna notificación",
+        "markAsRead": "Marcar como leída",
+        "timeOfNotification": "ahora"
+    },
     "tenantSelection": {
         "title": "Gestión de Tenants",
         "description": "¡Hola, {{userName}}! Selecciona un tenant para personificar o gestiona los tenants existentes.",
@@ -131,12 +138,39 @@
                     "accepted": "Aceptado",
                     "expired": "Expirado"
                 }
+            },
+            "systemNotifications": {
+                "tabTitle": "Notificaciones del Sistema",
+                "subtitle": "Notificaciones Enviadas",
+                "gridTitle": "Historial de Notificaciones",
+                "createButton": "Nueva Notificación",
+                "createSuccess": "¡Notificación creada con éxito!",
+                "createError": "Error al crear notificación",
+                "columns": {
+                    "title": "Título",
+                    "content": "Contenido",
+                    "usersCount": "Destinatarios",
+                    "createdAt": "Creado el"
+                },
+                "errors": {
+                    "titleRequired": "El título es obligatorio",
+                    "contentRequired": "El contenido es obligatorio"
+                },
+                "createModal": {
+                    "title": "Crear Notificación",
+                    "titleField": "Título",
+                    "contentField": "Contenido",
+                    "usersField": "Usuarios",
+                    "usersHint": "Dejar vacío para enviar a todos los usuarios",
+                    "selectAll": "Seleccionar todos",
+                    "deselectAll": "Deseleccionar todos"
+                }
             }
         }
     },
     "login": {
         "title": "Inicia sesión para continuar",
-        "rights": "© 2024 Boilerplate. Todos los derechos reservados.",
+        "rights": " 2026 Boilerplate. Todos los derechos reservados.",
         "fields": {
             "email": "Correo electrónico",
             "password": "Contraseña"

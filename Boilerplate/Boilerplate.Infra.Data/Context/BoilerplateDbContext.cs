@@ -20,7 +20,7 @@ namespace Boilerplate.Infra.Data.Context
         }
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<TenantInvitation> TenantInvitations => Set<TenantInvitation>();
-        public new DbSet<User> DomainUsers => Set<User>();
+        public DbSet<User> DomainUsers => Set<User>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<SystemNotification> SystemNotifications => Set<SystemNotification>();
         public DbSet<Entity1> Entity1s => Set<Entity1>();
@@ -118,6 +118,14 @@ namespace Boilerplate.Infra.Data.Context
             ApplyTenantId();
             ApplyAuditing();
             return base.SaveChanges();
+        }
+
+        public override async Task<int> SaveChangesAsync(
+            CancellationToken cancellationToken = default)
+        {
+            ApplyTenantId();
+            ApplyAuditing();
+            return await base.SaveChangesAsync(cancellationToken);
         }
 
         private void ApplyTenantId()

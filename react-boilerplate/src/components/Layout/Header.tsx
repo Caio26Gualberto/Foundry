@@ -72,7 +72,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onDesktopMenuClick,
           {/* Tenant Indicator */}
           {user?.tenantId ? (
             <Chip
-              label={`Tenant: ${user.tenantId}`}
+              label={`Tenant: ${user.tenantName}`}
               size="small"
               variant="outlined"
               color="primary"

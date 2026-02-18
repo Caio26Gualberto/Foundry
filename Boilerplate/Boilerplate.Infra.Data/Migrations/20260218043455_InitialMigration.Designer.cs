@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Boilerplate.Infra.Data.Migrations
 {
     [DbContext(typeof(BoilerplateDbContext))]
-    [Migration("20251020231758_InitialMigrate")]
-    partial class InitialMigrate
+    [Migration("20260218043455_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -94,6 +94,10 @@ namespace Boilerplate.Infra.Data.Migrations
 
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -498,6 +502,21 @@ namespace Boilerplate.Infra.Data.Migrations
                     b.ToTable("UserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("SystemNotificationUser", b =>
+                {
+                    b.Property<int>("SystemNotificationsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsersId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SystemNotificationsId", "UsersId");
+
+                    b.HasIndex("UsersId");
+
+                    b.ToTable("SystemNotificationUser");
+                });
+
             modelBuilder.Entity("Boilerplate.Domain.Entities.Entity1", b =>
                 {
                     b.HasOne("Boilerplate.Domain.Entities.Tenant", "Tenant")
@@ -639,6 +658,21 @@ namespace Boilerplate.Infra.Data.Migrations
                     b.HasOne("Boilerplate.Infra.Data.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SystemNotificationUser", b =>
+                {
+                    b.HasOne("Boilerplate.Domain.Entities.SystemNotification", null)
+                        .WithMany()
+                        .HasForeignKey("SystemNotificationsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Boilerplate.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

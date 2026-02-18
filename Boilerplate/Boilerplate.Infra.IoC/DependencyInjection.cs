@@ -5,6 +5,7 @@ using Boilerplate.Application.JobScheduler;
 using Boilerplate.Application.Services;
 using Boilerplate.Application.Services.Auth;
 using Boilerplate.Application.Services.Email;
+using Boilerplate.Application.Services.Notifications;
 using Boilerplate.Application.Services.Tenants;
 using Boilerplate.Application.Services.Users;
 using Boilerplate.Application.Utils.CurrentUserContext;
@@ -99,6 +100,7 @@ namespace Boilerplate.Infra.IoC
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ITenantService, TenantService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ISystemNotificationService, SystemNotificationService>();
             services.AddScoped<IApplicationUserService, ApplicationUserService>();
             services.AddScoped<ICurrentUserContext, CurrentUserContext>();
             services.AddScoped<ITokenDecoder, TokenDecoder>();

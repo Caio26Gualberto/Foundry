@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Boilerplate.Infra.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigrate : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -50,6 +50,7 @@ namespace Boilerplate.Infra.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsRead = table.Column<bool>(type: "bit", nullable: false),
                     CreatedBy = table.Column<int>(type: "int", nullable: true),
@@ -189,6 +190,30 @@ namespace Boilerplate.Infra.Data.Migrations
                         principalTable: "Tenants",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SystemNotificationUser",
+                columns: table => new
+                {
+                    SystemNotificationsId = table.Column<int>(type: "int", nullable: false),
+                    UsersId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SystemNotificationUser", x => new { x.SystemNotificationsId, x.UsersId });
+                    table.ForeignKey(
+                        name: "FK_SystemNotificationUser_DomainUsers_UsersId",
+                        column: x => x.UsersId,
+                        principalTable: "DomainUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_SystemNotificationUser_SystemNotifications_SystemNotificationsId",
+                        column: x => x.SystemNotificationsId,
+                        principalTable: "SystemNotifications",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -341,6 +366,11 @@ namespace Boilerplate.Infra.Data.Migrations
                 filter: "[NormalizedName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SystemNotificationUser_UsersId",
+                table: "SystemNotificationUser",
+                column: "UsersId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserClaims_UserId",
                 table: "UserClaims",
                 column: "UserId");
@@ -399,7 +429,7 @@ namespace Boilerplate.Infra.Data.Migrations
                 name: "RoleClaims");
 
             migrationBuilder.DropTable(
-                name: "SystemNotifications");
+                name: "SystemNotificationUser");
 
             migrationBuilder.DropTable(
                 name: "TenantInvitations");
@@ -415,6 +445,9 @@ namespace Boilerplate.Infra.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "UserTokens");
+
+            migrationBuilder.DropTable(
+                name: "SystemNotifications");
 
             migrationBuilder.DropTable(
                 name: "Roles");

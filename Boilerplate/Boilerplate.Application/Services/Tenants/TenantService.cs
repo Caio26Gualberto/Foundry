@@ -122,9 +122,10 @@ namespace Boilerplate.Application.Services.Tenants
             return true;
         }
 
-        public async Task<bool> Update(string name, Address address)
+        public async Task<bool> Update(int id, string name, Address address)
         {
-            var tenant = await _repository.GetByIdAsync((int)_currentUserContext.TenantId!);
+            var tenantId = _currentUserContext.TenantId ?? id;
+            var tenant = await _repository.GetByIdAsync(tenantId);
             if (tenant == null)
                 throw new NullReferenceException("Tenant não encontrada para atualizar");
 

@@ -7,6 +7,7 @@ import type { UserDto } from "../types/Users";
 import { useAuth } from "../contexts/Auth";
 import BoilerplateDataGrid from "../components/common/BoilerplateDataGrid";
 import InviteUserModal from "../components/users/InviteUserModal/InviteUserModal";
+import EditUserModal from "../components/users/EditUserModal/EditUserModal";
 import { useConfirmation } from "../contexts/confirmationContext/ConfirmationProvider";
 import apiClient from "../services/apiClient";
 import { translate } from "../i18n";
@@ -19,6 +20,8 @@ export const Users: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -50,11 +53,15 @@ export const Users: React.FC = () => {
   };
 
   const handleEditUser = (id: GridRowId) => {
-    // TODO: Implementar edição de usuário
-    console.log("Edit user:", id);
-    enqueueSnackbar("Funcionalidade de edição em desenvolvimento", {
-      variant: "info",
-    });
+    const userToEdit = users.find((u) => u.id === id) || null;
+    setSelectedUser(userToEdit);
+    setEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    fetchUsers();
+    setEditModalOpen(false);
+    setSelectedUser(null);
   };
 
   const handleDeleteUser = async (id: GridRowId) => {
@@ -167,6 +174,16 @@ export const Users: React.FC = () => {
           open={inviteModalOpen}
           onClose={() => setInviteModalOpen(false)}
           onSuccess={handleInviteSuccess}
+        />
+
+        <EditUserModal
+          open={editModalOpen}
+          user={selectedUser}
+          onClose={() => {
+            setEditModalOpen(false);
+            setSelectedUser(null);
+          }}
+          onSuccess={handleEditSuccess}
         />
       </Box>
     </Container>
