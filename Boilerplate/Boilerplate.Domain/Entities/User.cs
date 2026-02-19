@@ -6,6 +6,6 @@
         public Tenant? Tenant { get; set; }
         public string Name { get; set; }
         public string Email { get; set; }
-        public List<SystemNotification> SystemNotifications { get; set; } = new List<SystemNotification>();
+        public List<SystemNotificationUser> SystemNotificationUser { get; set; } = new List<SystemNotificationUser>();
     }
 }

@@ -12,6 +12,7 @@ export interface TenantNotificationDto {
     content: string;
     createdAt: Date;
     usersCount: number;
+    readCount: number;
 }
 
 export interface CreateNotificationDto {

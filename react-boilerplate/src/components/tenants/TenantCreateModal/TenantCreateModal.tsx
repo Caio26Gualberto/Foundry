@@ -260,7 +260,7 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
       setLoading(true);
       try {
         console.log(formData);
-        const tenant = await apiClient.patch<Tenant>(`/tenant/${formData.registerInput.tenantId}`, formData);
+        const tenant = await apiClient.patch<Tenant>(`/Tenant/${formData.registerInput.tenantId}`, formData);
         enqueueSnackbar('Tenant atualizado com sucesso!', { variant: 'success' });
         onSuccess(tenant);
         handleClose();
@@ -285,7 +285,7 @@ export const TenantCreateModal: React.FC<TenantCreateModalProps> = ({
 
     setLoading(true);
     try {
-      const tenant = await apiClient.post<Tenant>('/tenant', { ...formData, registerInput: { ...formData.registerInput, tenantId: null, nickname: formData.registerInput.name } });
+      const tenant = await apiClient.post<Tenant>('/Tenant', { ...formData, registerInput: { ...formData.registerInput, tenantId: null, nickname: formData.registerInput.name } });
       enqueueSnackbar('Tenant criado com sucesso!', { variant: 'success' });
       // Guarda tenant e abre confirmação para copiar email/senha
       setCreatedTenant(tenant);

@@ -4,7 +4,7 @@
     {
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
-        public bool IsRead { get; set; } = false;
-        public List<User> Users { get; set; } = new List<User>();
+        public int? TenantId { get; set; }
+        public List<SystemNotificationUser> SystemNotificationUser { get; set; } = new List<SystemNotificationUser>();
     }
 }

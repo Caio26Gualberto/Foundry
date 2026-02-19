@@ -44,13 +44,11 @@ export const NotificationCenter: React.FC = () => {
 
   const handleMarkAsRead = async (notificationId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    if (!connection) return;
-    await connection.invoke('MarkNotificationAsRead', notificationId);
+    await apiClient.patch<boolean>(`/SystemNotification/MarkAsRead/${notificationId}`, {isRead: true});
   };
 
-  const handleClearAll = () => {
-    if (!connection) return;
-    connection.invoke('ClearNotifications');
+  const handleClearAll = async () => {
+    await apiClient.post<boolean>('/SystemNotification/ClearAllMessages', {notificationIds: notifications.map(n => n.id)});
     handleClose();
   };
 
@@ -94,9 +92,17 @@ export const NotificationCenter: React.FC = () => {
   };
 
   const fetchNotifications = async () => {
-    const notifications = await apiClient.get<SystemNotificationDto[]>('/systemNotification');
-    setNotifications(notifications);
+    try {
+      const notifications = await apiClient.get<SystemNotificationDto[]>('/SystemNotification');
+      setNotifications(notifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
   };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
   useEffect(() => {
     if (!connection) return;
@@ -119,12 +125,12 @@ export const NotificationCenter: React.FC = () => {
         onClick={handleClick}
       >
         <Badge
-          badgeContent={notifications.length}
+          badgeContent={notifications.filter(n => !n.isRead).length}
           color="error"
           max={9}
           variant="standard"
           showZero={false} 
-          invisible={notifications.length === 0}
+          invisible={notifications.filter(n => !n.isRead).length === 0}
         >
           <NotificationsIcon />
         </Badge>

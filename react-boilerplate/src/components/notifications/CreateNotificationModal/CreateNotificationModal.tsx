@@ -54,7 +54,7 @@ export const CreateNotificationModal: React.FC<CreateNotificationModalProps> = (
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const usersData = await apiClient.get<UserDto[]>('/user');
+      const usersData = await apiClient.get<UserDto[]>('/User');
       setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -88,7 +88,7 @@ export const CreateNotificationModal: React.FC<CreateNotificationModalProps> = (
         content,
         userIds: selectedUsers,
       };
-      await apiClient.post('/systemNotification', payload);
+      await apiClient.post('/SystemNotification', payload);
       enqueueSnackbar(translate('tenantSettings.tenantTabs.systemNotifications.createSuccess'), { variant: 'success' });
       onSuccess?.();
       handleClose();

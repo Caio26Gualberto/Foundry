@@ -53,7 +53,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = useCallback(async (): Promise<void> => {
     try {
       if (token) {
-        await apiClient.get('/auth/logout');
+        await apiClient.get('/Auth/Logout');
       }
     } catch (error) {
       console.error('Logout API call failed:', error);
@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
 
-      const response = await apiClient.get<TokensDto>('/auth/refresh-token');
+      const response = await apiClient.get<TokensDto>('/Auth/RefreshToken');
       
       if (response) {
         const { token: newAccessToken, refreshToken: newRefreshToken } = response;
@@ -159,7 +159,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<{ isNeededChangePassword: boolean }> => {
     try {
       setIsLoading(true);
-      const response = await apiClient.post<LoginResponseDto>('/auth/login', { email, password });
+      const response = await apiClient.post<LoginResponseDto>('/Auth/Login', { email, password });
       
       if (response?.isNeededChangePassword) {
         return { isNeededChangePassword: true };
@@ -193,7 +193,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const selectTenant = async (tenantId: string): Promise<void> => {
     try {
       setIsLoading(true);
-      const response = await apiClient.post<TokensDto>('/impersonate', { tenantId });
+      const response = await apiClient.post<TokensDto>('/Impersonate', { tenantId });
       
       if (response?.token && response?.refreshToken) {
         const { token: accessToken, refreshToken: newRefreshToken } = response;

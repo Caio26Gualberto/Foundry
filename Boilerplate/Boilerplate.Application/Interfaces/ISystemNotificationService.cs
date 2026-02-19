@@ -6,5 +6,8 @@ namespace Boilerplate.Application.Interfaces
     {
         Task<List<SystemNotificationDto>> GetAllNotifications();
         Task<SystemNotificationDto> CreateSystemNotification(CreateSystemNotificationDto input);
+        Task<List<TenantNotificationDto>> GetNotificationByTenant();
+        Task<bool> MarkNotificationAsRead(int id, MarkAsReadDto input);
+        Task<bool> DeleteAllMessages(ClearAllMessagesDto input);
     }
 }

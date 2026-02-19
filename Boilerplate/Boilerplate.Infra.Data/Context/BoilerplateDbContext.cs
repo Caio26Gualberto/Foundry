@@ -23,6 +23,7 @@ namespace Boilerplate.Infra.Data.Context
         public DbSet<User> DomainUsers => Set<User>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<SystemNotification> SystemNotifications => Set<SystemNotification>();
+        public DbSet<SystemNotificationUser> SystemNotificationUser => Set<SystemNotificationUser>();
         public DbSet<Entity1> Entity1s => Set<Entity1>();
 
 
@@ -75,6 +76,9 @@ namespace Boilerplate.Infra.Data.Context
                             .WithOne(u => u.Tenant)
                             .HasForeignKey(u => u.TenantId)
                             .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<SystemNotificationUser>()
+                .HasKey(x => new { x.UserId, x.NotificationId });
 
             builder.Entity<Entity1>()
                 .HasOne(e => e.Tenant)

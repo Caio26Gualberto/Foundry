@@ -58,7 +58,7 @@ export const AcceptInvitation: React.FC = () => {
 
       try {
         setLoading(true);
-        const isValid = await apiClient.post<boolean>('/auth/validate-invitation-token', {
+        const isValid = await apiClient.post<boolean>('/Auth/ValidateInvitationToken', {
           token: formData.token,
           email: formData.email
         });
@@ -107,7 +107,7 @@ export const AcceptInvitation: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await apiClient.post<boolean>('/auth/acceptTenantInvite', {
+      const response = await apiClient.post<boolean>('/Auth/AcceptTenantInvite', {
         token: formData.token,
         email: formData.email,
         name: formData.name,

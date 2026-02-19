@@ -36,7 +36,7 @@ export const TenantSelection: React.FC = () => {
   const fetchTenants = async () => {
     try {
       setLoading(true);
-      const tenantsData = await apiClient.get<Tenant[]>("/tenant");
+      const tenantsData = await apiClient.get<Tenant[]>("/Tenant");
       setTenants(tenantsData);
       setError("");
     } catch (err) {
@@ -99,7 +99,7 @@ export const TenantSelection: React.FC = () => {
       message: t("tenantSelection.tenantGrid.alertDeleteTenant"),
     });
     if (!result) return;
-    await apiClient.delete(`/tenant`);
+    await apiClient.delete(`/Tenant`);
     fetchTenants();
     enqueueSnackbar("Tenant excluído com sucesso", {
       variant: "success",

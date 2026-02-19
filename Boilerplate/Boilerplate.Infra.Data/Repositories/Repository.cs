@@ -23,6 +23,12 @@ namespace Boilerplate.Infra.Data.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task AddRangeAsync(List<T> entities)
+        {
+            await _dbSet.AddRangeAsync(entities);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task DeleteAsync(T entity)
         {
             _dbSet.Remove(entity);

@@ -59,7 +59,7 @@ export const ChangePassword: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      const ok = await apiClient.post<boolean>('/auth/ChangePassword', {
+      const ok = await apiClient.post<boolean>('/Auth/ChangePassword', {
         email,
         password
       });

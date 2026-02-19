@@ -75,7 +75,7 @@ export const TenantUsersModal: React.FC<TenantUsersModalProps> = ({
     try {
       localStorage.removeItem(STORAGE_KEYS.IMPERSONATED_TOKEN);
       const tokenDto = await apiClient.post<TokensDto>(
-        "/tenant/impersonate",
+        "/Tenant/Impersonate",
         { tenantId: tenant.id, userId: params.id },
         { silent: false }
       );

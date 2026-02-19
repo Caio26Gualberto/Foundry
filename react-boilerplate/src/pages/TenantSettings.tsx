@@ -81,7 +81,7 @@ export const TenantSettings: React.FC = () => {
   const fetchInvites = async () => {
     try {
       setLoading(true);
-      const invitesData = await apiClient.get<InviteData[]>("/user/GetInvites");
+      const invitesData = await apiClient.get<InviteData[]>("/User/GetInvites");
       setInvites(invitesData);
       setError("");
     } catch (err) {
@@ -110,7 +110,7 @@ export const TenantSettings: React.FC = () => {
   const fetchNotifications = async () => {
     try {
       setNotificationsLoading(true);
-      const data = await apiClient.get<TenantNotificationDto[]>("/systemNotification/tenant");
+      const data = await apiClient.get<TenantNotificationDto[]>("/SystemNotification/GetNotificationsCreatedByTenant");
       setNotifications(data);
       setNotificationsError("");
     } catch (err) {
@@ -406,13 +406,7 @@ export const TenantSettings: React.FC = () => {
 
               <BoilerplateDataGrid
                 title={translate("tenantSettings.tenantTabs.systemNotifications.gridTitle")}
-                rows={notifications.map((n) => ({
-                  id: n.id,
-                  title: n.title,
-                  content: n.content,
-                  createdAt: n.createdAt,
-                  usersCount: n.usersCount,
-                }))}
+                rows={notifications}
                 columns={notificationColumns}
                 loading={notificationsLoading}
                 error={notificationsError}

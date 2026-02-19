@@ -6,7 +6,7 @@ import { API_BASE_URL, STORAGE_KEYS } from '../utils/constants';
 interface ErrorResponseData {
   title?: string;
   status?: number;
-  detail?: string;
+  message?: string;
   errors?: Record<string, string[]>;
 }
 
@@ -192,12 +192,17 @@ class ApiClient {
       enqueueSnackbar(config.errorMessage, { variant: 'error' });
       return Promise.reject(error);
     }
+    
+    if (data?.message) {
+      enqueueSnackbar(data.message, { variant: 'error' });
+      return Promise.reject(error);
+    }
 
     const status = error.response?.status;
     switch (status) {
       case 400:
       case 409:
-        enqueueSnackbar(data?.detail || 'Dados inválidos', { variant: 'error' });
+        enqueueSnackbar(data?.message || 'Dados inválidos', { variant: 'error' });
         break;
 
       case 403:

@@ -78,7 +78,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
     setLoading(true);
     try {
-      await apiClient.patch(`/user/${user.id}`, { name, email, roles });
+      await apiClient.patch(`/User/${user.id}`, { name, email, roles });
       enqueueSnackbar('Usuário atualizado com sucesso!', { variant: 'success' });
       onSuccess?.();
       handleClose();

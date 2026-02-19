@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Boilerplate.Infra.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class InitialMigrate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -52,7 +52,7 @@ namespace Boilerplate.Infra.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsRead = table.Column<bool>(type: "bit", nullable: false),
+                    TenantId = table.Column<int>(type: "int", nullable: true),
                     CreatedBy = table.Column<int>(type: "int", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedBy = table.Column<int>(type: "int", nullable: true),
@@ -196,21 +196,31 @@ namespace Boilerplate.Infra.Data.Migrations
                 name: "SystemNotificationUser",
                 columns: table => new
                 {
-                    SystemNotificationsId = table.Column<int>(type: "int", nullable: false),
-                    UsersId = table.Column<int>(type: "int", nullable: false)
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    NotificationId = table.Column<int>(type: "int", nullable: false),
+                    IsRead = table.Column<bool>(type: "bit", nullable: false),
+                    ReadAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Id = table.Column<int>(type: "int", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SystemNotificationUser", x => new { x.SystemNotificationsId, x.UsersId });
+                    table.PrimaryKey("PK_SystemNotificationUser", x => new { x.UserId, x.NotificationId });
                     table.ForeignKey(
-                        name: "FK_SystemNotificationUser_DomainUsers_UsersId",
-                        column: x => x.UsersId,
+                        name: "FK_SystemNotificationUser_DomainUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "DomainUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_SystemNotificationUser_SystemNotifications_SystemNotificationsId",
-                        column: x => x.SystemNotificationsId,
+                        name: "FK_SystemNotificationUser_SystemNotifications_NotificationId",
+                        column: x => x.NotificationId,
                         principalTable: "SystemNotifications",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -366,9 +376,9 @@ namespace Boilerplate.Infra.Data.Migrations
                 filter: "[NormalizedName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SystemNotificationUser_UsersId",
+                name: "IX_SystemNotificationUser_NotificationId",
                 table: "SystemNotificationUser",
-                column: "UsersId");
+                column: "NotificationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserClaims_UserId",

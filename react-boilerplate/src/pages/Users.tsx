@@ -30,7 +30,7 @@ export const Users: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const usersData = await apiClient.get<UserDto[]>("/user");
+      const usersData = await apiClient.get<UserDto[]>("/User");
       setUsers(usersData);
       setError("");
     } catch (err) {
@@ -72,7 +72,7 @@ export const Users: React.FC = () => {
     if (!result) return;
 
     try {
-      await apiClient.delete(`/user/${id}`);
+      await apiClient.delete(`/User/${id}`);
       fetchUsers();
       enqueueSnackbar("Usuário excluído com sucesso", {
         variant: "success",

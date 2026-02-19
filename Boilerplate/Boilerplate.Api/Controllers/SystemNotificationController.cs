@@ -41,5 +41,38 @@ namespace Boilerplate.Api.Controllers
                 Data = notification
             });
         }
+
+        [HttpGet("GetNotificationsCreatedByTenant")]
+        public async Task<ActionResult<BoilerplateResponse<List<TenantNotificationDto>>>> GetNotificationsCreatedByTenant()
+        {
+            var notifications = await _notificationService.GetNotificationByTenant();
+            return Ok(new BoilerplateResponse<List<TenantNotificationDto>>
+            {
+                IsSuccess = true,
+                Data = notifications
+            });
+        }
+
+        [HttpPatch("MarkAsRead/{id}")]
+        public async Task<ActionResult<BoilerplateResponse<bool>>> MarkAsRead(int id, [FromBody] MarkAsReadDto input)
+        {
+            var result = await _notificationService.MarkNotificationAsRead(id, input);
+            return Ok(new BoilerplateResponse<bool>
+            {
+                IsSuccess = true,
+                Data = result
+            });
+        }
+
+        [HttpPost("ClearAllMessages")]
+        public async Task<ActionResult<BoilerplateResponse<bool>>> ClearAllMessages(ClearAllMessagesDto input)
+        {
+            var result = await _notificationService.DeleteAllMessages(input);
+            return Ok(new BoilerplateResponse<bool>
+            {
+                IsSuccess = true,
+                Data = result
+            });
+        }
     }
 }

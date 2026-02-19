@@ -51,7 +51,7 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
 
     setLoading(true);
     try {
-      await apiClient.post('/tenant/invite', { email, tenantId: user?.tenantId });
+      await apiClient.post('/Tenant/Invite', { email, tenantId: user?.tenantId });
       enqueueSnackbar('Convite enviado com sucesso!', { variant: 'success' });
       onSuccess?.();
       handleClose();

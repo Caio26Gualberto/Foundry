@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Boilerplate.Infra.Data.Migrations
 {
     [DbContext(typeof(BoilerplateDbContext))]
-    [Migration("20260218043455_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20260219030843_InitialMigrate")]
+    partial class InitialMigrate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -92,8 +92,8 @@ namespace Boilerplate.Infra.Data.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
+                    b.Property<int?>("TenantId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -108,6 +108,51 @@ namespace Boilerplate.Infra.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("SystemNotifications");
+                });
+
+            modelBuilder.Entity("Boilerplate.Domain.Entities.SystemNotificationUser", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NotificationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "NotificationId");
+
+                    b.HasIndex("NotificationId");
+
+                    b.ToTable("SystemNotificationUser");
                 });
 
             modelBuilder.Entity("Boilerplate.Domain.Entities.Tenant", b =>
@@ -502,21 +547,6 @@ namespace Boilerplate.Infra.Data.Migrations
                     b.ToTable("UserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("SystemNotificationUser", b =>
-                {
-                    b.Property<int>("SystemNotificationsId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UsersId")
-                        .HasColumnType("int");
-
-                    b.HasKey("SystemNotificationsId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("SystemNotificationUser");
-                });
-
             modelBuilder.Entity("Boilerplate.Domain.Entities.Entity1", b =>
                 {
                     b.HasOne("Boilerplate.Domain.Entities.Tenant", "Tenant")
@@ -526,6 +556,25 @@ namespace Boilerplate.Infra.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("Boilerplate.Domain.Entities.SystemNotificationUser", b =>
+                {
+                    b.HasOne("Boilerplate.Domain.Entities.SystemNotification", "Notification")
+                        .WithMany("SystemNotificationUser")
+                        .HasForeignKey("NotificationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Boilerplate.Domain.Entities.User", "User")
+                        .WithMany("SystemNotificationUser")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Notification");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Boilerplate.Domain.Entities.Tenant", b =>
@@ -662,24 +711,19 @@ namespace Boilerplate.Infra.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("SystemNotificationUser", b =>
+            modelBuilder.Entity("Boilerplate.Domain.Entities.SystemNotification", b =>
                 {
-                    b.HasOne("Boilerplate.Domain.Entities.SystemNotification", null)
-                        .WithMany()
-                        .HasForeignKey("SystemNotificationsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Boilerplate.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("SystemNotificationUser");
                 });
 
             modelBuilder.Entity("Boilerplate.Domain.Entities.Tenant", b =>
                 {
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("Boilerplate.Domain.Entities.User", b =>
+                {
+                    b.Navigation("SystemNotificationUser");
                 });
 #pragma warning restore 612, 618
         }
