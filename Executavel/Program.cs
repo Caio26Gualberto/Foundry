@@ -279,6 +279,23 @@ namespace BoilerplateCustomizer
                     Console.WriteLine($"Aviso: Não foi possível processar {filePath}: {ex.Message}");
                 }
             }
+
+            // Rename directories containing "Boilerplate" (e.g., BoilerplateDataGrid -> {projectName}DataGrid)
+            var dirsToRename = Directory.GetDirectories(frontendPath, "*Boilerplate*", SearchOption.AllDirectories)
+                .Where(d => !d.Contains("\\node_modules\\"))
+                .OrderByDescending(d => d.Length) // Rename deepest first
+                .ToList();
+            foreach (var dir in dirsToRename)
+            {
+                string dirName = Path.GetFileName(dir);
+                string newDirName = dirName.Replace("Boilerplate", projectName);
+                string newPath = Path.Combine(Path.GetDirectoryName(dir)!, newDirName);
+                if (dir != newPath && Directory.Exists(dir))
+                {
+                    Directory.Move(dir, newPath);
+                    Console.WriteLine($"  Renomeado diretório: {dirName} -> {newDirName}");
+                }
+            }
         }
 
         private static async Task ReplaceProjectNames(string projectPath)
@@ -2227,14 +2244,17 @@ namespace {projectName}.Infra.Data.Context.Factory
             await RewriteConstants(frontendPath);
             await RewriteAuthHelpers(frontendPath);
             await RewriteContextsUtils(frontendPath);
-            await ModifySidebar(frontendPath);
-            await ModifyHeader(frontendPath);
-            await ModifyDashboard(frontendPath);
-            await ModifyDashboardLayout(frontendPath);
+            await RewriteSidebar(frontendPath);
+            await RewriteHeader(frontendPath);
+            await RewriteDashboard(frontendPath);
+            await RewriteDashboardLayout(frontendPath);
             await ModifyApiClient(frontendPath);
             await ModifyFrontendUserTypes(frontendPath);
             await ModifyFrontendSystemNotificationTypes(frontendPath);
-            await ModifyUsersPage(frontendPath);
+            await RewriteUsersPage(frontendPath);
+            await ModifyEditUserModal(frontendPath);
+            await ModifyComponentsIndex(frontendPath);
+            await ModifyCreateNotificationModal(frontendPath);
 
             Console.WriteLine("Multi-tenancy removida do frontend com sucesso.");
         }
@@ -2631,41 +2651,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             string path = Path.Combine(frontendPath, "src", "types", "index.ts");
             if (!File.Exists(path)) return;
 
-            // Read the original to preserve any non-tenant types at the bottom
-            string original = await File.ReadAllTextAsync(path);
-
-            // Keep everything after the AuthContextType interface but before any tenant-specific stuff
-            string content = @"export interface User {
+            string content = $@"export interface User {{
   id: string;
   email: string;
   userName: string;
   roles: string[];
-}
-export interface AuthContextType {
+}}
+export interface AuthContextType {{
   user: User | null;
   token: string | null;
   refreshToken: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ isNeededChangePassword: boolean }>;
+  login: (email: string, password: string) => Promise<{{ isNeededChangePassword: boolean }}>;
   logout: () => void;
   refreshTokens: () => Promise<boolean>;
   refreshUserFromToken: () => Promise<void>;
-}
+}}
 
-export interface TokensDto {
+export interface TokensDto {{
   token: string;
   refreshToken: string;
-}
-";
+}}
 
-            // Preserve any additional types that were after TokensDto in original
-            var tokensMatch = Regex.Match(original, @"export interface TokensDto\s*\{[^}]*\}\s*\n(.*)", RegexOptions.Singleline);
-            if (tokensMatch.Success && !string.IsNullOrWhiteSpace(tokensMatch.Groups[1].Value))
-            {
-                string remaining = tokensMatch.Groups[1].Value.Trim();
-                if (!string.IsNullOrEmpty(remaining))
-                    content += "\n" + remaining + "\n";
-            }
+export interface LoginResponseDto {{
+  tokens: TokensDto | null;
+  isNeededChangePassword: boolean;
+}}
+
+export interface {projectName}Response<T> {{
+  isSuccess: boolean;
+  message?: string;
+  data: T;
+}}
+
+export interface LoginInputDto {{
+  email: string;
+  password: string;
+}}
+
+export interface RefreshTokenRequestDto {{
+  refreshToken: string;
+}}
+
+export type UserRole = 'AdminGlobal' | 'GlobalManager' | 'User';
+
+export interface ApiCallOptions {{
+  errorMessage?: string;
+  silent?: boolean;
+}}
+";
 
             await File.WriteAllTextAsync(path, content);
         }
@@ -2742,109 +2776,597 @@ export const isAdminGlobal = (user: User | null): boolean => {
             await File.WriteAllTextAsync(path, content);
         }
 
-        private static async Task ModifySidebar(string frontendPath)
+        private static async Task RewriteSidebar(string frontendPath)
         {
             string path = Path.Combine(frontendPath, "src", "components", "Layout", "Sidebar.tsx");
             if (!File.Exists(path)) return;
-            string content = await File.ReadAllTextAsync(path);
 
-            // Remove canAccessTenantSelection import
-            content = RemoveLineContaining(content, "import { canAccessTenantSelection }");
+            Console.WriteLine("  Reescrevendo Sidebar sem multi-tenancy...");
 
-            // Remove InviteUserModal import
-            content = RemoveLineContaining(content, "import InviteUserModal");
+            string content = $@"import React, {{ useState }} from 'react';
+import {{
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+  Divider,
+  Avatar,
+  Chip,
+  IconButton,
+  Collapse,
+}} from '@mui/material';
+import {{
+  Home,
+  Dashboard,
+  People,
+  Analytics,
+  Security,
+  ChevronRight,
+  AccountCircle,
+  ExpandLess,
+  ExpandMore,
+}} from '@mui/icons-material';
+import {{ useAuth }} from '../../contexts/Auth';
+import {{ useNavigate }} from 'react-router-dom';
+import {{ translate }} from '../../i18n';
 
-            // Remove inviteModalOpen state and handlers
-            content = RemoveLineContaining(content, "inviteModalOpen");
-            content = RemoveLineContaining(content, "handleInviteSuccess");
+interface SidebarProps {{
+  mobileOpen: boolean;
+  desktopOpen: boolean;
+  onMobileClose: () => void;
+  onDesktopToggle: () => void;
+  drawerWidth: number;
+  collapsedWidth: number;
+}}
 
-            // Remove handleInviteUser function
-            content = Regex.Replace(content,
-                @"\s*const handleInviteUser = \(\) => \{[^}]*\};\s*",
-                "\n", RegexOptions.Singleline);
+interface MenuItem {{
+  text: string;
+  icon: React.ReactNode;
+  path?: string;
+  subItems?: MenuItem[];
+  action?: () => void;
+}}
 
-            // Remove handleInviteSuccess function
-            content = Regex.Replace(content,
-                @"\s*const handleInviteSuccess = \(\) => \{[^}]*\};\s*",
-                "\n", RegexOptions.Singleline);
+const getMenuItems = (): MenuItem[] => [
+  {{ text: translate('sidebar.home'), icon: <Home />, path: '/dashboard' }},
+  {{ text: translate('sidebar.dashboard'), icon: <Dashboard />, path: '/dashboard/analytics' }},
+  {{ text: translate('sidebar.users.title'), icon: <People />, path: '/dashboard/users' }},
+  {{ text: translate('sidebar.reports'), icon: <Analytics />, path: '/dashboard/reports' }},
+  {{ text: translate('sidebar.security'), icon: <Security />, path: '/dashboard/security' }},
+];
 
-            // Remove tenant-conditional config menu item
-            content = Regex.Replace(content,
-                @"\s*\.\.\.\(\(user\?\.tenantId.*?\]\)\s*",
-                "", RegexOptions.Singleline);
+export const Sidebar: React.FC<SidebarProps> = ({{ 
+  mobileOpen, 
+  desktopOpen, 
+  onMobileClose, 
+  onDesktopToggle, 
+  drawerWidth, 
+  collapsedWidth 
+}}) => {{
+  const {{ user, logout }} = useAuth();
+  const navigate = useNavigate();
+  const [openSubmenus, setOpenSubmenus] = useState<{{ [key: string]: boolean }}>({{}});
 
-            // Remove Tenant Info section in sidebar
-            content = Regex.Replace(content,
-                @"\s*\{/\* Tenant Info \*/\}\s*\{user\?\.tenantId && \([\s\S]*?\)\}\s*",
-                "", RegexOptions.Singleline);
+  const handleNavigation = (path: string) => {{
+    navigate(path);
+  }};
 
-            // Remove Global Admin Info section
-            content = Regex.Replace(content,
-                @"\s*\{/\* Global Admin Info \*/\}\s*\{canAccessTenantSelection[\s\S]*?\)\}\s*",
-                "", RegexOptions.Singleline);
+  const toggleSubmenu = (itemText: string) => {{
+    setOpenSubmenus(prev => ({{
+      ...prev,
+      [itemText]: !prev[itemText]
+    }}));
+  }};
 
-            // Remove InviteUserModal component usage
-            content = Regex.Replace(content,
-                @"\s*\{/\* Modal de Convite \*/\}\s*<InviteUserModal[\s\S]*?/>\s*",
-                "\n", RegexOptions.Singleline);
+  const menuItems = getMenuItems();
 
+  const getDrawerContent = (isCollapsed = false) => (
+    <Box sx={{{{ height: '100%', display: 'flex', flexDirection: 'column' }}}}>
+      {{/* Header */}}
+      <Box sx={{{{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}}}>
+        {{!isCollapsed && (
+          <Typography variant=""h6"" noWrap component=""div"" sx={{{{ fontWeight: 600 }}}}>
+            {projectName}
+          </Typography>
+        )}}
+        <IconButton 
+          onClick={{isCollapsed ? onDesktopToggle : onMobileClose}} 
+          sx={{{{ display: {{ sm: isCollapsed ? 'block' : 'none' }} }}}}
+        >
+          <ChevronRight />
+        </IconButton>
+      </Box>
+
+      <Divider />
+
+      {{/* User Info */}}
+      {{!isCollapsed && (
+        <Box sx={{{{ p: 2 }}}}>
+          <Box sx={{{{ display: 'flex', alignItems: 'center', mb: 2 }}}}>
+            <Avatar sx={{{{ width: 40, height: 40, mr: 2, bgcolor: 'primary.main' }}}}>
+              <AccountCircle />
+            </Avatar>
+            <Box sx={{{{ flex: 1, minWidth: 0 }}}}>
+              <Typography variant=""subtitle2"" noWrap>
+                {{user?.userName}}
+              </Typography>
+              <Typography variant=""caption"" color=""text.secondary"" noWrap>
+                {{user?.email}}
+              </Typography>
+            </Box>
+          </Box>
+
+          {{/* User Roles */}}
+          <Box sx={{{{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}}}>
+            {{user?.roles.map((role) => (
+              <Chip
+                key={{role}}
+                label={{role}}
+                size=""small""
+                variant=""outlined""
+                sx={{{{ fontSize: '0.7rem' }}}}
+              />
+            ))}}
+          </Box>
+        </Box>
+      )}}
+
+      {{/* Collapsed User Avatar */}}
+      {{isCollapsed && (
+        <Box sx={{{{ p: 1, display: 'flex', justifyContent: 'center' }}}}>
+          <Avatar sx={{{{ width: 40, height: 40, bgcolor: 'primary.main' }}}}>
+            <AccountCircle />
+          </Avatar>
+        </Box>
+      )}}
+
+      <Divider />
+
+      {{/* Navigation Menu */}}
+      <Box sx={{{{ flex: 1, overflow: 'auto' }}}}>
+        <List>
+          {{menuItems.map((item) => (
+            <React.Fragment key={{item.text}}>
+              <ListItem disablePadding>
+                <ListItemButton
+                  onClick={{() => {{
+                    if (item.subItems && !isCollapsed) {{
+                      toggleSubmenu(item.text);
+                    }} else if (item.path) {{
+                      handleNavigation(item.path);
+                    }} else if (item.action) {{
+                      item.action();
+                    }}
+                  }}}}
+                  sx={{{{
+                    minHeight: 48,
+                    px: 2.5,
+                    '&:hover': {{
+                      backgroundColor: 'action.hover',
+                    }},
+                  }}}}
+                >
+                  <ListItemIcon sx={{{{ minWidth: isCollapsed ? 'auto' : 40, justifyContent: 'center' }}}}>
+                    {{item.icon}}
+                  </ListItemIcon>
+                  {{!isCollapsed && (
+                    <>
+                      <ListItemText 
+                        primary={{item.text}}
+                        primaryTypographyProps={{{{
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                        }}}}
+                      />
+                      {{item.subItems && (
+                        openSubmenus[item.text] ? <ExpandLess /> : <ExpandMore />
+                      )}}
+                    </>
+                  )}}
+                </ListItemButton>
+              </ListItem>
+              
+              {{/* Submenu */}}
+              {{item.subItems && !isCollapsed && (
+                <Collapse in={{openSubmenus[item.text]}} timeout=""auto"" unmountOnExit>
+                  <List component=""div"" disablePadding>
+                    {{item.subItems.map((subItem) => (
+                      <ListItem key={{subItem.text}} disablePadding>
+                        <ListItemButton
+                          onClick={{() => {{
+                            if (subItem.path) {{
+                              handleNavigation(subItem.path);
+                            }} else if (subItem.action) {{
+                              subItem.action();
+                            }}
+                          }}}}
+                          sx={{{{
+                            pl: 4,
+                            minHeight: 40,
+                            '&:hover': {{
+                              backgroundColor: 'action.hover',
+                            }},
+                          }}}}
+                        >
+                          <ListItemIcon sx={{{{ minWidth: 32, justifyContent: 'center' }}}}>
+                            {{subItem.icon}}
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={{subItem.text}}
+                            primaryTypographyProps={{{{
+                              fontSize: '0.8rem',
+                              fontWeight: 400,
+                            }}}}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    ))}}
+                  </List>
+                </Collapse>
+              )}}
+            </React.Fragment>
+          ))}}
+        </List>
+      </Box>
+
+      <Divider />
+
+      {{/* Bottom Actions */}}
+      <Box sx={{{{ p: 1 }}}}>
+        <ListItemButton
+          onClick={{logout}}
+          sx={{{{ 
+            borderRadius: 1,
+            color: 'error.main',
+            '&:hover': {{
+              backgroundColor: 'error.light',
+              color: 'error.contrastText',
+            }},
+          }}}}
+        >
+          <ListItemIcon sx={{{{ minWidth: isCollapsed ? 'auto' : 40, justifyContent: 'center', color: 'inherit' }}}}>
+            <AccountCircle />
+          </ListItemIcon>
+          {{!isCollapsed && (
+            <ListItemText 
+              primary={{translate('sidebar.logout')}}
+              primaryTypographyProps={{{{
+                fontSize: '0.875rem',
+              }}}}
+            />
+          )}}
+        </ListItemButton>
+      </Box>
+    </Box>
+  );
+
+  const currentDesktopWidth = desktopOpen ? drawerWidth : collapsedWidth;
+
+  return (
+    <Box
+      component=""nav""
+      sx={{{{ width: {{ sm: currentDesktopWidth }}, flexShrink: {{ sm: 0 }} }}}}
+    >
+      {{/* Mobile drawer */}}
+      <Drawer
+        variant=""temporary""
+        open={{mobileOpen}}
+        onClose={{onMobileClose}}
+        ModalProps={{{{
+          keepMounted: true,
+        }}}}
+        sx={{{{
+          display: {{ xs: 'block', sm: 'none' }},
+          '& .MuiDrawer-paper': {{
+            boxSizing: 'border-box',
+            width: drawerWidth,
+          }},
+        }}}}
+      >
+        {{getDrawerContent(false)}}
+      </Drawer>
+
+      {{/* Desktop drawer */}}
+      <Drawer
+        variant=""permanent""
+        sx={{{{
+          display: {{ xs: 'none', sm: 'block' }},
+          '& .MuiDrawer-paper': {{
+            boxSizing: 'border-box',
+            width: currentDesktopWidth,
+            transition: 'width 0.3s ease',
+            overflowX: 'hidden',
+          }},
+        }}}}
+        open
+      >
+        {{getDrawerContent(!desktopOpen)}}
+      </Drawer>
+    </Box>
+  );
+}};
+";
             await File.WriteAllTextAsync(path, content);
         }
 
-        private static async Task ModifyHeader(string frontendPath)
+        private static async Task RewriteHeader(string frontendPath)
         {
             string path = Path.Combine(frontendPath, "src", "components", "Layout", "Header.tsx");
             if (!File.Exists(path)) return;
-            string content = await File.ReadAllTextAsync(path);
 
-            // Remove canAccessTenantSelection import
-            content = RemoveLineContaining(content, "import { canAccessTenantSelection }");
+            Console.WriteLine("  Reescrevendo Header sem multi-tenancy...");
 
-            // Remove the Tenant Indicator block
-            content = Regex.Replace(content,
-                @"\s*\{/\* Tenant Indicator \*/\}\s*\{user\?\.tenantId \?[\s\S]*?\) : null\}\s*",
-                "\n", RegexOptions.Singleline);
+            string content = @"import React from 'react';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  IconButton,
+  Box,
+  Avatar,
+} from '@mui/material';
+import {
+  Menu as MenuIcon,
+  AccountCircle,
+} from '@mui/icons-material';
+import { NotificationCenter } from '../NotificationCenter';
+import LanguageSwitcher from '../common/LanguageSwitcher';
+import { translate } from '../../i18n';
 
+interface HeaderProps {
+  onMenuClick: () => void;
+  onDesktopMenuClick?: () => void;
+  drawerWidth: number;
+}
+export const Header: React.FC<HeaderProps> = ({ onMenuClick, onDesktopMenuClick, drawerWidth }) => {
+  return (
+    <AppBar
+      position=""fixed""
+      sx={{
+        width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
+        ml: { sm: `${drawerWidth}px` },
+        bgcolor: 'background.paper',
+        color: 'text.primary',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        transition: 'width 0.3s ease, margin-left 0.3s ease',
+      }}
+    >
+      <Toolbar>
+        {/* Mobile menu button */}
+        <IconButton
+          color=""inherit""
+          aria-label=""open drawer""
+          edge=""start""
+          onClick={onMenuClick}
+          sx={{ mr: 2, display: { sm: 'none' } }}
+        >
+          <MenuIcon />
+        </IconButton>
+
+        {/* Desktop menu button */}
+        {onDesktopMenuClick && (
+          <IconButton
+            color=""inherit""
+            aria-label=""toggle drawer""
+            edge=""start""
+            onClick={onDesktopMenuClick}
+            sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
+
+        <Typography variant=""h6"" noWrap component=""div"" sx={{ flexGrow: 1 }}>
+          {translate('sidebar.dashboard')}
+        </Typography>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* Notifications */}
+          <NotificationCenter />
+
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+
+          {/* User Avatar */}
+          <IconButton color=""inherit"">
+            <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+              <AccountCircle />
+            </Avatar>
+          </IconButton>
+        </Box>
+      </Toolbar>
+    </AppBar>
+  );
+};
+";
             await File.WriteAllTextAsync(path, content);
         }
 
-        private static async Task ModifyDashboard(string frontendPath)
+        private static async Task RewriteDashboard(string frontendPath)
         {
             string path = Path.Combine(frontendPath, "src", "pages", "Dashboard.tsx");
             if (!File.Exists(path)) return;
-            string content = await File.ReadAllTextAsync(path);
 
-            // Remove canAccessTenantSelection import if present
-            content = RemoveLineContaining(content, "import { canAccessTenantSelection }");
-            content = RemoveLineContaining(content, "canAccessTenantSelection");
+            Console.WriteLine("  Reescrevendo Dashboard sem multi-tenancy...");
 
-            // Remove tenant chip displays
-            content = Regex.Replace(content,
-                @"\s*\{canAccessTenantSelection\(user\) && !user\?\.tenantId && \(\s*<Chip[^/]*/>\s*\)\}\s*",
-                "", RegexOptions.Singleline);
-            content = Regex.Replace(content,
-                @"\s*\{user\?\.tenantId && \(\s*<Chip[\s\S]*?/>\s*\)\}\s*",
-                "", RegexOptions.Singleline);
+            string content = @"import React from 'react';
+import {
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Avatar,
+} from '@mui/material';
+import {
+  TrendingUp,
+  People,
+  Notifications,
+} from '@mui/icons-material';
+import { useAuth } from '../contexts/Auth';
+import { translate } from '../i18n';
 
+const StatCard: React.FC<{
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  color: string;
+  change?: string;
+}> = ({ title, value, icon, color, change }) => (
+  <Card sx={{ height: '100%' }}>
+    <CardContent>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          <Typography color=""text.secondary"" gutterBottom variant=""overline"">
+            {title}
+          </Typography>
+          <Typography variant=""h4"" component=""div"" sx={{ fontWeight: 600 }}>
+            {value}
+          </Typography>
+          {change && (
+            <Typography variant=""body2"" sx={{ color: 'success.main', mt: 1 }}>
+              {change}
+            </Typography>
+          )}
+        </Box>
+        <Avatar sx={{ bgcolor: color, width: 56, height: 56 }}>
+          {icon}
+        </Avatar>
+      </Box>
+    </CardContent>
+  </Card>
+);
+
+export const Dashboard: React.FC = () => {
+  const { user } = useAuth();
+
+  return (
+    <Box>
+      {/* Welcome Section */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant=""h4"" component=""h1"" gutterBottom sx={{ fontWeight: 600 }}>
+          {translate('dashboard.title', { userName: user?.userName })}
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+          <Typography variant=""body1"" color=""text.secondary"">
+            {translate('dashboard.description')}
+          </Typography>
+        </Box>
+      </Box>
+      <Typography variant=""h6"" color=""text.primary"" sx={{ mb: 2 }}>
+        {translate('dashboard.subtitle')}
+      </Typography>
+
+      {/* Statistics Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid sx={{xs: 12, sm: 6, md: 3}}>
+          <StatCard
+            title=""Active Users""
+            value=""1,234""
+            icon={<People />}
+            color=""primary.main""
+            change=""+12% this month""
+          />
+        </Grid>
+        <Grid sx={{xs: 12, sm: 6, md: 3}}>
+          <StatCard
+            title=""Revenue""
+            value=""$45.2K""
+            icon={<TrendingUp />}
+            color=""success.main""
+            change=""+8% this month""
+          />
+        </Grid>
+        <Grid sx={{xs: 12, sm: 6, md: 3}}>
+          <StatCard
+            title=""Alerts""
+            value=""12""
+            icon={<Notifications />}
+            color=""warning.main""
+          />
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
+";
             await File.WriteAllTextAsync(path, content);
         }
 
-        private static async Task ModifyDashboardLayout(string frontendPath)
+        private static async Task RewriteDashboardLayout(string frontendPath)
         {
             string path = Path.Combine(frontendPath, "src", "components", "Layout", "DashboardLayout.tsx");
             if (!File.Exists(path)) return;
-            string content = await File.ReadAllTextAsync(path);
 
-            // Remove ROUTES import if only used for tenant selection
-            // Remove temporary access logic
-            content = RemoveLineContaining(content, "const hasTemporaryAccess");
-            content = RemoveLineContaining(content, "handleGoToTenantSelection");
+            Console.WriteLine("  Reescrevendo DashboardLayout sem multi-tenancy...");
 
-            // Remove the Alert banner for temporary access
-            content = Regex.Replace(content,
-                @"\s*\{/\* Banner informativo.*?\*/\}\s*\{hasTemporaryAccess && \([\s\S]*?\)\}\s*",
-                "\n", RegexOptions.Singleline);
+            string content = @"import React, { useState } from 'react';
+import { Box, Toolbar } from '@mui/material';
+import { Header } from './Header';
+import { Sidebar } from './Sidebar';
 
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+}
+
+const DRAWER_WIDTH = 280;
+const DRAWER_WIDTH_COLLAPSED = 64;
+
+export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopOpen, setDesktopOpen] = useState(true);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const handleDesktopDrawerToggle = () => {
+    setDesktopOpen(!desktopOpen);
+  };
+
+  const currentDrawerWidth = desktopOpen ? DRAWER_WIDTH : DRAWER_WIDTH_COLLAPSED;
+
+  return (
+    <Box sx={{ display: 'flex', width: '100%', minHeight: '100vh' }}>
+      <Header 
+        onMenuClick={handleDrawerToggle} 
+        onDesktopMenuClick={handleDesktopDrawerToggle}
+        drawerWidth={currentDrawerWidth} 
+      />
+      
+      <Sidebar
+        mobileOpen={mobileOpen}
+        desktopOpen={desktopOpen}
+        onMobileClose={handleDrawerToggle}
+        onDesktopToggle={handleDesktopDrawerToggle}
+        drawerWidth={DRAWER_WIDTH}
+        collapsedWidth={DRAWER_WIDTH_COLLAPSED}
+      />
+
+      <Box
+        component=""main""
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { xs: '100%', sm: `calc(100% - ${currentDrawerWidth}px)` },
+          minHeight: '100vh',
+          bgcolor: 'background.default',
+          overflow: 'auto',
+          transition: 'width 0.3s ease, margin-left 0.3s ease, padding 0.3s ease',
+        }}
+      >
+        <Toolbar />
+        {children}
+      </Box>
+    </Box>
+  );
+};
+";
             await File.WriteAllTextAsync(path, content);
         }
 
@@ -2867,33 +3389,174 @@ export const isAdminGlobal = (user: User | null): boolean => {
             await File.WriteAllTextAsync(path, content);
         }
 
-        private static async Task ModifyUsersPage(string frontendPath)
+        private static async Task RewriteUsersPage(string frontendPath)
         {
             string path = Path.Combine(frontendPath, "src", "pages", "Users.tsx");
             if (!File.Exists(path)) return;
-            string content = await File.ReadAllTextAsync(path);
 
-            // Remove InviteUserModal import
-            content = RemoveLineContaining(content, "import InviteUserModal");
+            Console.WriteLine("  Reescrevendo Users.tsx sem multi-tenancy...");
 
-            // Remove inviteModalOpen state
-            content = RemoveLineContaining(content, "inviteModalOpen");
+            string content = $@"import React, {{ useState, useEffect }} from ""react"";
+import {{ Box, Typography, Container, Chip, Stack }} from ""@mui/material"";
+import {{ useSnackbar }} from ""notistack"";
+import type {{ GridColDef, GridRowParams, GridRowId }} from ""@mui/x-data-grid"";
+import type {{ UserDto }} from ""../types/Users"";
+import {projectName}DataGrid from ""../components/common/{projectName}DataGrid"";
+import EditUserModal from ""../components/users/EditUserModal/EditUserModal"";
+import {{ useConfirmation }} from ""../contexts/confirmationContext/ConfirmationProvider"";
+import apiClient from ""../services/apiClient"";
+import {{ translate }} from ""../i18n"";
 
-            // Remove handleInviteUser function
-            content = Regex.Replace(content,
-                @"\s*const handleInviteUser = \(\) => \{[^}]*\};\s*",
-                "\n", RegexOptions.Singleline);
+export const Users: React.FC = () => {{
+  const {{ enqueueSnackbar }} = useSnackbar();
+  const confirm = useConfirmation();
+  const [users, setUsers] = useState<UserDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("""");
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
 
-            // Remove handleInviteSuccess function
-            content = Regex.Replace(content,
-                @"\s*const handleInviteSuccess = \(\) => \{[^}]*\};\s*",
-                "\n", RegexOptions.Singleline);
+  useEffect(() => {{
+    fetchUsers();
+  }}, []);
 
-            // Remove InviteUserModal component usage
-            content = Regex.Replace(content,
-                @"\s*<InviteUserModal[\s\S]*?/>\s*",
-                "\n", RegexOptions.Singleline);
+  const fetchUsers = async () => {{
+    try {{
+      setLoading(true);
+      const usersData = await apiClient.get<UserDto[]>(""/User"");
+      setUsers(usersData);
+      setError("""");
+    }} catch (err) {{
+      console.error(""Error fetching users:"", err);
+      const errorMessage =
+        err instanceof Error ? err.message : ""Erro ao carregar usuários"";
+      setError(errorMessage);
+    }} finally {{
+      setLoading(false);
+    }}
+  }};
 
+  const handleEditUser = (id: GridRowId) => {{
+    const userToEdit = users.find((u) => u.id === id) || null;
+    setSelectedUser(userToEdit);
+    setEditModalOpen(true);
+  }};
+
+  const handleEditSuccess = () => {{
+    fetchUsers();
+    setEditModalOpen(false);
+    setSelectedUser(null);
+  }};
+
+  const handleDeleteUser = async (id: GridRowId) => {{
+    const result = await confirm({{
+      title: ""Excluir Usuário"",
+      message: ""Tem certeza que deseja excluir este usuário?"",
+    }});
+    if (!result) return;
+
+    try {{
+      await apiClient.delete(`/User/${{id}}`);
+      fetchUsers();
+      enqueueSnackbar(""Usuário excluído com sucesso"", {{
+        variant: ""success"",
+      }});
+    }} catch (error) {{
+      console.error(""Error deleting user:"", error);
+      enqueueSnackbar(""Erro ao excluir usuário"", {{ variant: ""error"" }});
+    }}
+  }};
+
+  const handleRowClick = (params: GridRowParams) => {{
+    console.log(""View user details:"", params.id);
+  }};
+
+  const columns: GridColDef[] = [
+    {{
+      field: ""name"",
+      headerName: translate(""usersManagement.usersGrid.columns.name""),
+      flex: 1,
+      minWidth: 200,
+    }},
+    {{
+      field: ""email"",
+      headerName: translate(""usersManagement.usersGrid.columns.email""),
+      flex: 1,
+      minWidth: 250,
+    }},
+    {{
+      field: ""roles"",
+      headerName: translate(""usersManagement.usersGrid.columns.roles""),
+      minWidth: 200,
+      flex: 1,
+      renderCell: (params) => {{
+        const roles: string[] = params.value || [];
+
+        if (!roles.length) {{
+          return <Chip label=""User"" size=""small"" variant=""outlined"" />;
+        }}
+
+        return (
+          <Stack direction=""row"" spacing={{0.5}} mt={{2}} sx={{{{ flexWrap: ""wrap"" }}}}>
+            {{roles.map((role) => (
+              <Chip key={{role}} label={{role}} size=""small"" variant=""outlined"" />
+            ))}}
+          </Stack>
+        );
+      }},
+    }},
+  ];
+
+  const rows = users.map((user) => ({{
+    id: user.id,
+    name: user.name,
+    email: user.email || ""-"",
+    roles: user.roles || [],
+  }}));
+
+  return (
+    <Container maxWidth=""lg"">
+      <Box sx={{{{ py: 4 }}}}>
+        <Box sx={{{{ mb: 4 }}}}>
+          <Typography variant=""h4"" component=""h1"" gutterBottom>
+            {{translate(""usersManagement.title"")}}
+          </Typography>
+          <Typography variant=""body1"" color=""text.secondary"">
+            {{translate(""usersManagement.description"")}}
+          </Typography>
+        </Box>
+
+        <Box sx={{{{ mb: 3 }}}}>
+          <{projectName}DataGrid
+            title={{translate(""usersManagement.usersGrid.title"")}}
+            rows={{rows}}
+            columns={{columns}}
+            loading={{loading}}
+            error={{error}}
+            onEdit={{handleEditUser}}
+            onDelete={{handleDeleteUser}}
+            onRowClick={{handleRowClick}}
+            height={{500}}
+            pageSize={{10}}
+          />
+        </Box>
+
+        <EditUserModal
+          open={{editModalOpen}}
+          user={{selectedUser}}
+          onClose={{() => {{
+            setEditModalOpen(false);
+            setSelectedUser(null);
+          }}}}
+          onSuccess={{handleEditSuccess}}
+        />
+      </Box>
+    </Container>
+  );
+}};
+
+export default Users;
+";
             await File.WriteAllTextAsync(path, content);
         }
 
@@ -2931,6 +3594,44 @@ export interface CreateNotificationDto {
     userIds: string[];
 }
 ";
+            await File.WriteAllTextAsync(path, content);
+        }
+
+        private static async Task ModifyEditUserModal(string frontendPath)
+        {
+            string path = Path.Combine(frontendPath, "src", "components", "users", "EditUserModal", "EditUserModal.tsx");
+            if (!File.Exists(path)) return;
+            string content = await File.ReadAllTextAsync(path);
+
+            // Replace TENANT_ADMIN with just USER in availableRoles
+            content = content.Replace(
+                "const availableRoles = [USER_ROLES.USER, USER_ROLES.TENANT_ADMIN];",
+                "const availableRoles = [USER_ROLES.USER];");
+
+            await File.WriteAllTextAsync(path, content);
+        }
+
+        private static async Task ModifyComponentsIndex(string frontendPath)
+        {
+            string path = Path.Combine(frontendPath, "src", "components", "index.ts");
+            if (!File.Exists(path)) return;
+            string content = await File.ReadAllTextAsync(path);
+
+            // Remove TenantCreateModal export
+            content = RemoveLineContaining(content, "TenantCreateModal");
+
+            await File.WriteAllTextAsync(path, content);
+        }
+
+        private static async Task ModifyCreateNotificationModal(string frontendPath)
+        {
+            string path = Path.Combine(frontendPath, "src", "components", "notifications", "CreateNotificationModal", "CreateNotificationModal.tsx");
+            if (!File.Exists(path)) return;
+            string content = await File.ReadAllTextAsync(path);
+
+            // Replace tenant translation keys with simpler notification keys
+            content = content.Replace("tenantSettings.tenantTabs.systemNotifications.", "notifications.");
+
             await File.WriteAllTextAsync(path, content);
         }
 

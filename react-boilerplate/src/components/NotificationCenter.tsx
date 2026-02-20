@@ -8,16 +8,11 @@ import {
   Box,
   Divider,
   Button,
-  Chip,
   Avatar,
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
   NotificationsNone,
-  Info,
-  CheckCircle,
-  Warning,
-  Error,
   Clear,
   MarkEmailRead,
 } from '@mui/icons-material';
@@ -50,32 +45,6 @@ export const NotificationCenter: React.FC = () => {
   const handleClearAll = async () => {
     await apiClient.post<boolean>('/SystemNotification/ClearAllMessages', {notificationIds: notifications.map(n => n.id)});
     handleClose();
-  };
-
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'success':
-        return <CheckCircle color="success" />;
-      case 'warning':
-        return <Warning color="warning" />;
-      case 'error':
-        return <Error color="error" />;
-      default:
-        return <Info color="info" />;
-    }
-  };
-
-  const getNotificationColor = (type: string) => {
-    switch (type) {
-      case 'success':
-        return 'success.main';
-      case 'warning':
-        return 'warning.main';
-      case 'error':
-        return 'error.main';
-      default:
-        return 'info.main';
-    }
   };
 
   const formatTime = (timestamp: Date) => {
