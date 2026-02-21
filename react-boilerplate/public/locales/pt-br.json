@@ -1,0 +1,228 @@
+{
+    "notifications": {
+        "title": "Notificações",
+        "clearAll": "Limpar",
+        "noNotifications": "Nenhuma notificação",
+        "markAsRead": "Marcar como lida",
+        "timeOfNotification": "agora"
+    },
+    "tenantSelection": {
+        "title": "Gerenciamento de Tenants",
+        "description": "Olá, {{userName}}! Selecione um tenant para personificar ou gerencie os tenants existentes.",
+        "skipToDashboard": "Acessar Dashboard",
+        "skipToDashboardDescription": "Você pode selecionar um tenant mais tarde",
+        "tenantGrid": {
+            "title": "Tenants Disponíveis",
+            "addButtonText": "Novo Tenant",
+            "alertDeleteTenant": "Tem certeza que deseja excluir este tenant?",
+            "alertDeleteTenantTitle": "Excluir Tenant",
+            "columns": {
+                "name": "Nome",
+                "addressCity": "Cidade",
+                "addressState": "Estado",
+                "address": "Endereço Completo",
+                "status": "Status"
+            }
+        },
+        "tenantModal": {
+            "steps": {
+                "tenant": "Tenant",
+                "user": "Usuário"
+            },
+            "secondStep": {
+                "title": "Dados do usuário administrador",
+                "name": "Nome",
+                "email": "Email",
+                "password": "Senha gerada",
+                "generatePassword": "Gerar senha",
+                "helpText": "Clique em 'Gerar senha' para criar uma senha forte."
+            },
+            "datashow": {
+                "title": "Tenant criado",
+                "subtitle": "Guarde as credenciais do usuário administrador"
+            },
+            "createTenant": "Criar Novo Tenant",
+            "editTenant": "Editar Tenant",
+            "infoTenant": "Informações do Tenant",
+            "nameTenant": "Nome do Tenant",
+            "address": "Endereço",
+            "street": "Rua",
+            "number": "Número",
+            "complement": "Complemento",
+            "city": "Cidade",
+            "state": "Estado",
+            "zipCode": "CEP",
+            "country": "País"
+        },
+        "usersGrid": {
+            "title": "Usuários do Tenant: {{tenantName}}",
+            "selectUser": "Selecione um usuário para personificar",
+            "columns": {
+                "name": "Nome do Usuário",
+                "id": "ID"
+            }
+        }
+    },
+    "dashboard": {
+        "title": "Bem vindo, {{userName}}!",
+        "description": "Aqui está um resumo das suas atividades",
+        "subtitle": "Não foi feita nenhuma tradução ou estilização abaixo pois se trata apenas de um template, a partir daqui você pode personalizar como desejar.",
+        "impersonatedBy": "Impersonado por usuário ID: {{impersonatedBy}}",
+        "adminGlobal": "Modo Administrador Global",
+        "tenantId": "Tenant ID: {{tenantId}}",
+        "impersonated": "Modo Impersonação",
+        "stopImpersonation": "Parar Impersonação"
+    },
+    "sidebar": {
+        "home": "Início",
+        "dashboard": "Dashboard",
+        "users": {
+            "title": "Usuários",
+            "inviteUser": "Convidar Usuário"
+        },
+        "reports": "Relatórios",
+        "security": "Segurança",
+        "configuration": "Configurações",
+        "logout": "Sair",
+        "inviteUser": {
+            "title": "Convidar Usuário",
+            "description": "Digite o email da pessoa que você deseja convidar para o tenant.",
+            "label": "email do usuário"
+        }
+    },
+    "usersManagement": {
+        "title": "Gerenciamento de Usuários",
+        "description": "Gerencie os usuários do seu tenant e envie convites para novos membros.",
+        "tenantName": "Tenant: {{tenantName}}",
+        "usersGrid": {
+            "title": "Usuários do Tenant: {{tenantName}}",
+            "buttonInvite": "Convidar Usuário",
+            "columns": {
+                "name": "Nome",
+                "email": "Email",
+                "roles": "Funções"
+            }
+        }
+    },
+    "tenantSettings": {
+        "title": "Configurações do Tenant",
+        "description": "Gerencie as configurações e membros do seu tenant.",
+        "tenantName": "Tenant: {{tenantName}}",
+        "warnings": {
+            "deleteInvite": "Tem certeza que deseja cancelar este convite?",
+            "deleteInviteTitle": "Cancelar Convite"
+        },
+        "tenantTabs": {
+            "generalSettings": {
+                "tabTitle": "Configurações Gerais",
+                "description": "Funcionalidades de configuração geral em desenvolvimento."
+            },
+            "usersManagement": {
+                "tabTitle": "Gerenciar Membros",
+                "subtitle": "Histórico de Convites",
+                "inviteButton": "Convidar Usuário",
+                "cards": {
+                    "totalInvites": "Total de Convites",
+                    "pendingInvites": "Convites Pendentes",
+                    "acceptedInvites": "Convites Aceitos",
+                    "expiredInvites": "Convites Expirados"
+                },
+                "columns": {
+                    "email": "Email",
+                    "status": "Status",
+                    "sentAt": "Enviado em",
+                    "expiresAt": "Expira em"
+                },
+                "inviteStatus": {
+                    "pending": "Pendente",
+                    "accepted": "Aceito",
+                    "expired": "Expirado"
+                }
+            },
+            "systemNotifications": {
+                "tabTitle": "Avisos do Sistema",
+                "subtitle": "Notificações Enviadas",
+                "gridTitle": "Histórico de Notificações",
+                "createButton": "Nova Notificação",
+                "createSuccess": "Notificação criada com sucesso!",
+                "createError": "Erro ao criar notificação",
+                "columns": {
+                    "title": "Título",
+                    "content": "Conteúdo",
+                    "usersCount": "Destinatários",
+                    "createdAt": "Criado em"
+                },
+                "errors": {
+                    "titleRequired": "Título é obrigatório",
+                    "contentRequired": "Conteúdo é obrigatório"
+                },
+                "createModal": {
+                    "title": "Criar Notificação",
+                    "titleField": "Título",
+                    "contentField": "Conteúdo",
+                    "usersField": "Usuários",
+                    "usersHint": "Deixe vazio para enviar para todos os usuários",
+                    "selectAll": "Selecionar todos",
+                    "deselectAll": "Desmarcar todos"
+                }
+            }
+        }
+    },
+    "login": {
+        "title": "Faça login para continuar",
+        "rights": " 2026 Boilerplate. Todos os direitos reservados.",
+        "fields": {
+            "email": "Email",
+            "password": "Senha"
+        }
+    },
+    "changePassword": {
+        "title": "Definir nova senha",
+        "description": "Por favor, defina sua nova senha para continuar.",
+        "save": "Salvar nova senha",
+        "backToLogin": "Voltar ao login",
+        "fields": {
+            "email": "Email",
+            "password": "Senha",
+            "confirmPassword": "Confirmar nova senha"
+        }
+    },
+    "acceptInvitation": {
+        "title": "Bem-vindo!",
+        "subtitle": "A {{tenantName}} te dá boas vindas",
+        "description": "Complete seu cadastro para acessar a plataforma",
+        "invite": "Convite para: {{email}}",
+        "processing": "Processando...",
+        "alreadyHaveAccount": "Já tem uma conta?",
+        "login": "Ir para Login",
+        "errors": {
+            "invite": "Convite inválido ou expirado",
+            "description": "O link do convite é inválido ou expirou. Entre em contato com o administrador para solicitar um novo convite."
+        },
+        "accept": "Aceitar Convite",
+        "fields": {
+            "name": "Nome Completo",
+            "password": "Senha",
+            "confirmPassword": "Confirmar Senha"
+        }
+    },
+    "dataGrid": {
+        "actionsColumn": "Ações",
+        "paginationRowsPerPage": "Linhas por página",
+        "of": "de",
+        "moreThan": "mais de",
+        "around": "em torno de"
+    },
+    "button": {
+        "cancel": "Cancelar",
+        "create": "Criar",
+        "edit": "Editar",
+        "delete": "Excluir",
+        "save": "Salvar",
+        "confirm": "Confirmar",
+        "close": "Fechar",
+        "enter": "Entrar",
+        "back": "Voltar",
+        "next": "Próximo"
+    }
+}
