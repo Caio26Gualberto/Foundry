@@ -242,7 +242,13 @@ namespace BoilerplateCustomizer
             // 3. Criar entidades baseadas em Entity1
             await CreateEntitiesFromTemplate(projectPath);
 
-            // 4. Configurar multitenancy
+            // 4. Remover referências a Entity1 do DbContext (apenas se entidades foram criadas)
+            if (entityNames.Count > 0)
+            {
+                await RemoveEntity1FromDbContext(projectPath);
+            }
+
+            // 5. Configurar multitenancy
             if (!enableMultitenancy)
             {
                 await RemoveMultitenancyBackend(projectPath);
@@ -509,6 +515,15 @@ namespace BoilerplateCustomizer
                     string newContent = content.Replace("Entity1", entityName);
                     newContent = newContent.Replace("entity1", entityName.ToLower());
 
+                    // Se multitenancy não está habilitado, remover propriedades Tenant/TenantId
+                    if (!enableMultitenancy)
+                    {
+                        newContent = RemoveLineContaining(newContent, "public int TenantId { get; set; }");
+                        newContent = RemoveLineContaining(newContent, "public int? TenantId { get; set; }");
+                        newContent = RemoveLineContaining(newContent, "public Tenant Tenant { get; set; }");
+                        newContent = RemoveLineContaining(newContent, "public Tenant? Tenant { get; set; }");
+                    }
+
                     // Se for um arquivo de entidade no Domain, garantir que herde de EntityBase
                     if (templateFile.Contains("\\Domain\\Entities\\") && templateFile.EndsWith(".cs"))
                     {
@@ -597,6 +612,34 @@ namespace BoilerplateCustomizer
                 {
                     Console.WriteLine($"Aviso: Não foi possível processar {filePath} para remoção de Entity1: {ex.Message}");
                 }
+            }
+        }
+
+        private static async Task RemoveEntity1FromDbContext(string projectPath)
+        {
+            string dbContextPath = Path.Combine(projectPath, $"{projectName}.Infra.Data", "Context", $"{projectName}DbContext.cs");
+            if (!File.Exists(dbContextPath)) return;
+
+            string content = await File.ReadAllTextAsync(dbContextPath);
+            bool modified = false;
+
+            // Remove DbSet<Entity1> line
+            if (content.Contains("DbSet<Entity1>"))
+            {
+                content = RemoveLineContaining(content, "DbSet<Entity1>");
+                modified = true;
+            }
+
+            // Remove Entity1 using statement if present
+            if (content.Contains("Entity1"))
+            {
+                content = Regex.Replace(content, @".*using.*Entity1.*\n", "");
+                modified = true;
+            }
+
+            if (modified)
+            {
+                await File.WriteAllTextAsync(dbContextPath, content);
             }
         }
 
@@ -772,7 +815,7 @@ namespace {projectName}.Infra.Data.Context
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<SystemNotification> SystemNotifications => Set<SystemNotification>();
         public DbSet<SystemNotificationUser> SystemNotificationUser => Set<SystemNotificationUser>();
-        public DbSet<Entity1> Entity1s => Set<Entity1>();
+{(entityNames.Count == 0 ? "        public DbSet<Entity1> Entity1s => Set<Entity1>();" : "")}
 
 
         protected override void OnModelCreating(ModelBuilder builder)
