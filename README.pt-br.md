@@ -1,11 +1,21 @@
 <p align="center">
-  <h1 align="center">🚀 Boilerplate Customizer</h1>
+  <h1 align="center">� Foundry</h1>
   <p align="center">
-    Um gerador de boilerplate full-stack pronto para produção com backend .NET 9 e frontend React 19.
+    Uma CLI para scaffolding de projetos full-stack com backend .NET 9 e frontend React 19.
     <br />
     <a href="./README.md"><strong>🇺🇸 Read in English »</strong></a>
   </p>
 </p>
+
+---
+
+**Foundry CLI** é uma ferramenta de linha de comando open-source e multiplataforma focada em automatizar o scaffolding de projetos e customização de boilerplates.
+
+Seu objetivo é simplificar a criação e configuração de estruturas de projetos, ajudando desenvolvedores a iniciar novos projetos de forma mais rápida e consistente.
+
+O código fonte está disponível publicamente para transparência e contribuições da comunidade. Sugestões, relatos de bugs e pull requests são sempre bem-vindos!
+
+Se você apenas quer usar a ferramenta, binários pré-compilados para **Windows**, **Linux** e **macOS** estão disponíveis na seção de [Releases](https://github.com/Caio26Gualberto/Foundry/releases) — sem necessidade de compilação.
 
 ---
 
@@ -14,7 +24,7 @@
 - [Visão Geral](#-visão-geral)
 - [Arquitetura](#-arquitetura)
 - [Stack Tecnológica](#-stack-tecnológica)
-- [Gerador de Projetos (Executável)](#-gerador-de-projetos-executável)
+- [Foundry CLI](#-foundry-cli)
 - [Funcionalidades do Backend](#-funcionalidades-do-backend)
 - [Funcionalidades do Frontend](#-funcionalidades-do-frontend)
 - [Como Começar](#-como-começar)
@@ -22,17 +32,20 @@
 - [Configuração](#-configuração)
 - [Migrations do Banco de Dados](#-migrations-do-banco-de-dados)
 - [Endpoints da API](#-endpoints-da-api)
+- [Contribuindo](#-contribuindo)
 
 ---
 
 ## 🎯 Visão Geral
 
-Este é um **gerador de projetos boilerplate** projetado para acelerar a criação de aplicações full-stack. Em vez de começar do zero, você executa o **BoilerplateCustomizer**, responde algumas perguntas e recebe um projeto totalmente estruturado com autenticação, notificações em tempo real, jobs em background, serviço de email e muito mais — tudo pronto para customizar.
+**Foundry** é uma ferramenta CLI que gera aplicações full-stack prontas para produção. Execute a CLI, responda algumas perguntas e receba um projeto totalmente estruturado com autenticação, notificações em tempo real, jobs em background, serviço de email e muito mais — tudo pronto para customizar.
 
-O gerador cria:
+A CLI gera:
 - Um **backend .NET 9** seguindo Clean Architecture e padrões RESTful
-- Um **frontend React 19** com Material UI, rotas, contexto de autenticação e i18n — pronto para customização
-- Suporte opcional a **multi-tenancy** com isolamento de tenants, impersonação e sistema de convites
+- Um **frontend React 19** com Material UI, rotas, contexto de autenticação e i18n
+- Escolha entre templates **multi-tenancy** (com isolamento de tenants, impersonação e convites) ou **single-tenancy**
+
+Os templates são embutidos dentro do binário da CLI — nenhuma pasta externa é necessária.
 
 ---
 
@@ -100,22 +113,21 @@ O backend segue **Clean Architecture** com separação clara de responsabilidade
 
 ---
 
-## ⚡ Gerador de Projetos (Executável)
+## ⚡ Foundry CLI
 
-O **BoilerplateCustomizer** é um `.exe` autocontido que monta todo o seu projeto de forma interativa.
+**Foundry CLI** é um `.exe` autocontido que monta todo o seu projeto de forma interativa. Os templates para multi-tenancy e single-tenancy são embutidos no binário — basta executar de qualquer lugar.
 
 ### O que ele faz:
 1. **Pede o nome do projeto** — renomeia todos os namespaces, arquivos e referências
-2. **Pede quantas entidades criar** — gera stack CRUD completo (Entity, Repository, Service, Controller, DTOs) a partir de templates
-3. **Pergunta sobre multi-tenancy** — remove opcionalmente todo código relacionado a tenants para projetos mais simples
-4. **Pede o caminho de saída** — permite escolher onde criar o projeto (ou usa o padrão)
+2. **Pergunta sobre multi-tenancy** — seleciona o template apropriado (multi-tenancy ou single-tenancy)
+3. **Pede quantas entidades criar** — gera stack CRUD completo (Entity, Repository, Service, Controller, DTOs) a partir de templates
+4. **Pede o caminho de saída** — permite escolher onde criar o projeto (ou usa o diretório atual)
 5. **Gera uma chave secreta JWT** automaticamente
 6. **Cria uma pasta mãe** contendo os projetos backend e frontend
 
 ### Como executar:
 ```bash
-cd Executavel/publish
-./BoilerplateCustomizer.exe
+Foundry.CLI.exe
 ```
 
 ### Estrutura gerada:
@@ -191,7 +203,7 @@ Handler global que mapeia exceções .NET para status HTTP corretos:
 - Consultas baseadas em LINQ com `Expression<Func<T, object>>` includes
 
 ### Sistema de Templates de Entidades
-Cada entidade gerada pelo customizador recebe:
+Cada entidade gerada pela CLI recebe:
 - Entidade no Domínio (herda `EntityBase` com `Id`, `CreatedAt`, `UpdatedAt`, `IsDeleted`)
 - Registro no Repository
 - Service + Interface
@@ -201,7 +213,7 @@ Cada entidade gerada pelo customizador recebe:
 - Registro no DI
 
 ### Multi-Tenancy (Opcional)
-Quando habilitado:
+Quando o template multi-tenancy é selecionado:
 - Isolamento de tenant com `TenantId` nas entidades
 - Sistema de convites de tenant com tokens por email
 - Impersonação de contas de tenant pelo admin
@@ -228,7 +240,7 @@ O frontend React foi projetado como um **ponto de partida mínimo e funcional** 
 - **Componente DataGrid reutilizável** construído sobre MUI X DataGrid
 
 ### O que é intencionalmente simples:
-O frontend é um **boilerplate** — ele foi feito para ser customizado. A UI é limpa e funcional, mas deliberadamente não é excessivamente estilizada. Você deve:
+O frontend é um **scaffold** — ele foi feito para ser customizado. A UI é limpa e funcional, mas deliberadamente não é excessivamente estilizada. Você deve:
 - Adicionar suas próprias páginas e componentes de negócio
 - Customizar o tema e branding em `src/theme/`
 - Estender a navegação da sidebar em `src/components/Layout/Sidebar.tsx`
@@ -245,8 +257,7 @@ O frontend é um **boilerplate** — ele foi feito para ser customizado. A UI é
 
 ### 1. Gere seu projeto
 ```bash
-cd Executavel/publish
-./BoilerplateCustomizer.exe
+Foundry.CLI.exe
 ```
 Siga as instruções interativas.
 
@@ -265,7 +276,7 @@ Atualize o `appsettings.json`:
     "DefaultConnection": "Server=localhost;Database=SeuBancoDeDados;Trusted_Connection=True;TrustServerCertificate=True;"
   },
   "JWT": {
-    "SecretKey": "gerado-automaticamente-pelo-customizer",
+    "SecretKey": "gerado-automaticamente-pelo-foundry",
     "Issuer": "SeuProjetoAPI",
     "Audience": "SeuProjetoClient",
     "ExpiresInMinutes": 60
@@ -313,7 +324,20 @@ O frontend irá iniciar em `http://localhost:3000`.
 
 ## 📁 Estrutura do Projeto
 
-### Backend
+### Repositório
+```
+Foundry/
+├── Foundry.CLI/               # Código fonte da CLI
+│   ├── Program.cs             # Entry point e lógica de scaffolding
+│   ├── Templates/
+│   │   ├── multi-tenancy/     # Templates backend + frontend multi-tenant
+│   │   └── single-tenancy/    # Templates backend + frontend single-tenant
+│   └── Foundry.CLI.csproj
+├── README.md                  # Versão em inglês
+└── README.pt-br.md            # Este arquivo (Português)
+```
+
+### Backend Gerado
 ```
 SeuProjeto/
 ├── SeuProjeto.Api/
@@ -352,7 +376,7 @@ SeuProjeto/
     └── Triggers/              # Triggers com configuração de retry
 ```
 
-### Frontend
+### Frontend Gerado
 ```
 react-seuprojeto/
 ├── src/
@@ -397,7 +421,7 @@ VITE_SIGNALR_URL=https://localhost:7001/hubs/systemNotification
 
 ## 🗄 Migrations do Banco de Dados
 
-O projeto inclui scripts auxiliares para migrations do Entity Framework Core:
+O projeto gerado inclui scripts auxiliares para migrations do Entity Framework Core:
 
 | Script | Descrição |
 |---|---|
@@ -446,13 +470,27 @@ dotnet ef database update --project SeuProjeto.Infra.Data --startup-project SeuP
 | PATCH | `/MarkAsRead/{id}` | Marcar como lida |
 | POST | `/ClearAllMessages` | Limpar todas as mensagens |
 
-### Tenant (`/api/Tenant`) — *Apenas com multi-tenancy*
+### Tenant (`/api/Tenant`) — *Apenas no template multi-tenancy*
 | Método | Endpoint | Descrição |
 |---|---|---|
 | GET | `/` | Listar tenants |
 | POST | `/` | Criar tenant |
 | POST | `/Invite` | Convidar usuário para tenant |
 | POST | `/Impersonate` | Impersonar tenant |
+
+---
+
+## 🤝 Contribuindo
+
+Foundry é open source e contribuições são bem-vindas! Seja uma correção de bug, uma nova funcionalidade, melhoria na documentação ou apenas uma sugestão — fique à vontade para abrir uma issue ou enviar um pull request.
+
+1. Faça um fork do repositório
+2. Crie sua branch de feature (`git checkout -b feature/minha-feature`)
+3. Commit suas alterações (`git commit -m 'Adiciona minha feature'`)
+4. Push para a branch (`git push origin feature/minha-feature`)
+5. Abra um Pull Request
+
+Se você tem ideias, feedback ou dicas, não hesite em compartilhá-los através das [Issues](https://github.com/Caio26Gualberto/Foundry/issues).
 
 ---
 
@@ -463,5 +501,5 @@ Este projeto é open source e está disponível para uso como ponto de partida p
 ---
 
 <p align="center">
-  Feito com ❤️ para economizar tempo de desenvolvedores.
+  Feito com 🔨 pelo Foundry.
 </p>
