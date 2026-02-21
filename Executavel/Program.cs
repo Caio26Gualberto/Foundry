@@ -1,3 +1,5 @@
+using System.IO.Compression;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -11,29 +13,36 @@ namespace BoilerplateCustomizer
         private static List<string> entityNames = new();
         private static bool enableMultitenancy = true;
         private static string? destinationPath;
+        private static string? tempExtractPath;
 
-        private static string GetTemplatesPath()
+        private static string ExtractTemplates()
         {
-            string currentDir = Directory.GetCurrentDirectory();
+            var assembly = Assembly.GetExecutingAssembly();
+            using var stream = assembly.GetManifestResourceStream("templates.zip")
+                ?? throw new InvalidOperationException("Embedded templates.zip not found in assembly.");
 
-            // Try current directory
-            string templatesPath = Path.Combine(currentDir, "templates");
-            if (Directory.Exists(templatesPath)) return templatesPath;
+            tempExtractPath = Path.Combine(Path.GetTempPath(), "BoilerplateCustomizer", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempExtractPath);
 
-            // Try parent directory (for when run from Executavel)
-            string parentDir = Directory.GetParent(currentDir)?.FullName ?? currentDir;
-            templatesPath = Path.Combine(parentDir, "templates");
-            if (Directory.Exists(templatesPath)) return templatesPath;
+            using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+            archive.ExtractToDirectory(tempExtractPath);
 
-            // Try two levels up (publish -> Executavel -> root)
-            string grandParentDir = Directory.GetParent(parentDir)?.FullName ?? parentDir;
-            templatesPath = Path.Combine(grandParentDir, "templates");
-            if (Directory.Exists(templatesPath)) return templatesPath;
+            return tempExtractPath;
+        }
 
-            // Try three levels up (publish2 -> Executavel -> root)
-            string greatGrandParentDir = Directory.GetParent(grandParentDir)?.FullName ?? grandParentDir;
-            templatesPath = Path.Combine(greatGrandParentDir, "templates");
-            return templatesPath;
+        private static void CleanupTempFiles()
+        {
+            if (tempExtractPath != null && Directory.Exists(tempExtractPath))
+            {
+                try
+                {
+                    Directory.Delete(tempExtractPath, true);
+                }
+                catch
+                {
+                    // Best-effort cleanup
+                }
+            }
         }
 
         static async Task Main(string[] args)
@@ -43,23 +52,8 @@ namespace BoilerplateCustomizer
 
             try
             {
-                string templatesPath = GetTemplatesPath();
-                if (!Directory.Exists(templatesPath))
-                {
-                    Console.WriteLine($"Error: 'templates' folder not found!");
-                    Console.WriteLine($"Searched at: {templatesPath}");
-                    Console.WriteLine($"Current directory: {Directory.GetCurrentDirectory()}");
-                    Console.WriteLine();
-                    Console.WriteLine("Expected structure:");
-                    Console.WriteLine("  templates/");
-                    Console.WriteLine("  ├── multi-tenancy/");
-                    Console.WriteLine("  │   ├── Boilerplate/");
-                    Console.WriteLine("  │   └── react-boilerplate/");
-                    Console.WriteLine("  └── single-tenancy/");
-                    Console.WriteLine("      ├── Boilerplate/");
-                    Console.WriteLine("      └── react-boilerplate/");
-                    return;
-                }
+                Console.WriteLine("Extracting templates...");
+                string templatesPath = ExtractTemplates();
 
                 // Collect user input
                 await CollectUserInput();
@@ -76,9 +70,7 @@ namespace BoilerplateCustomizer
                 }
 
                 // Determine base directory
-                string baseDir = destinationPath
-                    ?? Directory.GetParent(templatesPath)?.FullName
-                    ?? Directory.GetCurrentDirectory();
+                string baseDir = destinationPath ?? Directory.GetCurrentDirectory();
 
                 // Create parent project folder
                 string parentFolder = Path.Combine(baseDir, projectName!);
@@ -143,6 +135,7 @@ namespace BoilerplateCustomizer
             }
             finally
             {
+                CleanupTempFiles();
                 Console.WriteLine();
                 Console.WriteLine("Press any key to close...");
                 Console.ReadKey();
@@ -260,7 +253,7 @@ namespace BoilerplateCustomizer
             Console.WriteLine("Replacing project names in frontend...");
 
             var filesToProcess = Directory.GetFiles(frontendPath, "*", SearchOption.AllDirectories)
-                .Where(f => !f.Contains("\\node_modules\\"))
+                .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}node_modules{Path.DirectorySeparatorChar}"))
                 .Where(f => Path.GetExtension(f).ToLower() is ".ts" or ".tsx" or ".json" or ".html" or ".env" or ".md")
                 .ToList();
 
@@ -286,7 +279,7 @@ namespace BoilerplateCustomizer
 
             // Rename directories containing "Boilerplate"
             var dirsToRename = Directory.GetDirectories(frontendPath, "*Boilerplate*", SearchOption.AllDirectories)
-                .Where(d => !d.Contains("\\node_modules\\"))
+                .Where(d => !d.Contains($"{Path.DirectorySeparatorChar}node_modules{Path.DirectorySeparatorChar}"))
                 .OrderByDescending(d => d.Length)
                 .ToList();
             foreach (var dir in dirsToRename)
@@ -307,7 +300,7 @@ namespace BoilerplateCustomizer
             Console.WriteLine("Replacing project names...");
 
             var filesToProcess = Directory.GetFiles(projectPath, "*", SearchOption.AllDirectories)
-                .Where(f => !f.Contains("\\bin\\") && !f.Contains("\\obj\\"))
+                .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
                 .Where(f => Path.GetExtension(f).ToLower() is ".cs" or ".csproj" or ".sln" or ".json")
                 .ToList();
 
@@ -468,14 +461,14 @@ namespace BoilerplateCustomizer
         {
             // Find all files containing "Entity1"
             var entity1Files = Directory.GetFiles(projectPath, "*", SearchOption.AllDirectories)
-                .Where(f => !f.Contains("\\bin\\") && !f.Contains("\\obj\\") && !f.Contains("\\.vs\\") && !f.Contains("\\packages\\"))
+                .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}.vs{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}packages{Path.DirectorySeparatorChar}"))
                 .Where(f => Path.GetExtension(f).ToLower() is ".cs" or ".csproj" or ".json")
                 .Where(f => Path.GetFileName(f).Contains("Entity1"))
                 .ToList();
 
             // Also find .cs files that reference Entity1 in content
             var additionalFiles = Directory.GetFiles(projectPath, "*.cs", SearchOption.AllDirectories)
-                .Where(f => !f.Contains("\\bin\\") && !f.Contains("\\obj\\") && !f.Contains("\\.vs\\") && !f.Contains("\\packages\\"))
+                .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}.vs{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}packages{Path.DirectorySeparatorChar}"))
                 .Where(f => !Path.GetFileName(f).Contains("Entity1"))
                 .ToList();
 
@@ -509,7 +502,7 @@ namespace BoilerplateCustomizer
                     newContent = newContent.Replace("entity1", entityName.ToLower());
 
                     // Ensure entity inherits from EntityBase
-                    if (templateFile.Contains("\\Domain\\Entities\\") && templateFile.EndsWith(".cs"))
+                    if (templateFile.Contains($"{Path.DirectorySeparatorChar}Domain{Path.DirectorySeparatorChar}Entities{Path.DirectorySeparatorChar}") && templateFile.EndsWith(".cs"))
                     {
                         if (!newContent.Contains(": EntityBase") && newContent.Contains($"class {entityName}"))
                         {
@@ -534,7 +527,7 @@ namespace BoilerplateCustomizer
             Console.WriteLine("Removing Entity1 template files...");
 
             var entity1Files = Directory.GetFiles(projectPath, "*Entity1*", SearchOption.AllDirectories)
-                .Where(f => !f.Contains("\\bin\\") && !f.Contains("\\obj\\") && !f.Contains("\\.vs\\") && !f.Contains("\\packages\\"))
+                .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}.vs{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}packages{Path.DirectorySeparatorChar}"))
                 .ToList();
 
             foreach (string file in entity1Files)
@@ -557,7 +550,7 @@ namespace BoilerplateCustomizer
         private static async Task RemoveEntity1References(string projectPath)
         {
             var filesToProcess = Directory.GetFiles(projectPath, "*.cs", SearchOption.AllDirectories)
-                .Where(f => !f.Contains("\\bin\\") && !f.Contains("\\obj\\") && !f.Contains("\\.vs\\") && !f.Contains("\\packages\\"))
+                .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}.vs{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}packages{Path.DirectorySeparatorChar}"))
                 .ToList();
 
             foreach (string filePath in filesToProcess)
