@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">� Foundry</h1>
+  <h1 align="center">⚒️ Foundry</h1>
   <p align="center">
     Uma CLI para scaffolding de projetos full-stack com backend .NET 9 e frontend React 19.
     <br />
