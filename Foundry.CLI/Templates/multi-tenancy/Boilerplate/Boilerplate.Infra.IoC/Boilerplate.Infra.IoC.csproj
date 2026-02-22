@@ -10,10 +10,12 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.9" />
+    <PackageReference Include="StackExchange.Redis" Version="2.11.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Boilerplate.Application\Boilerplate.Application.csproj" />
+    <ProjectReference Include="..\Boilerplate.Contracts\Boilerplate.Contracts.csproj" />
     <ProjectReference Include="..\Boilerplate.Domain\Boilerplate.Domain.csproj" />
     <ProjectReference Include="..\Boilerplate.Infra.Data\Boilerplate.Infra.Data.csproj" />
     <ProjectReference Include="..\Boilerplate.JobServer\Boilerplate.JobServer.csproj" />

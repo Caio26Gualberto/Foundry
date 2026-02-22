@@ -1,4 +1,5 @@
 using Boilerplate.Api.Middleware;
+using Boilerplate.Api.RateLimiting.Policies;
 using Boilerplate.Application.Services.SignalR;
 using Boilerplate.Infra.Data.Context.Seeding;
 using Boilerplate.Infra.IoC;
@@ -22,6 +23,8 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddInfraIoC(builder.Configuration);
+builder.Services.AddScoped<LoginRateLimitPolicy>();
+builder.Services.AddScoped<UserRateLimitPolicy>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen(options =>
@@ -79,6 +82,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UseMiddleware<ImpersonationTokenMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<RateLimitMiddleware>();
 app.UseHttpsRedirection();
 app.UseCors("AllowLocalFrontend");
 app.UseAuthentication();

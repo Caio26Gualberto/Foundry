@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36301.6
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11512.155 d18.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boilerplate.Api", "Boilerplate.Api.csproj", "{FED4857D-BB6E-431C-A1D8-DD77590521F8}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boilerplate.Infra.IoC", "..\Boilerplate.Infra.IoC\Boilerplate.Infra.IoC.csproj", "{058BD5D2-7A8F-4C9E-BF43-75B362252373}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boilerplate.JobServer", "..\Boilerplate.JobServer\Boilerplate.JobServer.csproj", "{427CDF1B-0E9B-4654-9735-55EE2310A06E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boilerplate.Contracts", "..\Boilerplate.Contracts\Boilerplate.Contracts.csproj", "{90A63DFE-53E2-47BB-A075-666921804054}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{427CDF1B-0E9B-4654-9735-55EE2310A06E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{427CDF1B-0E9B-4654-9735-55EE2310A06E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{427CDF1B-0E9B-4654-9735-55EE2310A06E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90A63DFE-53E2-47BB-A075-666921804054}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90A63DFE-53E2-47BB-A075-666921804054}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90A63DFE-53E2-47BB-A075-666921804054}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90A63DFE-53E2-47BB-A075-666921804054}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

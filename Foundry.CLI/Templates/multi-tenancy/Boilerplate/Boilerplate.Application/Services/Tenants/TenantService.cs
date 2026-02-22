@@ -17,18 +17,16 @@ namespace Boilerplate.Application.Services.Tenants
         private readonly IRepository<Tenant> _repository;
         private readonly IRepository<TenantInvitation> _tenantInvitationRepository;
         private readonly IRepository<User> _userRepository;
-        private readonly IRepository<Entity1> _hahahaha;
         private readonly IEmailService _emailService;
         private readonly IAuthenticateService _authenticateService;
         private readonly ICurrentUserContext _currentUserContext;
 
         public TenantService(IRepository<Tenant> repository, IRepository<TenantInvitation> tenantInvitationRepository, IRepository<User> userRepository,
-            IRepository<Entity1> teste, IEmailService emailService, IAuthenticateService authenticateService, ICurrentUserContext currentUserContext)
+            IEmailService emailService, IAuthenticateService authenticateService, ICurrentUserContext currentUserContext)
         {
             _repository = repository;
             _tenantInvitationRepository = tenantInvitationRepository;
             _userRepository = userRepository;
-            _hahahaha = teste;
             _emailService = emailService;
             _authenticateService = authenticateService;
             _currentUserContext = currentUserContext;

@@ -1,8 +1,9 @@
 using Boilerplate.Api.ApiResponse;
+using Boilerplate.Api.RateLimiting;
+using Boilerplate.Api.RateLimiting.Policies;
 using Boilerplate.Application.Dtos.Auth;
 using Boilerplate.Application.DTOs.Auth;
 using Boilerplate.Application.Services.Auth;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Boilerplate.Api.Controllers
@@ -17,6 +18,7 @@ namespace Boilerplate.Api.Controllers
             _authAppService = authAppService;
         }
 
+        [RateLimit(typeof(LoginRateLimitPolicy))]
         [HttpPost("Login")]
         public async Task<ActionResult<BoilerplateResponse<LoginResponseDto>>> Login(LoginInputDto input)
         {

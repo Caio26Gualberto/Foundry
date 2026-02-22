@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Boilerplate.Contracts\Boilerplate.Contracts.csproj" />
     <ProjectReference Include="..\Boilerplate.Infra.IoC\Boilerplate.Infra.IoC.csproj" />
   </ItemGroup>
 

@@ -9,6 +9,7 @@ using Boilerplate.Application.Services.Notifications;
 using Boilerplate.Application.Services.Tenants;
 using Boilerplate.Application.Services.Users;
 using Boilerplate.Application.Utils.CurrentUserContext;
+using Boilerplate.Contracts.RateLimit.Interface;
 using Boilerplate.Domain.Interfaces.ApplicationUserService;
 using Boilerplate.Domain.Interfaces.Authenticate;
 using Boilerplate.Domain.Interfaces.JobExecutors;
@@ -20,8 +21,11 @@ using Boilerplate.Infra.Data.Context.Seeding;
 using Boilerplate.Infra.Data.Identity;
 using Boilerplate.Infra.Data.Identity.ApplicationUserService;
 using Boilerplate.Infra.Data.Identity.AuthenticateService;
+using Boilerplate.Infra.Data.Redis;
 using Boilerplate.Infra.Data.Repositories;
 using Boilerplate.Infra.Data.Repositories.UnitOfWork;
+using Boilerplate.Infra.Data.Services.Caching;
+using Boilerplate.Infra.Data.Services.RateLimit;
 using Boilerplate.JobServer.Wrappers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -29,6 +33,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 using System.Text;
 
 namespace Boilerplate.Infra.IoC
@@ -51,6 +56,22 @@ namespace Boilerplate.Infra.IoC
             })
             .AddEntityFrameworkStores<BoilerplateDbContext>()
             .AddDefaultTokenProviders();
+
+            var redisSection = configuration.GetSection("Redis");
+            var redisEnabled = redisSection.GetValue<bool>("Enabled");
+
+            if (redisEnabled)
+            {
+                var connectionString = redisSection.GetValue<string>("ConnectionString");
+                services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(connectionString!));
+
+                services.AddScoped<IRedisConnection, RedisConnection>();
+                services.AddScoped<IRateLimitService, RateLimitService>();
+            }
+            else
+            {
+                services.AddScoped<IRateLimitService, InMemoryRateLimitService>();
+            }
 
             var jwtSettings = configuration.GetSection("JWT");
             var secretKey = jwtSettings["SecretKey"] ?? "your-secret-key-here-make-it-long-enough";
@@ -104,6 +125,7 @@ namespace Boilerplate.Infra.IoC
             services.AddScoped<IApplicationUserService, ApplicationUserService>();
             services.AddScoped<ICurrentUserContext, CurrentUserContext>();
             services.AddScoped<ITokenDecoder, TokenDecoder>();
+            services.AddScoped<ICacheService, CacheService>();
 
             //Hangfire Job Scheduler Wrappers
             services.AddScoped<IEntity1JobScheduler, Entity1Wrapper>();
