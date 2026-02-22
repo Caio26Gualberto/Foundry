@@ -1,4 +1,6 @@
 ﻿using Boilerplate.Api.ApiResponse;
+using Boilerplate.Api.RateLimiting;
+using Boilerplate.Api.RateLimiting.Policies;
 using Boilerplate.Application.Dtos.SystemNotification;
 using Boilerplate.Application.Dtos.Tenants;
 using Boilerplate.Application.Interfaces;
@@ -19,6 +21,7 @@ namespace Boilerplate.Api.Controllers
             _notificationService = notificationService;
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpGet]
         public async Task<ActionResult<BoilerplateResponse<List<SystemNotificationDto>>>> GetAll()
         {
@@ -30,6 +33,7 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpPost]
         [Authorize(Roles = $"{Roles.TenantAdmin},{Roles.GlobalManager},{Roles.AdminGlobal}")]
         public async Task<ActionResult<BoilerplateResponse<SystemNotificationDto>>> Create(CreateSystemNotificationDto input)
@@ -42,6 +46,7 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpGet("GetNotificationsCreatedByTenant")]
         public async Task<ActionResult<BoilerplateResponse<List<TenantNotificationDto>>>> GetNotificationsCreatedByTenant()
         {
@@ -53,6 +58,7 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpPatch("MarkAsRead/{id}")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> MarkAsRead(int id, [FromBody] MarkAsReadDto input)
         {
@@ -64,6 +70,7 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpPost("ClearAllMessages")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> ClearAllMessages(ClearAllMessagesDto input)
         {

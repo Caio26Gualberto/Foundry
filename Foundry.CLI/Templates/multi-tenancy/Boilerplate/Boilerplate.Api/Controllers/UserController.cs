@@ -1,4 +1,6 @@
 ﻿using Boilerplate.Api.ApiResponse;
+using Boilerplate.Api.RateLimiting;
+using Boilerplate.Api.RateLimiting.Policies;
 using Boilerplate.Application.Dtos.Users;
 using Boilerplate.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +19,7 @@ namespace Boilerplate.Api.Controllers
             _userService = userService;
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpGet]
         public async Task<ActionResult<BoilerplateResponse<List<UserDto>>>> GetAll()
         {
@@ -28,6 +31,7 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpGet("GetInvites")]
         public async Task<ActionResult<BoilerplateResponse<List<UserInviteDto>>>> GetAllInvites()
         {
@@ -39,6 +43,7 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpDelete("{id}")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> Delete(int id)
         {
@@ -46,6 +51,7 @@ namespace Boilerplate.Api.Controllers
             return NoContent();
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpPatch("{id}")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> Update(int id, UpdateUserDto input)
         {

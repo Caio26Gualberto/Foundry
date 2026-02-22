@@ -1,4 +1,6 @@
 ﻿using Boilerplate.Api.ApiResponse;
+using Boilerplate.Api.RateLimiting;
+using Boilerplate.Api.RateLimiting.Policies;
 using Boilerplate.Application.Dtos.Tenants;
 using Boilerplate.Application.DTOs.Auth;
 using Boilerplate.Application.Interfaces;
@@ -18,6 +20,7 @@ namespace Boilerplate.Api.Controllers
             _tenantService = tenantService;
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpGet]
         public async Task<ActionResult<BoilerplateResponse<List<TenantDto>>>> GetAll()
         {
@@ -29,6 +32,7 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpPatch("{id}")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> UpdateTenant(int id, TenantCreateOrUpdateDto input)
         {
@@ -36,6 +40,7 @@ namespace Boilerplate.Api.Controllers
             return NoContent();
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpPost]
         public async Task<ActionResult<BoilerplateResponse<int>>> CreateTenant(TenantCreateOrUpdateDto input)
         {
@@ -43,6 +48,7 @@ namespace Boilerplate.Api.Controllers
             return Created();
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpDelete]
         public async Task<ActionResult<BoilerplateResponse<bool>>> DeleteTenant()
         {
@@ -50,6 +56,7 @@ namespace Boilerplate.Api.Controllers
             return NoContent();
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpPost("invite")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> InviteUser([FromBody] TenantInvitationDto dto)
         {
@@ -64,6 +71,7 @@ namespace Boilerplate.Api.Controllers
             return StatusCode(500, new BoilerplateResponse<bool> { IsSuccess = false, Message = "Algo deu errado, tente novamente mais tarde" });
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpPost("impersonate")]
         public async Task<ActionResult<BoilerplateResponse<TokensDto>>> ImpersonateTenant(TenantImpersonateDto input)
         {

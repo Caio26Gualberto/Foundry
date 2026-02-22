@@ -39,6 +39,7 @@ namespace Boilerplate.Api.Controllers
             };
         }
 
+        [RateLimit(typeof(LoginRateLimitPolicy))]
         [HttpPost("Register")]
         public async Task<ActionResult<BoilerplateResponse<RegisterResponseDto>>> Register(RegisterInputDto input)
         {
@@ -57,6 +58,7 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpGet("Logout")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> Logout()
         {
@@ -73,6 +75,7 @@ namespace Boilerplate.Api.Controllers
             return StatusCode(500, new BoilerplateResponse<bool> { IsSuccess = false, Message = "Algo deu errado, tente novamente mais tarde" });
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpPost("RefreshToken")]
         public async Task<ActionResult<BoilerplateResponse<TokensDto>>> RefreshToken([FromBody] RefreshTokenRequestDto request)
         {
@@ -99,6 +102,7 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
+        [RateLimit(typeof(LoginRateLimitPolicy))]
         [HttpPost("ForgotPassword")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> ForgotPassword(ForgotPasswordRequestDto request)
         {
@@ -112,6 +116,7 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
+        [RateLimit(typeof(LoginRateLimitPolicy))]
         [HttpPost("ResetPassword")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> ResetPassword(ResetPasswordRequestDto request)
         {
@@ -125,6 +130,7 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
+        [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpPost("ChangePassword")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> ChangePassword(ChangePasswordDto request)
         {
@@ -136,6 +142,7 @@ namespace Boilerplate.Api.Controllers
             });
         }
 
+        [RateLimit(typeof(LoginRateLimitPolicy))]
         [HttpGet("confirm-email")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> ConfirmEmail(string userId, string token)
         {
