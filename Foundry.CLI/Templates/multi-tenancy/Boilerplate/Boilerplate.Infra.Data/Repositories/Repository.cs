@@ -42,7 +42,7 @@ namespace Boilerplate.Infra.Data.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public IQueryable<T> GetAll(params Expression<Func<T, object>>[] includes)
+        public IQueryable<T> GetAll(params Expression<Func<T, object>>[]? includes)
         {
             IQueryable<T> query = _dbSet;
             if (includes != null)

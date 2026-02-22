@@ -8,7 +8,7 @@ namespace Boilerplate.Infra.Data.Identity
         public int? TenantId { get; set; }
         public Tenant? Tenant { get; set; } 
         public int DomainUserId { get; set; }
-        public User User { get; set; }
+        public User User { get; set; } = new User();
         public bool IsNeededChangePassword { get; set; } = false;
     }
 }

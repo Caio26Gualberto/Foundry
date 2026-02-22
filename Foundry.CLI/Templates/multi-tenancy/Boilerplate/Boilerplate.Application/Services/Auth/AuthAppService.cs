@@ -32,7 +32,7 @@ namespace Boilerplate.Application.Services.Auth
 
         public async Task<LoginResponseDto> Authenticate(string email, string password)
         {
-            var user = _userRepository.GetAll(x => x.Tenant).Where(x => x.Email == email).FirstOrDefault();
+            var user = _userRepository.GetAll(x => x.Tenant!).Where(x => x.Email == email).FirstOrDefault();
             if (user == null)
                 throw new Exception("Usuário não encontrado");
 
@@ -148,7 +148,7 @@ namespace Boilerplate.Application.Services.Auth
             if (string.IsNullOrEmpty(email))
                 return EmptyTokens();
 
-            var user = _userRepository.GetAll(x => x.Tenant).FirstOrDefault(x => x.Email == email);
+            var user = _userRepository.GetAll(x => x.Tenant!).FirstOrDefault(x => x.Email == email);
             if (user == null)
                 return EmptyTokens();
 

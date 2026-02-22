@@ -81,7 +81,7 @@ namespace Boilerplate.Application.Services.Tenants
             if (adminUser == null)
                 throw new UnauthorizedAccessException("Usuário não encontrado.");
 
-            var targetUser = _userRepository.GetAll(tu => tu.Tenant).FirstOrDefault(x => x.Id == userId);
+            var targetUser = _userRepository.GetAll(tu => tu.Tenant!).FirstOrDefault(x => x.Id == userId);
             if (targetUser == null)
                 throw new ArgumentException("Usuário alvo não encontrado.");
 

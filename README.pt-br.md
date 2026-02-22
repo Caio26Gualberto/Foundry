@@ -256,9 +256,20 @@ O frontend é um **scaffold** — ele foi feito para ser customizado. A UI é li
 - [SQL Server](https://www.microsoft.com/sql-server) (LocalDB ou instância completa)
 
 ### 1. Gere seu projeto
+
+**Windows:**
 ```bash
 Foundry.CLI.exe
 ```
+
+**Linux/macOS:**
+```bash
+chmod +x Foundry.CLI
+./Foundry.CLI
+```
+
+> **Nota para usuários Linux/macOS:** O comando `chmod +x` concede permissões de execução ao binário. Por padrão, arquivos baixados não possuem direitos de execução por motivos de segurança. Este é um passo único — após definir as permissões, você pode executar a CLI diretamente.
+
 Siga as instruções interativas.
 
 ### 2. Configure o backend
