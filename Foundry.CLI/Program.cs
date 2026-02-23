@@ -12,6 +12,7 @@ namespace BoilerplateCustomizer
         private static string? projectName;
         private static List<string> entityNames = new();
         private static bool enableMultitenancy = true;
+        private static bool enableRedis = true;
         private static string? destinationPath;
         private static string? tempExtractPath;
 
@@ -160,6 +161,21 @@ namespace BoilerplateCustomizer
             var multitenancyResponse = Console.ReadLine()?.ToLower();
             enableMultitenancy = multitenancyResponse == "y" || multitenancyResponse == "yes";
 
+            // Redis
+            Console.Write("Enable Redis for caching? (y/n): ");
+            var redisResponse = Console.ReadLine()?.ToLower();
+            if (redisResponse != "y" && redisResponse != "yes")
+            {
+                Console.WriteLine();
+                Console.WriteLine("Redis provides distributed caching and rate limiting with better performance.");
+                Console.WriteLine("It's recommended for production and multi-instance deployments.");
+                Console.WriteLine("Without Redis, the application will use InMemoryRateLimitService instead.");
+                Console.WriteLine();
+                Console.Write("Are you sure you don't want Redis? (y/n): ");
+                var confirmNoRedis = Console.ReadLine()?.ToLower();
+                enableRedis = confirmNoRedis != "y" && confirmNoRedis != "yes";
+            }
+
             // Number of entities
             Console.Write("How many initial entities do you want to create? ");
             int entityCount;
@@ -245,6 +261,12 @@ namespace BoilerplateCustomizer
             if (entityNames.Count > 0)
             {
                 await RemoveEntity1FromDbContext(projectPath);
+            }
+
+            // 5. Remove Redis if disabled
+            if (!enableRedis)
+            {
+                await RemoveRedis(projectPath);
             }
         }
 
@@ -655,6 +677,119 @@ namespace BoilerplateCustomizer
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Warning: Could not update DependencyInjection for {entityName}: {ex.Message}");
+                }
+            }
+        }
+
+        // ========================================================================
+        // REDIS REMOVAL
+        // ========================================================================
+
+        private static async Task RemoveRedis(string projectPath)
+        {
+            Console.WriteLine("Removing Redis configuration...");
+
+            // 1. Delete Redis folder
+            string redisFolder = Path.Combine(projectPath, $"{projectName}.Infra.Data", "Redis");
+            if (Directory.Exists(redisFolder))
+            {
+                Directory.Delete(redisFolder, true);
+                Console.WriteLine("  Deleted Redis folder");
+            }
+
+            // 2. Delete Caching folder
+            string cachingFolder = Path.Combine(projectPath, $"{projectName}.Infra.Data", "Services", "Caching");
+            if (Directory.Exists(cachingFolder))
+            {
+                Directory.Delete(cachingFolder, true);
+                Console.WriteLine("  Deleted Caching folder");
+            }
+
+            // 3. Delete RateLimitService.cs (keep InMemoryRateLimitService.cs)
+            string rateLimitServicePath = Path.Combine(projectPath, $"{projectName}.Infra.Data", "Services", "RateLimit", "RateLimitService.cs");
+            if (File.Exists(rateLimitServicePath))
+            {
+                File.Delete(rateLimitServicePath);
+                Console.WriteLine("  Deleted RateLimitService.cs");
+            }
+
+            // 4. Delete docker-compose.yml
+            string dockerComposePath = Path.Combine(projectPath, "docker-compose.yml");
+            if (File.Exists(dockerComposePath))
+            {
+                File.Delete(dockerComposePath);
+                Console.WriteLine("  Deleted docker-compose.yml");
+            }
+
+            // 5. Modify DependencyInjection.cs - Remove Redis code block and related usings
+            string diPath = Path.Combine(projectPath, $"{projectName}.Infra.IoC", "DependencyInjection.cs");
+            if (File.Exists(diPath))
+            {
+                try
+                {
+                    string content = await File.ReadAllTextAsync(diPath);
+
+                    // Remove Redis-related using statements
+                    content = RemoveLineContaining(content, $"using {projectName}.Infra.Data.Redis;");
+                    content = RemoveLineContaining(content, $"using {projectName}.Infra.Data.Services.RateLimit;");
+                    content = RemoveLineContaining(content, $"using {projectName}.Infra.Data.Services.Caching;");
+                    content = RemoveLineContaining(content, "using StackExchange.Redis;");
+
+                    // Replace the Redis conditional block with just InMemoryRateLimitService
+                    string redisBlockPattern = @"\s*var redisSection = configuration\.GetSection\(""Redis""\);.*?services\.AddScoped<IRateLimitService, InMemoryRateLimitService>\(\);\s*\}";
+                    content = Regex.Replace(content, redisBlockPattern, "\n            services.AddScoped<IRateLimitService, InMemoryRateLimitService>();", RegexOptions.Singleline);
+
+                    // Remove CacheService injection
+                    content = RemoveLineContaining(content, "services.AddScoped<ICacheService, CacheService>();");
+
+                    await File.WriteAllTextAsync(diPath, content);
+                    Console.WriteLine("  Updated DependencyInjection.cs");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Warning: Could not update DependencyInjection.cs: {ex.Message}");
+                }
+            }
+
+            // 6. Modify appsettings.Example.json - Remove Redis section
+            string appsettingsPath = Path.Combine(projectPath, $"{projectName}.Api", "appsettings.Example.json");
+            if (File.Exists(appsettingsPath))
+            {
+                try
+                {
+                    string content = await File.ReadAllTextAsync(appsettingsPath);
+                    
+                    // Remove the Redis JSON section
+                    string redisJsonPattern = @",?\s*""Redis"":\s*\{[^}]*\}";
+                    content = Regex.Replace(content, redisJsonPattern, "");
+                    
+                    // Clean up any double commas that might result
+                    content = Regex.Replace(content, @",\s*,", ",");
+                    content = Regex.Replace(content, @",\s*\}", "}");
+
+                    await File.WriteAllTextAsync(appsettingsPath, content);
+                    Console.WriteLine("  Updated appsettings.Example.json");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Warning: Could not update appsettings.Example.json: {ex.Message}");
+                }
+            }
+
+            // 7. Modify .csproj - Remove StackExchange.Redis package reference
+            string csprojPath = Path.Combine(projectPath, $"{projectName}.Infra.Data", $"{projectName}.Infra.Data.csproj");
+            if (File.Exists(csprojPath))
+            {
+                try
+                {
+                    string content = await File.ReadAllTextAsync(csprojPath);
+                    content = RemoveLineContaining(content, "StackExchange.Redis");
+                    await File.WriteAllTextAsync(csprojPath, content);
+                    Console.WriteLine("  Updated .csproj (removed StackExchange.Redis)");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Warning: Could not update .csproj: {ex.Message}");
                 }
             }
         }

@@ -96,6 +96,7 @@ O backend segue **Clean Architecture** com separação clara de responsabilidade
 | **JWT (JSON Web Tokens)** | Autenticação stateless com refresh tokens |
 | **SignalR** | Comunicação em tempo real via WebSocket |
 | **Hangfire** | Processamento de jobs em background com dashboard |
+| **Redis** | Cache em memória e rate limiting (via Docker) |
 | **SMTP** | Serviço de email transacional |
 
 ### Frontend
@@ -254,6 +255,7 @@ O frontend é um **scaffold** — ele foi feito para ser customizado. A UI é li
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
 - [Node.js 18+](https://nodejs.org/)
 - [SQL Server](https://www.microsoft.com/sql-server) (LocalDB ou instância completa)
+- [Docker](https://docs.docker.com/get-docker/) (para container Redis, se habilitado)
 
 ### 1. Gere seu projeto
 
@@ -272,7 +274,15 @@ chmod +x Foundry.CLI
 
 Siga as instruções interativas.
 
-### 2. Configure o backend
+### 2. Inicie o Redis (se habilitado)
+Se você habilitou Redis durante a geração do projeto, inicie o container:
+```bash
+cd SeuProjeto/SeuProjeto
+docker-compose up -d
+```
+Isso inicia uma instância Redis na porta 6379 para cache e rate limiting.
+
+### 3. Configure o backend
 ```bash
 cd SeuProjeto/SeuProjeto/SeuProjeto.Api
 ```
@@ -304,7 +314,7 @@ Atualize o `appsettings.json`:
 }
 ```
 
-### 3. Execute as migrations do banco de dados
+### 4. Execute as migrations do banco de dados
 **Windows:**
 ```bash
 create-migrations-windows.bat
@@ -317,13 +327,13 @@ chmod +x create-migrations-linux.sh apply-migrations-linux.sh
 ./apply-migrations-linux.sh
 ```
 
-### 4. Execute o backend
+### 5. Execute o backend
 ```bash
 dotnet run --project SeuProjeto.Api
 ```
 O backend irá iniciar em `https://localhost:7001` (ou porta configurada).
 
-### 5. Execute o frontend
+### 6. Execute o frontend
 ```bash
 cd SeuProjeto/react-seuprojeto
 npm install

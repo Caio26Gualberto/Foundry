@@ -96,6 +96,7 @@ The backend follows **Clean Architecture** with clear separation of concerns acr
 | **JWT (JSON Web Tokens)** | Stateless authentication with refresh tokens |
 | **SignalR** | Real-time WebSocket communication |
 | **Hangfire** | Background job processing with dashboard |
+| **Redis** | In-memory caching & rate limiting (via Docker) |
 | **SMTP** | Transactional email service |
 
 ### Frontend
@@ -254,6 +255,7 @@ The frontend is a **scaffold** — it's meant to be customized. The UI is clean 
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
 - [Node.js 18+](https://nodejs.org/)
 - [SQL Server](https://www.microsoft.com/sql-server) (LocalDB or full instance)
+- [Docker](https://docs.docker.com/get-docker/) (for Redis container, if enabled)
 
 ### 1. Generate your project
 
@@ -272,7 +274,15 @@ chmod +x Foundry.CLI
 
 Follow the interactive prompts.
 
-### 2. Configure the backend
+### 2. Start Redis (if enabled)
+If you enabled Redis during project generation, start the Redis container:
+```bash
+cd YourProject/YourProject
+docker-compose up -d
+```
+This starts a Redis instance on port 6379 for caching and rate limiting.
+
+### 3. Configure the backend
 ```bash
 cd YourProject/YourProject/YourProject.Api
 ```
@@ -304,7 +314,7 @@ Update `appsettings.json`:
 }
 ```
 
-### 3. Run database migrations
+### 4. Run database migrations
 **Windows:**
 ```bash
 create-migrations-windows.bat
@@ -317,13 +327,13 @@ chmod +x create-migrations-linux.sh apply-migrations-linux.sh
 ./apply-migrations-linux.sh
 ```
 
-### 4. Run the backend
+### 5. Run the backend
 ```bash
 dotnet run --project YourProject.Api
 ```
 Backend will start at `https://localhost:7001` (or configured port).
 
-### 5. Run the frontend
+### 6. Run the frontend
 ```bash
 cd YourProject/react-yourproject
 npm install
