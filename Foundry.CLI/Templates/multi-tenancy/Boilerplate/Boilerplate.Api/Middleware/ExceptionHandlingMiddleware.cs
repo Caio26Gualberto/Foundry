@@ -1,5 +1,4 @@
 ﻿using Boilerplate.Api.ApiResponse;
-using System.ComponentModel.DataAnnotations;
 using System.Net.Sockets;
 using System.Security;
 using System.Security.Authentication;
@@ -28,49 +27,28 @@ public class ExceptionHandlingMiddleware
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = ex switch
             {
-                // 400 - Requisição inválida (erros de input)
-                ArgumentNullException => StatusCodes.Status400BadRequest,
-                ArgumentException => StatusCodes.Status400BadRequest,
-                FormatException => StatusCodes.Status400BadRequest,
-                ValidationException => StatusCodes.Status400BadRequest,
-                BadHttpRequestException => StatusCodes.Status400BadRequest,
-
-                // 401 - Não autenticado
+                // 401 - Problemas de autenticação/autorização técnica
                 UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
-                SecurityException => StatusCodes.Status401Unauthorized,
                 AuthenticationException => StatusCodes.Status401Unauthorized,
+                SecurityException => StatusCodes.Status401Unauthorized,
 
-                // 403 - Sem permissão
-                AccessViolationException => StatusCodes.Status403Forbidden,
-
-                // 404 - Recurso não encontrado
-                KeyNotFoundException => StatusCodes.Status404NotFound,
-                FileNotFoundException => StatusCodes.Status404NotFound,
-                DirectoryNotFoundException => StatusCodes.Status404NotFound,
-
-                // 405 - Método não permitido
-                NotSupportedException => StatusCodes.Status405MethodNotAllowed,
-
-                // 408 - Timeout / cancelamento
-                TaskCanceledException => StatusCodes.Status408RequestTimeout,
-                TimeoutException => StatusCodes.Status408RequestTimeout,
-
-                // 409 - Conflito (estado inválido, duplicidade, etc.)
-                InvalidOperationException => StatusCodes.Status409Conflict,
-
-                // 429 - Muitas requisições (throttling)
-                HttpRequestException httpEx when httpEx.Message.Contains("429") => StatusCodes.Status429TooManyRequests,
-
-                // 502 / 503 - Falhas de integração externa ou rede
-                SocketException => StatusCodes.Status502BadGateway,
-                HttpRequestException => StatusCodes.Status502BadGateway, // deve vir DEPOIS do with-filter acima
-                IOException => StatusCodes.Status503ServiceUnavailable,
+                // Timeout / cancelamento (infra / rede)
+                TaskCanceledException => StatusCodes.Status503ServiceUnavailable,
+                TimeoutException => StatusCodes.Status503ServiceUnavailable,
                 OperationCanceledException => StatusCodes.Status503ServiceUnavailable,
 
-                // 500 - Erro interno genérico (catch-all)
+                // Falhas de integração externa / rede
+                SocketException => StatusCodes.Status502BadGateway,
+                HttpRequestException httpEx when httpEx.Message.Contains("429")
+                    => StatusCodes.Status429TooManyRequests,
+                HttpRequestException => StatusCodes.Status502BadGateway,
+
+                // Infra geral (IO, disco, etc.)
+                IOException => StatusCodes.Status503ServiceUnavailable,
+
+                // fallback — erro inesperado
                 _ => StatusCodes.Status500InternalServerError
             };
-
 
             var response = new BoilerplateResponse<object>
             {

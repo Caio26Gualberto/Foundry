@@ -1,7 +1,24 @@
 import axios, { type AxiosError, type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import { enqueueSnackbar } from 'notistack';
-import { type BoilerplateResponse, type RefreshTokenRequestDto, type TokensDto } from '../types';
+import { type RefreshTokenRequestDto, type TokensDto } from '../types';
 import { API_BASE_URL, STORAGE_KEYS } from '../utils/constants';
+
+/**
+ * Contrato espelhando `BoilerplateResponse<T>` do backend (JSON em camelCase).
+ * Fonte da verdade para respostas da API — usar este tipo ao interpretar payloads.
+ */
+export interface BoilerplateResponse<T = unknown> {
+  isSuccess: boolean;
+  message?: string | null;
+  data?: T | null;
+}
+
+export interface ApiCallOptions extends AxiosRequestConfig {
+  /** Sobrescreve a mensagem de erro exibida no Snackbar (quando não silent). */
+  errorMessage?: string;
+  /** Não exibe Snackbar nem para sucesso nem para erro desta requisição. */
+  silent?: boolean;
+}
 
 interface ErrorResponseData {
   title?: string;
@@ -10,9 +27,30 @@ interface ErrorResponseData {
   errors?: Record<string, string[]>;
 }
 
-interface ApiCallOptions extends AxiosRequestConfig {
-  errorMessage?: string;
-  silent?: boolean;
+function isBoilerplatePayload(value: unknown): value is BoilerplateResponse<unknown> {
+  return typeof value === 'object' && value !== null && 'isSuccess' in value;
+}
+
+/** Texto exibível no Snackbar; ignora string vazia ou só espaços. */
+function snackbarText(message: string | null | undefined): string | undefined {
+  if (typeof message !== 'string') return undefined;
+  const t = message.trim();
+  return t.length > 0 ? t : undefined;
+}
+
+/**
+ * 401 em login/registro ou sem refresh token não é "sessão expirada" — não tentar renovar;
+ * deixa o fluxo ir para handleError (ex.: mensagem em BoilerplateResponse).
+ */
+function shouldSkipTokenRefreshOn401(config: AxiosRequestConfig | undefined): boolean {
+  const path = `${config?.baseURL ?? ''}${config?.url ?? ''}`.toLowerCase();
+  if (path.includes('/auth/login') || path.includes('/auth/register')) {
+    return true;
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)) {
+    return true;
+  }
+  return false;
 }
 
 interface PendingRequest {
@@ -58,8 +96,11 @@ class ApiClient {
       },
       async (error: AxiosError) => {
         const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
-        
+
         if (error.response?.status === 401 && !originalRequest._retry) {
+          if (shouldSkipTokenRefreshOn401(originalRequest)) {
+            return this.handleError(error);
+          }
           return this.handle401Error(originalRequest);
         }
 
@@ -70,28 +111,29 @@ class ApiClient {
 
   private handleBoilerplateResponse(response: AxiosResponse<BoilerplateResponse<unknown>>) {
     const boilerplateResponse = response.data;
-    
-    if (typeof boilerplateResponse !== 'object' || !('isSuccess' in boilerplateResponse)) {
+
+    if (!isBoilerplatePayload(boilerplateResponse)) {
       return response;
     }
 
     const config = response.config as ApiCallOptions;
+    const msg = snackbarText(boilerplateResponse.message);
 
     if (!boilerplateResponse.isSuccess) {
-      if (!config?.silent && boilerplateResponse.message) {
-        enqueueSnackbar(boilerplateResponse.message, { variant: 'error' });
+      if (!config?.silent && msg) {
+        enqueueSnackbar(msg, { variant: 'error' });
       }
-      
-      return Promise.reject(new Error(boilerplateResponse.message || 'Erro na requisição'));
+
+      return Promise.reject(new Error(msg ?? 'Erro na requisição'));
     }
 
-    if (!config?.silent && boilerplateResponse.message) {
-      enqueueSnackbar(boilerplateResponse.message, { variant: 'success' });
+    if (!config?.silent && msg) {
+      enqueueSnackbar(msg, { variant: 'success' });
     }
 
     return {
       ...response,
-      data: boilerplateResponse.data
+      data: boilerplateResponse.data as unknown
     };
   }
 
@@ -172,17 +214,22 @@ class ApiClient {
     );
 
     const boilerplateResponse = response.data;
-    
+
     if (!boilerplateResponse.isSuccess) {
-      throw new Error(boilerplateResponse.message || 'Failed to refresh token');
+      throw new Error(snackbarText(boilerplateResponse.message) ?? 'Failed to refresh token');
     }
 
-    return boilerplateResponse.data;
+    const tokens = boilerplateResponse.data;
+    if (!tokens) {
+      throw new Error('Failed to refresh token');
+    }
+
+    return tokens;
   }
 
   private handleError(error: AxiosError) {
     const config = error.config as ApiCallOptions;
-    const data = error.response?.data as ErrorResponseData;
+    const raw = error.response?.data;
 
     if (config?.silent) {
       return Promise.reject(error);
@@ -192,9 +239,20 @@ class ApiClient {
       enqueueSnackbar(config.errorMessage, { variant: 'error' });
       return Promise.reject(error);
     }
-    
-    if (data?.message) {
-      enqueueSnackbar(data.message, { variant: 'error' });
+
+    // Erro HTTP com corpo no formato BoilerplateResponse (ex.: middleware / controllers)
+    if (isBoilerplatePayload(raw) && raw.isSuccess === false) {
+      const msg = snackbarText(raw.message);
+      if (msg) {
+        enqueueSnackbar(msg, { variant: 'error' });
+        return Promise.reject(error);
+      }
+    }
+
+    const data = raw as ErrorResponseData | undefined;
+    const genericMsg = snackbarText(data?.message);
+    if (genericMsg) {
+      enqueueSnackbar(genericMsg, { variant: 'error' });
       return Promise.reject(error);
     }
 
@@ -202,7 +260,7 @@ class ApiClient {
     switch (status) {
       case 400:
       case 409:
-        enqueueSnackbar(data?.message || 'Dados inválidos', { variant: 'error' });
+        enqueueSnackbar(snackbarText(data?.message) ?? 'Dados inválidos', { variant: 'error' });
         break;
 
       case 403:

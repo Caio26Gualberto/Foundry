@@ -1,13 +1,14 @@
-﻿using Boilerplate.Application.Dtos.SystemNotification;
+﻿using Boilerplate.Application.Common.Results;
+using Boilerplate.Application.Dtos.SystemNotification;
 
 namespace Boilerplate.Application.Interfaces
 {
     public interface ISystemNotificationService
     {
-        Task<List<SystemNotificationDto>> GetAllNotifications();
-        Task<SystemNotificationDto> CreateSystemNotification(CreateSystemNotificationDto input);
-        Task<List<TenantNotificationDto>> GetNotificationByTenant();
-        Task<bool> MarkNotificationAsRead(int id, MarkAsReadDto input);
-        Task<bool> DeleteAllMessages(ClearAllMessagesDto input);
+        Task<Result<List<SystemNotificationDto>>> GetAllNotifications();
+        Task<Result<SystemNotificationDto>> CreateSystemNotification(CreateSystemNotificationDto input);
+        Task<Result<List<TenantNotificationDto>>> GetNotificationByTenant();
+        Task<Result<bool>> MarkNotificationAsRead(int id, MarkAsReadDto input);
+        Task<Result<bool>> DeleteAllMessages(ClearAllMessagesDto input);
     }
 }

@@ -10,7 +10,7 @@ namespace Boilerplate.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController : BaseController
     {
         private readonly AuthAppService _authAppService;
         public AuthController(AuthAppService authAppService)
@@ -22,19 +22,22 @@ namespace Boilerplate.Api.Controllers
         [HttpPost("Login")]
         public async Task<ActionResult<BoilerplateResponse<LoginResponseDto>>> Login(LoginInputDto input)
         {
-            var resultLogin = await _authAppService.Authenticate(input.Email, input.Password);
+            var result = await _authAppService.Authenticate(input.Email, input.Password);
+
+            if (result.IsFailure)
+                return MapError(result.Error);
 
             return new BoilerplateResponse<LoginResponseDto>()
             {
-                IsSuccess = true,
+                IsSuccess = result.IsSuccess,
                 Data = new LoginResponseDto
                 {
-                    Tokens = resultLogin.Tokens != null ? new TokensDto
+                    Tokens = result.Data.Tokens != null ? new TokensDto
                     {
-                        Token = resultLogin.Tokens.Token,
-                        RefreshToken = resultLogin.Tokens.RefreshToken
+                        Token = result.Data.Tokens.Token,
+                        RefreshToken = result.Data.Tokens.RefreshToken
                     } : null,
-                    IsNeededChangePassword = resultLogin.IsNeededChangePassword
+                    IsNeededChangePassword = result.Data.IsNeededChangePassword
                 }
             };
         }
@@ -45,16 +48,19 @@ namespace Boilerplate.Api.Controllers
         {
             var result = await _authAppService.Register(input);
 
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return Ok(new BoilerplateResponse<RegisterResponseDto>()
             {
                 Data = new RegisterResponseDto
                 {
-                    Result = result.Result,
-                    Message = result.Message,
-                    UserId = result.UserId
+                    Result = result.Data.Result,
+                    Message = result.Data.Message,
+                    UserId = result.Data.UserId
                 },
-                IsSuccess = result.Result,
-                Message = result.Message
+                IsSuccess = result.Data.Result,
+                Message = result.Data.Message
             });
         }
 
@@ -79,26 +85,21 @@ namespace Boilerplate.Api.Controllers
         [HttpPost("RefreshToken")]
         public async Task<ActionResult<BoilerplateResponse<TokensDto>>> RefreshToken([FromBody] RefreshTokenRequestDto request)
         {
-            var tokens = await _authAppService.RefreshTokens(request.RefreshToken);
 
-            if (!string.IsNullOrEmpty(tokens.Token))
+            var result = await _authAppService.RefreshTokens(request.RefreshToken);
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
+            return Ok(new BoilerplateResponse<TokensDto>
             {
-                return Ok(new BoilerplateResponse<TokensDto>
+                IsSuccess = true,
+                Message = "Tokens successfully renewed.",
+                Data = new TokensDto
                 {
-                    Data = new TokensDto
-                    {
-                        Token = tokens.Token,
-                        RefreshToken = tokens.RefreshToken
-                    },
-                    IsSuccess = true,
-                    Message = "Tokens renovados com sucesso"
-                });
-            }
-
-            return Unauthorized(new BoilerplateResponse<TokensDto>
-            {
-                IsSuccess = false,
-                Message = "Refresh token inválido ou expirado"
+                    Token = result.Data.Token,
+                    RefreshToken = result.Data.RefreshToken
+                }
             });
         }
 
@@ -122,11 +123,14 @@ namespace Boilerplate.Api.Controllers
         {
             var result = await _authAppService.ResetPassword(request);
 
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return Ok(new BoilerplateResponse<bool>
             {
                 Data = result.IsSuccess,
                 IsSuccess = result.IsSuccess,
-                Message = result.Message
+                Message = result.Data.Message
             });
         }
 

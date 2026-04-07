@@ -1,4 +1,5 @@
-﻿using Boilerplate.Application.Dtos.Tenants;
+﻿using Boilerplate.Application.Common.Results;
+using Boilerplate.Application.Dtos.Tenants;
 using Boilerplate.Application.Dtos.Users;
 using Boilerplate.Application.DTOs.Auth;
 using Boilerplate.Application.Interfaces;
@@ -7,6 +8,7 @@ using Boilerplate.Application.Utils.StaticUtils;
 using Boilerplate.Domain.Entities;
 using Boilerplate.Domain.Interfaces.Authenticate;
 using Boilerplate.Domain.Interfaces.Repositories;
+using Boilerplate.Domain.Interfaces.Repositories.IUnitOfWork;
 using Boilerplate.Domain.Models;
 using System.Security.Cryptography;
 
@@ -20,9 +22,10 @@ namespace Boilerplate.Application.Services.Tenants
         private readonly IEmailService _emailService;
         private readonly IAuthenticateService _authenticateService;
         private readonly ICurrentUserContext _currentUserContext;
+        private readonly IUnitOfWork _unitOfWork;
 
         public TenantService(IRepository<Tenant> repository, IRepository<TenantInvitation> tenantInvitationRepository, IRepository<User> userRepository,
-            IEmailService emailService, IAuthenticateService authenticateService, ICurrentUserContext currentUserContext)
+            IEmailService emailService, IAuthenticateService authenticateService, ICurrentUserContext currentUserContext, IUnitOfWork unitOfWork)
         {
             _repository = repository;
             _tenantInvitationRepository = tenantInvitationRepository;
@@ -30,10 +33,32 @@ namespace Boilerplate.Application.Services.Tenants
             _emailService = emailService;
             _authenticateService = authenticateService;
             _currentUserContext = currentUserContext;
+            _unitOfWork = unitOfWork;
         }
 
-        public async Task<int> Create(string name, Address address, RegisterInputDto registerDto)
+        public async Task<Result<int>> Create(string name, Address address, RegisterInputDto registerDto)
         {
+            if (string.IsNullOrEmpty(name))
+                return Result<int>.Fail(
+                    new Error("INVALID_NAME", "The tenant's name is required.", ErrorType.Validation)
+                );
+
+            if (string.IsNullOrEmpty(registerDto.Email) || string.IsNullOrEmpty(registerDto.Password) || string.IsNullOrEmpty(registerDto.Nickname))
+                return Result<int>.Fail(
+                    new Error("INVALID_ADMIN_DATA", "Admin user data is incomplete.", ErrorType.Validation)
+                );
+
+            if (string.IsNullOrEmpty(registerDto.Token))
+                return Result<int>.Fail(
+                    new Error("INVALID_TOKEN", "Token should be provided when creating a tenant.", ErrorType.Validation)
+                );
+
+            if (string.IsNullOrEmpty(address.Street) || string.IsNullOrEmpty(address.Number) || string.IsNullOrEmpty(address.City) || string.IsNullOrEmpty(address.State) ||
+                string.IsNullOrEmpty(address.Country) || string.IsNullOrEmpty(address.ZipCode))
+                return Result<int>.Fail(
+                    new Error("INVALID_ADDRESS", "Complete address information is required.", ErrorType.Validation)
+                );
+
             Tenant tenant = new Tenant
             {
                 Name = name,
@@ -43,23 +68,26 @@ namespace Boilerplate.Application.Services.Tenants
             await _repository.AddAsync(tenant);
 
             await _authenticateService.RegisterTenantAdmin(registerDto.Email, registerDto.Password, registerDto.Nickname, tenant.Id);
-            return tenant.Id;
+            return Result<int>.Ok(tenant.Id);
         }
 
-        public async Task<bool> Delete()
+        public async Task<Result<bool>> Delete()
         {
             var tenant = await _repository.GetByIdAsync((int)_currentUserContext.TenantId!);
             if (tenant == null)
-                throw new NullReferenceException("Tenant não encontrada para exclusão");
+                return Result<bool>.Fail(
+                    new Error("TENANT_NOT_FOUND", "Tenant not found for deletion.", ErrorType.NotFound)
+                );
 
             await _repository.SoftDelete(tenant);
-            return true;
+            return Result<bool>.Ok(true);
         }
 
-        public async Task<List<TenantDto>> GetAllTenants()
+        public async Task<Result<List<TenantDto>>> GetAllTenants()
         {
             var tenants = _repository.GetAll(t => t.Users).ToList();
-            return tenants.Select(x => new TenantDto
+
+            var result = tenants.Select(x => new TenantDto
             {
                 Address = x.Address,
                 Id = x.Id,
@@ -70,40 +98,49 @@ namespace Boilerplate.Application.Services.Tenants
                     Name = x.Name,
                     Email = x.Email
                 }).ToList(),
-            }).ToList();        
+            }).ToList();   
+            
+            return Result<List<TenantDto>>.Ok(result);
         }
 
-        public async Task<TokensDto> ImpersonateTenantByUser(int userId, int tenantId)
+        public async Task<Result<TokensDto>> ImpersonateTenantByUser(int userId, int tenantId)
         {
             var adminUser = await _userRepository.GetByIdAsync(_currentUserContext.UserId);
             if (adminUser == null)
-                throw new UnauthorizedAccessException("Usuário não encontrado.");
+                return Result<TokensDto>.Fail(
+                    new Error("USER_NOT_FOUND", "Current user not found for impersonation.", ErrorType.NotFound)
+                );
 
             var targetUser = _userRepository.GetAll(tu => tu.Tenant!).FirstOrDefault(x => x.Id == userId);
             if (targetUser == null)
-                throw new ArgumentException("Usuário alvo não encontrado.");
+                return Result<TokensDto>.Fail(
+                    new Error("TARGET_USER_NOT_FOUND", "Target user not found for impersonation.", ErrorType.NotFound)
+                );
 
             var tenantExists = _repository.GetAll()
                 .Any(t => t.Id == tenantId && t.Users.Any(u => u.Id == userId));
 
             if (!tenantExists)
-                throw new ArgumentException("A tenant não existe ou o usuário alvo não pertence a esta tenant.");
+                return Result<TokensDto>.Fail(
+                    new Error("TENANT_OR_USER_MISMATCH", "Tenant does not exist or target user does not belong to this tenant.", ErrorType.Validation)
+                );
 
             var token = await _authenticateService.GenerateJwtImpersonatorToken(adminUser, targetUser);
 
-            return new TokensDto
-            {
-                Token = token
-            };
+            return Result<TokensDto>.Ok(new TokensDto { Token = token });
         }
 
-        public async Task<bool> InviteUserToTenantAsync(int tenantId, string userEmail)
+        public async Task<Result<bool>> InviteUserToTenantAsync(int tenantId, string userEmail)
         {
             var tenant = await _repository.GetByIdAsync(tenantId);
             if (tenant == null)
-                throw new NullReferenceException("Tenant not found");
+                return Result<bool>.Fail(
+                    new Error("TENANT_NOT_FOUND", "Tenant not found for invitation.", ErrorType.NotFound)
+                );
 
             var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+            await _unitOfWork.BeginTransactionAsync();
 
             await _tenantInvitationRepository.AddAsync(new TenantInvitation
             {
@@ -115,24 +152,34 @@ namespace Boilerplate.Application.Services.Tenants
 
             var emailSent = await _emailService.SendTenantInvitationEmailAsync(userEmail, tenant, token);
             if (!emailSent)
-                throw new Exception("Failed to send invitation email");
+            {
+                await _unitOfWork.RollbackAsync();
+                return Result<bool>.Fail(
+                    new Error("EMAIL_SENDING_FAILED", "Failed to send invitation email.", ErrorType.Unexpected)
+                );
+            }
 
-            return true;
+            await _unitOfWork.CommitAsync();
+
+            return Result<bool>.Ok(true);
         }
 
-        public async Task<bool> Update(int id, string name, Address address)
+        public async Task<Result<bool>> Update(int id, string name, Address address)
         {
             var tenantId = _currentUserContext.TenantId ?? id;
             var tenant = await _repository.GetByIdAsync(tenantId);
+
             if (tenant == null)
-                throw new NullReferenceException("Tenant não encontrada para atualizar");
+                return Result<bool>.Fail(
+                    new Error("TENANT_NOT_FOUND", "Tenant not found for update.", ErrorType.NotFound)
+                );
 
             if (!string.IsNullOrEmpty(name) && tenant.Name != name)            
                 tenant.Name = name;
         
             BoilerplateStaticUtils.ApplyChanges<Address, Address>(tenant.Address, address);
             await _repository.UpdateAsync(tenant);
-            return true;
+            return Result<bool>.Ok(true);
         }
     }
 }

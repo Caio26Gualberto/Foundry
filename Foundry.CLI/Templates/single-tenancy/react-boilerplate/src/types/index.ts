@@ -25,12 +25,6 @@ export interface LoginResponseDto {
   isNeededChangePassword: boolean;
 }
 
-export interface BoilerplateResponse<T> {
-  isSuccess: boolean;
-  message?: string;
-  data: T;
-}
-
 export interface LoginInputDto {
   email: string;
   password: string;
@@ -41,8 +35,3 @@ export interface RefreshTokenRequestDto {
 }
 
 export type UserRole = 'AdminGlobal' | 'GlobalManager' | 'User';
-
-export interface ApiCallOptions {
-  errorMessage?: string;
-  silent?: boolean;
-}

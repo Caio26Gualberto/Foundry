@@ -13,7 +13,7 @@ namespace Boilerplate.Api.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class SystemNotificationController : ControllerBase
+    public class SystemNotificationController : BaseController
     {
         private readonly ISystemNotificationService _notificationService;
         public SystemNotificationController(ISystemNotificationService notificationService)
@@ -25,11 +25,15 @@ namespace Boilerplate.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<BoilerplateResponse<List<SystemNotificationDto>>>> GetAll()
         {
-            var notifications = await _notificationService.GetAllNotifications();
+            var result = await _notificationService.GetAllNotifications();
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return Ok(new BoilerplateResponse<List<SystemNotificationDto>>
             {
-                IsSuccess = true,
-                Data = notifications
+                IsSuccess = result.IsSuccess,
+                Data = result.Data
             });
         }
 
@@ -38,11 +42,15 @@ namespace Boilerplate.Api.Controllers
         [Authorize(Roles = $"{Roles.TenantAdmin},{Roles.GlobalManager},{Roles.AdminGlobal}")]
         public async Task<ActionResult<BoilerplateResponse<SystemNotificationDto>>> Create(CreateSystemNotificationDto input)
         {
-            var notification = await _notificationService.CreateSystemNotification(input);
+            var result = await _notificationService.CreateSystemNotification(input);
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return Ok(new BoilerplateResponse<SystemNotificationDto>
             {
-                IsSuccess = true,
-                Data = notification
+                IsSuccess = result.IsSuccess,
+                Data = result.Data
             });
         }
 
@@ -50,11 +58,15 @@ namespace Boilerplate.Api.Controllers
         [HttpGet("GetNotificationsCreatedByTenant")]
         public async Task<ActionResult<BoilerplateResponse<List<TenantNotificationDto>>>> GetNotificationsCreatedByTenant()
         {
-            var notifications = await _notificationService.GetNotificationByTenant();
+            var result = await _notificationService.GetNotificationByTenant();
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return Ok(new BoilerplateResponse<List<TenantNotificationDto>>
             {
-                IsSuccess = true,
-                Data = notifications
+                IsSuccess = result.IsSuccess,
+                Data = result.Data
             });
         }
 
@@ -63,10 +75,14 @@ namespace Boilerplate.Api.Controllers
         public async Task<ActionResult<BoilerplateResponse<bool>>> MarkAsRead(int id, [FromBody] MarkAsReadDto input)
         {
             var result = await _notificationService.MarkNotificationAsRead(id, input);
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return Ok(new BoilerplateResponse<bool>
             {
-                IsSuccess = true,
-                Data = result
+                IsSuccess = result.IsSuccess,
+                Data = result.Data
             });
         }
 
@@ -75,10 +91,14 @@ namespace Boilerplate.Api.Controllers
         public async Task<ActionResult<BoilerplateResponse<bool>>> ClearAllMessages(ClearAllMessagesDto input)
         {
             var result = await _notificationService.DeleteAllMessages(input);
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return Ok(new BoilerplateResponse<bool>
             {
-                IsSuccess = true,
-                Data = result
+                IsSuccess = result.IsSuccess,
+                Data = result.Data
             });
         }
     }

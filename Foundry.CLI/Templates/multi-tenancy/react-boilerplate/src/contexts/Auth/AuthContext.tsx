@@ -182,8 +182,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw new Error('Login failed - no tokens received');
     } catch (error) {
       console.error('Login failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro no login';
-      enqueueSnackbar(errorMessage, { variant: 'error' });
       throw error;
     } finally {
       setIsLoading(false);

@@ -12,7 +12,7 @@ namespace Boilerplate.Api.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class TenantController : ControllerBase
+    public class TenantController : BaseController
     {
         private readonly ITenantService _tenantService;
         public TenantController(ITenantService tenantService)
@@ -24,11 +24,15 @@ namespace Boilerplate.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<BoilerplateResponse<List<TenantDto>>>> GetAll()
         {
-            var tenants = await _tenantService.GetAllTenants();
+            var result = await _tenantService.GetAllTenants();
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return Ok(new BoilerplateResponse<List<TenantDto>>
             {
-                IsSuccess = true,
-                Data = tenants
+                IsSuccess = result.IsSuccess,
+                Data = result.Data,
             });
         }
 
@@ -36,7 +40,11 @@ namespace Boilerplate.Api.Controllers
         [HttpPatch("{id}")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> UpdateTenant(int id, TenantCreateOrUpdateDto input)
         {
-            await _tenantService.Update(id, input.Name, input.Address);
+            var result = await _tenantService.Update(id, input.Name, input.Address);
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return NoContent();
         }
 
@@ -44,7 +52,11 @@ namespace Boilerplate.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<BoilerplateResponse<int>>> CreateTenant(TenantCreateOrUpdateDto input)
         {
-            await _tenantService.Create(input.Name, input.Address, input.RegisterInput);
+            var response = await _tenantService.Create(input.Name, input.Address, input.RegisterInput);
+
+            if (response.IsFailure)
+                return MapError(response.Error);
+
             return Created();
         }
 
@@ -52,7 +64,11 @@ namespace Boilerplate.Api.Controllers
         [HttpDelete]
         public async Task<ActionResult<BoilerplateResponse<bool>>> DeleteTenant()
         {
-            await _tenantService.Delete();
+            var result = await _tenantService.Delete();
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return NoContent();
         }
 
@@ -61,26 +77,32 @@ namespace Boilerplate.Api.Controllers
         public async Task<ActionResult<BoilerplateResponse<bool>>> InviteUser([FromBody] TenantInvitationDto dto)
         {
             var result = await _tenantService.InviteUserToTenantAsync(dto.TenantId, dto.Email);
-            if (result)
-                return Ok(new BoilerplateResponse<bool>
-                {
-                    Data = result,
-                    IsSuccess = result,
-                    Message = "Convite enviado com sucesso"
-                });
-            return StatusCode(500, new BoilerplateResponse<bool> { IsSuccess = false, Message = "Algo deu errado, tente novamente mais tarde" });
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
+            return Ok(new BoilerplateResponse<bool>
+            {
+                IsSuccess = true,
+                Message = "Invitation sent successfully",
+                Data = result.Data
+            });
         }
 
         [RateLimit(typeof(UserRateLimitPolicy))]
         [HttpPost("impersonate")]
         public async Task<ActionResult<BoilerplateResponse<TokensDto>>> ImpersonateTenant(TenantImpersonateDto input)
         {
-            var tokens = await _tenantService.ImpersonateTenantByUser(input.UserId, input.TenantId);
+            var result = await _tenantService.ImpersonateTenantByUser(input.UserId, input.TenantId);
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return Ok(new BoilerplateResponse<TokensDto>
             {
                 IsSuccess = true,
-                Message = $"Impersonando TenantId {input.TenantId}",
-                Data = tokens
+                Message = $"Impersonating tenantId {input.TenantId}",
+                Data = result.Data
             });
         }
     }

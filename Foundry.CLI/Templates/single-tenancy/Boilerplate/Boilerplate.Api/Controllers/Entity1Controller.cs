@@ -4,7 +4,7 @@ namespace Boilerplate.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class Entity1Controller : ControllerBase
+    public class Entity1Controller : BaseController
     {
     }
 }

@@ -11,7 +11,7 @@ namespace Boilerplate.Api.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class UserController : ControllerBase
+    public class UserController : BaseController
     {
         private readonly IUserService _userService;
         public UserController(IUserService userService)
@@ -23,11 +23,15 @@ namespace Boilerplate.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<BoilerplateResponse<List<UserDto>>>> GetAll()
         {
-            var users = await _userService.GetAllUSers();
+            var result = await _userService.GetAllUSers();
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return Ok(new BoilerplateResponse<List<UserDto>>
             {
                 IsSuccess = true,
-                Data = users
+                Data = result.Data
             });
         }
 
@@ -35,11 +39,15 @@ namespace Boilerplate.Api.Controllers
         [HttpGet("GetInvites")]
         public async Task<ActionResult<BoilerplateResponse<List<UserInviteDto>>>> GetAllInvites()
         {
-            var invites = await _userService.GetAllInvites();
+            var result = await _userService.GetAllInvites();
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return Ok(new BoilerplateResponse<List<UserInviteDto>>
             {
                 IsSuccess = true,
-                Data = invites
+                Data = result.Data
             });
         }
 
@@ -47,7 +55,11 @@ namespace Boilerplate.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> Delete(int id)
         {
-            await _userService.DeleteUser(id);
+            var result = await _userService.DeleteUser(id);
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return NoContent();
         }
 
@@ -55,7 +67,11 @@ namespace Boilerplate.Api.Controllers
         [HttpPatch("{id}")]
         public async Task<ActionResult<BoilerplateResponse<bool>>> Update(int id, UpdateUserDto input)
         {
-            await _userService.UpdateUser(id, input);
+            var result = await _userService.UpdateUser(id, input);
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
             return NoContent();
         }
     }

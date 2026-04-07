@@ -1,4 +1,5 @@
-﻿using Boilerplate.Application.Common.SystemNotifications;
+﻿using Boilerplate.Application.Common.Results;
+using Boilerplate.Application.Common.SystemNotifications;
 using Boilerplate.Application.Dtos.SystemNotification;
 using Boilerplate.Application.Interfaces;
 using Boilerplate.Application.Interfaces.ICurrentUserContext;
@@ -32,7 +33,7 @@ namespace Boilerplate.Application.Services.Notifications
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<SystemNotificationDto> CreateSystemNotification(CreateSystemNotificationDto input)
+        public async Task<Result<SystemNotificationDto>> CreateSystemNotification(CreateSystemNotificationDto input)
         {
             var tenantId = _currentUserContext.TenantId;
 
@@ -55,7 +56,9 @@ namespace Boilerplate.Application.Services.Notifications
             }
 
             if (users.Count == 0)
-                throw new Exception("No valid users found for the notification.");
+                return Result<SystemNotificationDto>.Fail(
+                    new Error("USERS_NOT_FOUND", "Users not found to send notifications.", ErrorType.NotFound)
+                );
 
             var notification = new SystemNotification
             {
@@ -63,6 +66,7 @@ namespace Boilerplate.Application.Services.Notifications
                 Content = input.Content,
                 TenantId = tenantId,
             };
+
             await _unitOfWork.BeginTransactionAsync();
             await _repository.AddAsync(notification);
             await _unitOfWork.CommitAsync();
@@ -81,7 +85,7 @@ namespace Boilerplate.Application.Services.Notifications
                 .Users(users.Select(x => x.Id.ToString()).ToList())
                 .SendAsync(SystemNotificationEvents.UpdateNotifications);
 
-            return new SystemNotificationDto
+            var notificationDto = new SystemNotificationDto
             {
                 Id = notification.Id,
                 Title = notification.Title,
@@ -89,15 +93,19 @@ namespace Boilerplate.Application.Services.Notifications
                 IsRead = false,
                 CreatedAt = notification.CreatedAt,
             };
+
+            return Result<SystemNotificationDto>.Ok(notificationDto);
         }
 
-        public async Task<bool> DeleteAllMessages(ClearAllMessagesDto input)
+        public async Task<Result<bool>> DeleteAllMessages(ClearAllMessagesDto input)
         {
             var notifications = _repositoryNotificationsUsers.GetAll()
                 .Where(nu => input.NotificationIds.Contains(nu.NotificationId) && nu.UserId == _currentUserContext.UserId).ToList();
 
             if (!notifications.Any())
-                throw new Exception("No notifications found to delete.");
+                return Result<bool>.Fail(
+                    new Error("NOTIFICATIONS_NOT_FOUND", "No notifications found to delete.", ErrorType.NotFound)
+                );
 
             foreach (var notification in notifications)
                 await _repositoryNotificationsUsers.SoftDelete(notification);
@@ -106,13 +114,13 @@ namespace Boilerplate.Application.Services.Notifications
                 .User(_currentUserContext.UserId.ToString())
                 .SendAsync(SystemNotificationEvents.UpdateNotifications);
 
-            return true;
+            return Result<bool>.Ok(true);
         }
 
-        public async Task<List<SystemNotificationDto>> GetAllNotifications()
+        public async Task<Result<List<SystemNotificationDto>>> GetAllNotifications()
         {
             var notifications = _repositoryNotificationsUsers.GetAll(n => n.Notification).Where(nu => nu.UserId == _currentUserContext.UserId);
-            return notifications.Select(n => new SystemNotificationDto
+            var notificationsList = notifications.Select(n => new SystemNotificationDto
             {
                 Id = n.Notification.Id,
                 Title = n.Notification.Title,
@@ -120,9 +128,11 @@ namespace Boilerplate.Application.Services.Notifications
                 IsRead = n.IsRead,
                 CreatedAt = n.Notification.CreatedAt,
             }).OrderByDescending(n => n.CreatedAt).ToList();
+
+            return Result<List<SystemNotificationDto>>.Ok(notificationsList);
         }
 
-        public async Task<List<TenantNotificationDto>> GetNotificationByTenant()
+        public async Task<Result<List<TenantNotificationDto>>> GetNotificationByTenant()
         {
             var tenantId = _currentUserContext.TenantId;
 
@@ -130,7 +140,7 @@ namespace Boilerplate.Application.Services.Notifications
                 .GetAll(x => x.SystemNotificationUser)
                 .Where(n => n.TenantId == tenantId);
 
-            return notifications
+            var notificationsList = notifications
                 .Select(n => new TenantNotificationDto
                 {
                     Id = n.Id,
@@ -142,16 +152,20 @@ namespace Boilerplate.Application.Services.Notifications
                 })
                 .OrderByDescending(n => n.CreatedAt)
                 .ToList();
+
+            return Result<List<TenantNotificationDto>>.Ok(notificationsList);
         }
 
-        public async Task<bool> MarkNotificationAsRead(int id, MarkAsReadDto input)
+        public async Task<Result<bool>> MarkNotificationAsRead(int id, MarkAsReadDto input)
         {
             var notificationUser = _repositoryNotificationsUsers
                 .GetAll()
                 .FirstOrDefault(nu => nu.NotificationId == id && nu.UserId == _currentUserContext.UserId);
 
             if (notificationUser == null)
-                throw new Exception("Notification not found for the user.");
+                return Result<bool>.Fail(
+                    new Error("NOTIFICATION_NOT_FOUND", "Notification not found for the user.", ErrorType.NotFound)
+                );
 
             notificationUser.IsRead = input.IsRead;
             notificationUser.ReadAt = input.IsRead ? DateTime.UtcNow : null;
@@ -161,7 +175,7 @@ namespace Boilerplate.Application.Services.Notifications
                 .User(_currentUserContext.UserId.ToString())
                 .SendAsync(SystemNotificationEvents.UpdateNotifications);
 
-            return true;
+            return Result<bool>.Ok(true);
         }
     }
 }

@@ -43,7 +43,6 @@ export const Login: React.FC = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer login';
       setError(errorMessage);
-      enqueueSnackbar(errorMessage, { variant: 'error' });
     }
   };
 
