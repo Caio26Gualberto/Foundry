@@ -368,3 +368,6 @@ FodyWeavers.xsd
 
 # Packaged CLI templates (generated artifact)
 Foundry.CLI/templates.zip
+
+# Published CLI executables
+executors/
