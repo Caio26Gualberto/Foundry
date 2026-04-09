@@ -365,3 +365,6 @@ FodyWeavers.xsd
 /Boilerplate/Boilerplate.Api/appsettings.json
 /Foundry.CLI/Templates/single-tenancy/Boilerplate/Boilerplate.Api/appsettings.json
 /Foundry.CLI/Templates/multi-tenancy/Boilerplate/Boilerplate.Api/appsettings.json
+
+# Packaged CLI templates (generated artifact)
+Foundry.CLI/templates.zip
