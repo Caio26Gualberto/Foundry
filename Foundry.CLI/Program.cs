@@ -16,19 +16,38 @@ namespace BoilerplateCustomizer
         private static string? destinationPath;
         private static string? tempExtractPath;
 
-        private static string ExtractTemplates()
+        private static async Task<string> ExtractTemplatesAsync()
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            using var stream = assembly.GetManifestResourceStream("templates.zip")
-                ?? throw new InvalidOperationException("Embedded templates.zip not found in assembly.");
+            var version = "v0.2.1_Templates";
+            var url = $"https://github.com/Caio26Gualberto/Foundry/releases/download/{version}/templates.zip";
 
-            tempExtractPath = Path.Combine(Path.GetTempPath(), "BoilerplateCustomizer", Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(tempExtractPath);
+            var basePath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "BoilerplateCustomizer",
+                version
+            );
 
-            using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
-            archive.ExtractToDirectory(tempExtractPath);
+            var zipPath = Path.Combine(basePath, "templates.zip");
+            var extractPath = Path.Combine(basePath, "extracted");
 
-            return tempExtractPath;
+            if (Directory.Exists(extractPath))
+                return extractPath;
+
+            Directory.CreateDirectory(basePath);
+
+            Console.WriteLine("Downloading templates...");
+
+            using (var http = new HttpClient())
+            {
+                var bytes = await http.GetByteArrayAsync(url);
+                await File.WriteAllBytesAsync(zipPath, bytes);
+            }
+
+            Console.WriteLine("Extracting templates...");
+
+            ZipFile.ExtractToDirectory(zipPath, extractPath);
+
+            return extractPath;
         }
 
         private static void CleanupTempFiles()
@@ -54,7 +73,7 @@ namespace BoilerplateCustomizer
             try
             {
                 Console.WriteLine("Extracting templates...");
-                string templatesPath = ExtractTemplates();
+                string templatesPath = await ExtractTemplatesAsync();
 
                 // Collect user input
                 await CollectUserInput();

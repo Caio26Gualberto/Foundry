@@ -44,7 +44,7 @@ function snackbarText(message: string | null | undefined): string | undefined {
  */
 function shouldSkipTokenRefreshOn401(config: AxiosRequestConfig | undefined): boolean {
   const path = `${config?.baseURL ?? ''}${config?.url ?? ''}`.toLowerCase();
-  if (path.includes('/auth/login') || path.includes('/auth/register')) {
+  if (path.includes('/auth/login') || path.includes('/auth/register') || path.includes('/auth/verifyemail') || path.includes('/auth/resendverificationcode')) {
     return true;
   }
   if (!localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)) {

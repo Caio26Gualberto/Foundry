@@ -171,9 +171,39 @@
     "login": {
         "title": "Faça login para continuar",
         "rights": " 2026 Boilerplate. Todos os direitos reservados.",
+        "noAccount": "Não tem uma conta?",
+        "register": "Cadastre-se",
         "fields": {
             "email": "Email",
             "password": "Senha"
+        }
+    },
+    "register": {
+        "title": "Crie sua conta",
+        "hasAccount": "Já tem uma conta?",
+        "login": "Entrar",
+        "success": "Conta criada com sucesso! Verifique seu email.",
+        "fields": {
+            "email": "Email",
+            "nickname": "Nome",
+            "password": "Senha",
+            "confirmPassword": "Confirmar Senha"
+        },
+        "validation": {
+            "fillAll": "Por favor, preencha todos os campos",
+            "passwordMismatch": "As senhas não coincidem",
+            "passwordMin": "A senha deve ter pelo menos 6 caracteres"
+        }
+    },
+    "verifyEmail": {
+        "title": "Verificar Email",
+        "description": "Digite o código de 6 dígitos enviado para",
+        "success": "Email verificado com sucesso!",
+        "resend": "Reenviar código",
+        "resendSuccess": "Código reenviado com sucesso!",
+        "backToLogin": "Voltar ao login",
+        "validation": {
+            "fillCode": "Por favor, preencha o código completo"
         }
     },
     "changePassword": {

@@ -12,6 +12,9 @@ namespace Boilerplate.Domain.Interfaces.Authenticate
         Task<bool> ChangePassword(string email, string password);
 
         Task<bool> ConfirmEmail(string userId, string token);
+        Task<string> GenerateEmailVerificationCode(string email);
+        Task<bool> VerifyEmailCode(string email, string code);
+        Task<bool> IsEmailConfirmed(string email);
 
         // JWT Methods
         Task<string> GenerateJwtToken(string email, User domainUser);

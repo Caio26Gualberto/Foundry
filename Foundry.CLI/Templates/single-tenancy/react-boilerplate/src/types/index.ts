@@ -35,3 +35,20 @@ export interface RefreshTokenRequestDto {
 }
 
 export type UserRole = 'AdminGlobal' | 'GlobalManager' | 'User';
+
+export interface RegisterInputDto {
+  email: string;
+  nickname: string;
+  password: string;
+}
+
+export interface RegisterResponseDto {
+  result: boolean;
+  message: string;
+  userId?: number;
+}
+
+export interface VerifyEmailInputDto {
+  email: string;
+  code: string;
+}

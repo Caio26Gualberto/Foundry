@@ -171,9 +171,39 @@
     "login": {
         "title": "登录以继续",
         "rights": " 2026 Boilerplate. ",
+        "noAccount": "没有账户？",
+        "register": "注册",
         "fields": {
             "email": "电子邮箱",
             "password": "密码"
+        }
+    },
+    "register": {
+        "title": "创建账户",
+        "hasAccount": "已有账户？",
+        "login": "登录",
+        "success": "账户创建成功！请查看您的电子邮件。",
+        "fields": {
+            "email": "电子邮箱",
+            "nickname": "姓名",
+            "password": "密码",
+            "confirmPassword": "确认密码"
+        },
+        "validation": {
+            "fillAll": "请填写所有字段",
+            "passwordMismatch": "两次密码输入不一致",
+            "passwordMin": "密码至少需要6个字符"
+        }
+    },
+    "verifyEmail": {
+        "title": "验证邮箱",
+        "description": "请输入发送到以下邮箱的6位验证码",
+        "success": "邮箱验证成功！",
+        "resend": "重新发送验证码",
+        "resendSuccess": "验证码已重新发送！",
+        "backToLogin": "返回登录",
+        "validation": {
+            "fillCode": "请输入完整的验证码"
         }
     },
     "changePassword": {

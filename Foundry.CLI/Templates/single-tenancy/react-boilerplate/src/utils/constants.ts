@@ -2,6 +2,8 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localh
 
 export const ROUTES = {
   LOGIN: '/login',
+  REGISTER: '/register',
+  VERIFY_EMAIL: '/verify-email',
   CHANGE_PASSWORD: '/change-password',
   DASHBOARD: '/dashboard',
   USERS: '/dashboard/users',

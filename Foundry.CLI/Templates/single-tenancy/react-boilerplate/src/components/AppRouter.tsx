@@ -4,6 +4,8 @@ import { useAuth } from "../contexts/Auth";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { DashboardLayout } from "./Layout/DashboardLayout";
 import { Login } from "../pages/Login";
+import { Register } from "../pages/Register";
+import { VerifyEmail } from "../pages/VerifyEmail";
 import { Dashboard } from "../pages/Dashboard";
 import { ROUTES } from "../utils/constants";
 import Users from "../pages/Users";
@@ -36,6 +38,24 @@ export const AppRouter: React.FC = () => {
                 <Login />
               )
             }
+          />
+
+          {/* Register Route */}
+          <Route
+            path={ROUTES.REGISTER}
+            element={
+              user && token ? (
+                <Navigate to={getDefaultRedirect()} replace />
+              ) : (
+                <Register />
+              )
+            }
+          />
+
+          {/* Verify Email Route */}
+          <Route
+            path={ROUTES.VERIFY_EMAIL}
+            element={<VerifyEmail />}
           />
 
           {/* Change Password Route */}

@@ -40,45 +40,36 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
             return (passwordValid, user.IsNeededChangePassword);
         }
 
+        /// <summary>
+        /// Creates domain user and Identity user. When used with AuthAppService.Register, runs inside
+        /// a unit-of-work transaction so registration can roll back if verification email fails.
+        /// </summary>
         public async Task<(int, string)> Register(string email, string password, string name)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
+            var user = new User
             {
-                var user = new User
-                {
-                    Email = email,
-                    Name = name
-                };
+                Email = email,
+                Name = name
+            };
 
-                _context.DomainUsers.Add(user);
-                await _context.SaveChangesAsync();
+            _context.DomainUsers.Add(user);
+            await _context.SaveChangesAsync();
 
-                var applicationUser = new ApplicationUser
-                {
-                    UserName = email,
-                    Email = email,
-                    DomainUserId = user.Id
-                };
-
-                var result = await _userManager.CreateAsync(applicationUser, password);
-
-                if (!result.Succeeded)
-                {
-                    await transaction.RollbackAsync();
-                    return (0, string.Empty);
-                }
-
-                await _userManager.AddToRoleAsync(applicationUser, Boilerplate.Domain.Constants.Roles.User);
-                await transaction.CommitAsync();
-
-                return (applicationUser.Id, applicationUser.Email);
-            }
-            catch
+            var applicationUser = new ApplicationUser
             {
-                await transaction.RollbackAsync();
-                throw;
-            }
+                UserName = email,
+                Email = email,
+                DomainUserId = user.Id
+            };
+
+            var result = await _userManager.CreateAsync(applicationUser, password);
+
+            if (!result.Succeeded)
+                return (0, string.Empty);
+
+            await _userManager.AddToRoleAsync(applicationUser, Boilerplate.Domain.Constants.Roles.User);
+
+            return (applicationUser.Id, applicationUser.Email ?? string.Empty);
         }
 
         public async Task Logout()
@@ -201,6 +192,46 @@ namespace Boilerplate.Infra.Data.Identity.AuthenticateService
 
             var result = await _userManager.ConfirmEmailAsync(applicationUser, token);
             return result.Succeeded;
+        }
+
+        public async Task<string> GenerateEmailVerificationCode(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) return string.Empty;
+
+            var code = Random.Shared.Next(100000, 999999).ToString();
+            user.EmailVerificationCode = code;
+            user.EmailVerificationCodeExpiry = DateTime.UtcNow.AddMinutes(10);
+            await _userManager.UpdateAsync(user);
+
+            return code;
+        }
+
+        public async Task<bool> VerifyEmailCode(string email, string code)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) return false;
+
+            if (user.EmailVerificationCode != code)
+                return false;
+
+            if (user.EmailVerificationCodeExpiry == null || user.EmailVerificationCodeExpiry < DateTime.UtcNow)
+                return false;
+
+            user.EmailConfirmed = true;
+            user.EmailVerificationCode = null;
+            user.EmailVerificationCodeExpiry = null;
+            await _userManager.UpdateAsync(user);
+
+            return true;
+        }
+
+        public async Task<bool> IsEmailConfirmed(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) return false;
+
+            return user.EmailConfirmed;
         }
 
         public async Task<bool> IsExpiredRefreshToken(string refreshToken)

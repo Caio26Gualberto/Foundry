@@ -9,12 +9,14 @@ import {
   Alert,
   Container,
   CircularProgress,
+  Link,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useAuth } from '../contexts/Auth';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../utils/constants';
 import { translate } from '../i18n';
+import apiClient from '../services/apiClient';
 
 export const Login: React.FC = () => {
   const { login, isLoading } = useAuth();
@@ -40,8 +42,17 @@ export const Login: React.FC = () => {
       if (isNeededChangePassword) {
         navigate(`${ROUTES.CHANGE_PASSWORD}?email=${encodeURIComponent(email)}`);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer login';
+    } catch (err: unknown) {
+      const axiosResponse = (err as { response?: { data?: { message?: string } } })?.response?.data;
+      const errorMessage = axiosResponse?.message
+        || (err instanceof Error ? err.message : 'Erro ao fazer login');
+
+      if (errorMessage.toLowerCase().includes('email not confirmed')) {
+        await apiClient.post('/Auth/ResendVerificationCode', { email }, { silent: true }).catch(() => {});
+        navigate(`${ROUTES.VERIFY_EMAIL}?email=${encodeURIComponent(email)}`);
+        return;
+      }
+
       setError(errorMessage);
     }
   };
@@ -115,6 +126,20 @@ export const Login: React.FC = () => {
                   translate('button.enter')
                 )}
               </Button>
+            </Box>
+
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                {translate('login.noAccount')}{' '}
+                <Link
+                  component="button"
+                  variant="body2"
+                  onClick={() => navigate(ROUTES.REGISTER)}
+                  sx={{ cursor: 'pointer' }}
+                >
+                  {translate('login.register')}
+                </Link>
+              </Typography>
             </Box>
           </CardContent>
         </Card>

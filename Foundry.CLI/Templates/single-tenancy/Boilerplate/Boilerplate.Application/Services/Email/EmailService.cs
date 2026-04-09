@@ -14,7 +14,8 @@ namespace Boilerplate.Application.Services.Email
         {
             _configuration = configuration;
         }
-public async Task<bool> SendEmailAsync(EmailDto emailDto)
+
+        public async Task<bool> SendEmailAsync(EmailDto emailDto)
         {
             try
             {
@@ -35,7 +36,7 @@ public async Task<bool> SendEmailAsync(EmailDto emailDto)
             }
             catch (Exception ex)
             {
-                throw new Exception("Erro ao enviar email", ex);
+                throw new Exception("Failed to send email", ex);
             }
         }
 
@@ -46,18 +47,40 @@ public async Task<bool> SendEmailAsync(EmailDto emailDto)
             var confirmationLink = $"{basePath}/confirm-email?userId={userId}&token={Uri.EscapeDataString(token)}";
 
             var emailBody = BuildEmailTemplate(
-                title: "Confirme seu email para ativar sua conta",
-                messageBody: @"Olá,<br/><br/>
-                    Recebemos uma solicitação de registro com este email. 
-                    Para confirmar sua conta e ativar o acesso, clique no botão abaixo:",
-                ctaText: "Confirmar Email",
+                title: "Confirm your email to activate your account",
+                messageBody: @"Hello,<br/><br/>
+                    We received a registration request for this email address.
+                    To confirm your account and enable access, click the button below:",
+                ctaText: "Confirm email",
                 ctaLink: confirmationLink
             );
 
             return await SendEmailAsync(new EmailDto
             {
                 To = email,
-                Subject = "Boilerplate - Confirmação de Email",
+                Subject = "Boilerplate - Email confirmation",
+                Body = emailBody,
+                IsHtml = true
+            });
+        }
+
+        public async Task<bool> SendVerificationCodeEmail(string email, string code)
+        {
+            var emailBody = BuildEmailTemplate(
+                title: "Verification code",
+                messageBody: $@"Hello,<br/><br/>
+                    Your verification code is:<br/><br/>
+                    <div style='text-align:center; margin:20px 0;'>
+                        <span style='font-size:32px; font-weight:bold; letter-spacing:8px; color:#d32f2f;'>{code}</span>
+                    </div>
+                    <br/>This code expires in 10 minutes.<br/>
+                    If you did not request this code, you can ignore this email."
+            );
+
+            return await SendEmailAsync(new EmailDto
+            {
+                To = email,
+                Subject = "Boilerplate - Verification code",
                 Body = emailBody,
                 IsHtml = true
             });
@@ -69,16 +92,16 @@ public async Task<bool> SendEmailAsync(EmailDto emailDto)
             var resetLink = $"{frontendUrl}/security/resetPassword?token={Uri.EscapeDataString(resetToken)}&email={Uri.EscapeDataString(email)}";
 
             var emailBody = BuildEmailTemplate(
-                "Solicitação de Recuperação de Senha",
-                "Você solicitou a recuperação de sua senha. Clique no botão abaixo para redefinir sua senha. Este link expira em 24 horas.",
-                "Redefinir Senha",
+                "Password reset request",
+                "You requested a password reset. Click the button below to set a new password. This link expires in 24 hours.",
+                "Reset password",
                 resetLink
             );
 
             var emailDto = new EmailDto
             {
                 To = email,
-                Subject = "Boilerplate - Recuperação de Senha",
+                Subject = "Boilerplate - Password reset",
                 Body = emailBody,
                 IsHtml = true
             };
@@ -128,14 +151,14 @@ public async Task<bool> SendEmailAsync(EmailDto emailDto)
             emailHtml += @"
                         <hr style='border:none; border-top:1px solid #ddd; margin:30px 0;'/>
                         <p style='color:#999; font-size:12px; line-height:1.4;'>
-                            Este é um e-mail automático, não responda esta mensagem.<br/>
+                            This is an automated message, please do not reply.<br/>
                             Boilerplate
                         </p>
                     </div>
 
                     <!-- Footer -->
                     <div style='text-align:center; color:#999; font-size:12px; margin:20px 0;'>
-                        &copy; " + DateTime.Now.Year + @" Boilerplate. Todos os direitos reservados.
+                        &copy; " + DateTime.Now.Year + @" Boilerplate. All rights reserved.
                     </div>
                 </body>
                 </html>";

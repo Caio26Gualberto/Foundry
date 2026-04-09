@@ -171,9 +171,39 @@
     "login": {
         "title": "Sign in to continue",
         "rights": " 2026 Boilerplate. All rights reserved.",
+        "noAccount": "Don't have an account?",
+        "register": "Sign up",
         "fields": {
             "email": "Email",
             "password": "Password"
+        }
+    },
+    "register": {
+        "title": "Create your account",
+        "hasAccount": "Already have an account?",
+        "login": "Sign in",
+        "success": "Account created successfully! Check your email.",
+        "fields": {
+            "email": "Email",
+            "nickname": "Name",
+            "password": "Password",
+            "confirmPassword": "Confirm Password"
+        },
+        "validation": {
+            "fillAll": "Please fill in all fields",
+            "passwordMismatch": "Passwords do not match",
+            "passwordMin": "Password must be at least 6 characters"
+        }
+    },
+    "verifyEmail": {
+        "title": "Verify Email",
+        "description": "Enter the 6-digit code sent to",
+        "success": "Email verified successfully!",
+        "resend": "Resend code",
+        "resendSuccess": "Code resent successfully!",
+        "backToLogin": "Back to login",
+        "validation": {
+            "fillCode": "Please enter the complete code"
         }
     },
     "changePassword": {

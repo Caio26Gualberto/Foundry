@@ -158,5 +158,39 @@ namespace Boilerplate.Api.Controllers
                 Message = result ? "Email confirmado com sucesso." : "Falha ao confirmar o email.",
             });
         }
+
+        [RateLimit(typeof(LoginRateLimitPolicy))]
+        [HttpPost("VerifyEmail")]
+        public async Task<ActionResult<BoilerplateResponse<bool>>> VerifyEmail(VerifyEmailInputDto input)
+        {
+            var result = await _authAppService.VerifyEmail(input.Email, input.Code);
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
+            return Ok(new BoilerplateResponse<bool>
+            {
+                IsSuccess = true,
+                Data = true,
+                Message = "Email verificado com sucesso."
+            });
+        }
+
+        [RateLimit(typeof(LoginRateLimitPolicy))]
+        [HttpPost("ResendVerificationCode")]
+        public async Task<ActionResult<BoilerplateResponse<bool>>> ResendVerificationCode(ResendVerificationCodeInputDto input)
+        {
+            var result = await _authAppService.ResendVerificationCode(input.Email);
+
+            if (result.IsFailure)
+                return MapError(result.Error);
+
+            return Ok(new BoilerplateResponse<bool>
+            {
+                IsSuccess = true,
+                Data = true,
+                Message = "Código de verificação reenviado com sucesso."
+            });
+        }
     }
 }

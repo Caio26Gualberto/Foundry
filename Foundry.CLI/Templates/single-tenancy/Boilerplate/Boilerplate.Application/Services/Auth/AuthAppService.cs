@@ -5,6 +5,7 @@ using Boilerplate.Application.Interfaces;
 using Boilerplate.Domain.Entities;
 using Boilerplate.Domain.Interfaces.Authenticate;
 using Boilerplate.Domain.Interfaces.Repositories;
+using Boilerplate.Domain.Interfaces.Repositories.IUnitOfWork;
 
 namespace Boilerplate.Application.Services.Auth
 {
@@ -13,12 +14,18 @@ namespace Boilerplate.Application.Services.Auth
         private readonly IAuthenticateService _authService;
         private readonly IEmailService _emailService;
         private readonly IRepository<User> _userRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public AuthAppService(IAuthenticateService authenticateService, IEmailService emailService, IRepository<User> userRepository)
+        public AuthAppService(
+            IAuthenticateService authenticateService,
+            IEmailService emailService,
+            IRepository<User> userRepository,
+            IUnitOfWork unitOfWork)
         {
             _authService = authenticateService;
             _emailService = emailService;
             _userRepository = userRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<bool> ConfirmEmail(string userId, string token)
@@ -36,18 +43,18 @@ namespace Boilerplate.Application.Services.Auth
 
             var (isAuthenticated, isNeededChangePassword) = await _authService.Authenticate(email, password);
 
-            var response = new LoginResponseDto();
-
             if (!isAuthenticated)
             {
-                response = new LoginResponseDto
-                {
-                    Tokens = null,
-                    IsNeededChangePassword = isNeededChangePassword
-                };
-
                 return Result<LoginResponseDto>.Fail(
                     new Error("INVALID_CREDENTIALS", "Invalid email or password", ErrorType.Unauthorized)
+                );
+            }
+
+            var isEmailConfirmed = await _authService.IsEmailConfirmed(email);
+            if (!isEmailConfirmed)
+            {
+                return Result<LoginResponseDto>.Fail(
+                    new Error("EMAIL_NOT_CONFIRMED", "Email not confirmed. Please verify your email.", ErrorType.Unauthorized)
                 );
             }
 
@@ -56,7 +63,7 @@ namespace Boilerplate.Application.Services.Auth
 
             await _authService.SaveRefreshToken(email, refreshToken);
 
-            response = new LoginResponseDto
+            var response = new LoginResponseDto
             {
                 Tokens = new TokensDto
                 {
@@ -74,20 +81,95 @@ namespace Boilerplate.Application.Services.Auth
 
         public async Task<Result<RegisterResponseDto>> Register(RegisterInputDto input)
         {
-            var (userId, email) = await _authService.Register(input.Email, input.Password, input.Nickname);
+            await _unitOfWork.BeginTransactionAsync();
 
-            if (string.IsNullOrEmpty(email))
-                return Result<RegisterResponseDto>.Fail(
-                    new Error("REGISTRATION_FAILED", "Failed to register user", ErrorType.Validation)
+            try
+            {
+                var (_, email) = await _authService.Register(input.Email, input.Password, input.Nickname);
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    await _unitOfWork.RollbackAsync();
+                    return Result<RegisterResponseDto>.Fail(
+                        new Error("REGISTRATION_FAILED", "Failed to register user", ErrorType.Validation)
+                    );
+                }
+
+                var code = await _authService.GenerateEmailVerificationCode(email);
+                if (string.IsNullOrEmpty(code))
+                {
+                    await _unitOfWork.RollbackAsync();
+                    return Result<RegisterResponseDto>.Fail(
+                        new Error("REGISTRATION_FAILED", "Failed to register user", ErrorType.Validation)
+                    );
+                }
+
+                try
+                {
+                    var emailSent = await _emailService.SendVerificationCodeEmail(email, code);
+                    if (!emailSent)
+                    {
+                        await _unitOfWork.RollbackAsync();
+                        return Result<RegisterResponseDto>.Fail(
+                            new Error("EMAIL_SEND_FAILED", "Failed to send verification email. Please try again later.", ErrorType.Unexpected)
+                        );
+                    }
+                }
+                catch
+                {
+                    await _unitOfWork.RollbackAsync();
+                    return Result<RegisterResponseDto>.Fail(
+                        new Error("EMAIL_SEND_FAILED", "Failed to send verification email. Please try again later.", ErrorType.Unexpected)
+                    );
+                }
+
+                await _unitOfWork.CommitAsync();
+
+                var response = new RegisterResponseDto
+                {
+                    Result = true,
+                    Message = "User registered successfully. Please check your email for the verification code."
+                };
+
+                return Result<RegisterResponseDto>.Ok(response);
+            }
+            catch
+            {
+                await _unitOfWork.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task<Result<bool>> VerifyEmail(string email, string code)
+        {
+            var result = await _authService.VerifyEmailCode(email, code);
+
+            if (!result)
+                return Result<bool>.Fail(
+                    new Error("INVALID_CODE", "Invalid or expired verification code", ErrorType.Validation)
                 );
 
-            var response = new RegisterResponseDto
-            {
-                Result = true,
-                Message = "User registered successfully"
-            };
+            return Result<bool>.Ok(true);
+        }
 
-            return Result<RegisterResponseDto>.Ok(response);
+        public async Task<Result<bool>> ResendVerificationCode(string email)
+        {
+            var user = _userRepository.GetAll().FirstOrDefault(x => x.Email == email);
+            if (user == null)
+                return Result<bool>.Fail(
+                    new Error("USER_NOT_FOUND", "User not found", ErrorType.NotFound)
+                );
+
+            var isConfirmed = await _authService.IsEmailConfirmed(email);
+            if (isConfirmed)
+                return Result<bool>.Fail(
+                    new Error("ALREADY_CONFIRMED", "Email is already confirmed", ErrorType.Validation)
+                );
+
+            var code = await _authService.GenerateEmailVerificationCode(email);
+            await _emailService.SendVerificationCodeEmail(email, code);
+
+            return Result<bool>.Ok(true);
         }
 
         public async Task<bool> Logout()
